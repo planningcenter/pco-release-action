@@ -1,6 +1,7 @@
 {
   "name": "release-by-pr",
   "private": true,
+  "version": "1.0.0",
   "scripts": {
     "format": "prettier --write **/*.ts",
     "lint": "eslint .",

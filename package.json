@@ -1,7 +1,10 @@
 {
+  "name": "pco-release",
   "private": true,
   "scripts": {
     "build": "yarn workspaces build"
   },
-  "workspaces": ["release-by-pr"]
+  "workspaces": [
+    "release-by-pr"
+  ]
 }

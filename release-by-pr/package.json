@@ -1,4 +1,5 @@
 {
+  "name": "release-by-pr",
   "private": true,
   "scripts": {
     "format": "prettier --write **/*.ts",

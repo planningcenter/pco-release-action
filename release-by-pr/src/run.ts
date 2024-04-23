@@ -281,8 +281,8 @@ async function createPullRequest({
 
 async function buildBody(version: string): Promise<string> {
   const changelog = await readFileContent(`${GITHUB_WORKSPACE}/CHANGELOG.md`)
-  const currentChanges = changelog.split(new RegExp(`##\\sv((?!${version})\\d*\\.\\d*\\.\\d*)`))[0]
-  const changesMatch = currentChanges.match(new RegExp(`##\\sv${version}\\s(.|\\n)*`, 'm'))
+  const currentChanges = changelog.split(new RegExp(`##\\s\\[?v?((?!${version})\\d*\\.\\d*\\.\\d*)`))[0]
+  const changesMatch = currentChanges.match(new RegExp(`##\\s\\[?v?${version}(\\]\\(.*\\))?\\s(.|\\n)*`, 'm'))
   if (changesMatch === null) return `No changes found\n\n${FOOTER}`
 
   const changes = changesMatch[0]

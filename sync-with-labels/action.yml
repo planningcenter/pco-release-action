@@ -16,7 +16,7 @@ runs:
       with:
         node-version: "20"
         cache: "yarn"
-    - uses: ./.github/release-pr/
+    - uses: planningcenter/pco-release-action/@v1
       if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
       with:
         release_type: ${{ (github.event.label.name == 'pco-release-patch' && 'patch') || (github.event.label.name == 'pco-release-minor' && 'minor') || (github.event.label.name == 'pco-release-major' && 'major') }}

@@ -24,7 +24,7 @@ permissions:
   contents: write
   pull-requests: write
 
-name: Release Automation
+name: PCO-Release - Release Automation
 
 jobs:
   release-automation:
@@ -71,7 +71,7 @@ jobs:
 ```yml
 # .github/workflows/pco-release-create-release-on-merge.yml
 
-name: Create Release on Merge
+name: PCO-Release - Create Release on Merge
 
 on:
   pull_request:
@@ -93,7 +93,7 @@ jobs:
 ```yml
 # .github/workflows/pco-release-require-changelog-update.yml
 
-name: Require Changelog Update
+name: PCO-Release - Require Changelog Update
 
 on: [pull_request]
 

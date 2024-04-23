@@ -136,7 +136,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   // If there are no changes, exit
   try {
-    const diff = await easyExec(`git diff origin/${MAIN_BRANCH} v${lastReleaseVersion}`)
+    await easyExec(`git fetch origin --tags`)
+    const diff = await easyExec(`git diff origin/${MAIN_BRANCH}..refs/tags/v${lastReleaseVersion}`)
     if (diff.exitCode !== 0) throw diff
     if (diff.output === '') return
   } catch (e) {

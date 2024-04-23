@@ -57619,7 +57619,8 @@ const run = async (inputs) => {
     const versionBumpType = inputs.releaseType === 'nochange' ? getReleaseType(pullRequests[0]) : inputs.releaseType;
     // If there are no changes, exit
     try {
-        const diff = await easyExec(`git diff origin/${MAIN_BRANCH} v${lastReleaseVersion}`);
+        await easyExec(`git fetch origin --tags`);
+        const diff = await easyExec(`git diff origin/${MAIN_BRANCH}..refs/tags/v${lastReleaseVersion}`);
         if (diff.exitCode !== 0)
             throw diff;
         if (diff.output === '')

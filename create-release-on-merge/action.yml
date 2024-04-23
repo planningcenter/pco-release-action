@@ -1,6 +1,12 @@
 name: PCO Release - Create Release on PR Merge
 description: Automates the creation of a release when a `PCO-Release` PR is merged.
 
+inputs:
+  package_json_path:
+    description: "The path to the package.json file to version."
+    required: false
+    default: "package.json"
+
 runs:
   using: "composite"
   steps:
@@ -11,7 +17,7 @@ runs:
         ref: main
         fetch-depth: 0
         fetch-tags: true
-    - run: echo "version=$v$(jq -r .version package.json)" >> $GITHUB_ENV
+    - run: echo "version=$v$(jq -r .version ${{ inputs.package_json_path }})" >> $GITHUB_ENV
       if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
       shell: bash
     - name: Create Release

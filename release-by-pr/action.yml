@@ -8,6 +8,14 @@ inputs:
   release_type:
     required: false
     default: nochange
+  package_json_path:
+    description: 'The path to the package.json file to version.'
+    required: false
+    default: 'package.json'
+  version_command:
+    description: 'The command to run to bump the version'
+    required: false
+    default: 'yarn version'
 
 runs:
   using: 'node20'

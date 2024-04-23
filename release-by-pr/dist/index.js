@@ -57594,7 +57594,7 @@ const run = async (inputs) => {
     // Find the last release version from main branch
     await easyExec(`git fetch origin`);
     await easyExec(`git checkout ${MAIN_BRANCH}`);
-    const lastReleaseVersion = (await easyExec(`jq -r .version package.json`)).output.split('\n')[0];
+    const lastReleaseVersion = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
     // Fetch information needed about the repo
     const response = await octokit.graphql(FETCH_QUERY, {
         owner,
@@ -57634,8 +57634,8 @@ const run = async (inputs) => {
     // Bump version, update changelog, and push to release branch
     await easyExec(`git checkout ${RELEASE_BRANCH}`);
     await easyExec(`git reset --hard origin/${MAIN_BRANCH}`);
-    await easyExec(`yarn version --${versionBumpType} --no-git-tag-version`);
-    const version = (await easyExec(`jq -r .version package.json`)).output.split('\n')[0];
+    await easyExec(`${inputs.versionCommand} --${versionBumpType} --no-git-tag-version`);
+    const version = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
     const date = new Date().toISOString().split('T')[0];
     await replaceTextInFile(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## v${version} - ${date}`);
     await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
@@ -57756,6 +57756,8 @@ async function requestReviewsFromAuthors({ prId, commits, }) {
 const main = async () => {
     await run({
         releaseType: core.getInput('release_type', { required: true }),
+        packageJsonPath: core.getInput('package_json_path', { required: true }),
+        versionCommand: core.getInput('version_command', { required: true }),
     });
 };
 main().catch((e) => {

@@ -1,7 +1,8 @@
 import { Octokit } from '@octokit/action'
 import { easyExec, readFileContent, replaceTextInFile } from './utils.js'
 
-type Inputs = { releaseType: 'patch' | 'minor' | 'major' | 'nochange' }
+type ReleaseType = 'patch' | 'minor' | 'major' | 'nochange'
+type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
 type ValueOf<T> = T[keyof T]
 type Label = { id: string } | null
 type PullRequest<Label extends Record<string, any> = { id: string; name: string }> = {
@@ -88,7 +89,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Find the last release version from main branch
   await easyExec(`git fetch origin`)
   await easyExec(`git checkout ${MAIN_BRANCH}`)
-  const lastReleaseVersion = (await easyExec(`jq -r .version package.json`)).output.split('\n')[0]
+  const lastReleaseVersion = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0]
 
   // Fetch information needed about the repo
   const response: {
@@ -152,8 +153,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Bump version, update changelog, and push to release branch
   await easyExec(`git checkout ${RELEASE_BRANCH}`)
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
-  await easyExec(`yarn version --${versionBumpType} --no-git-tag-version`)
-  const version = (await easyExec(`jq -r .version package.json`)).output.split('\n')[0]
+  await easyExec(`${inputs.versionCommand} --${versionBumpType} --no-git-tag-version`)
+  const version = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0]
   const date = new Date().toISOString().split('T')[0]
   await replaceTextInFile(
     `${GITHUB_WORKSPACE}/CHANGELOG.md`,
@@ -298,7 +299,7 @@ async function updatePullRequest({
 }: {
   pullRequest: PullRequest
   version: string
-  releaseType: ValueOf<Inputs>
+  releaseType: ReleaseType
   labelMajorId: string
   labelMinorId: string
   labelPatchId: string

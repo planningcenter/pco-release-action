@@ -5,6 +5,14 @@ inputs:
   GITHUB_TOKEN:
     description: token for access
     required: true
+  package_json_path:
+    description: "The path to the package.json file to version."
+    required: false
+    default: "package.json"
+  version_command:
+    description: "The command to run to bump the version"
+    required: false
+    default: "yarn version"
 
 runs:
   using: "composite"
@@ -19,5 +27,7 @@ runs:
     - uses: planningcenter/pco-release-action/release-by-pr@v1
       if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
       with:
+        package_json_path: ${{ inputs.package_json_path }}
+        version_command: ${{ inputs.version_command }}
         release_type: ${{ (github.event.label.name == 'pco-release-patch' && 'patch') || (github.event.label.name == 'pco-release-minor' && 'minor') || (github.event.label.name == 'pco-release-major' && 'major') }}
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}

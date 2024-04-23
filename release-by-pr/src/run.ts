@@ -140,7 +140,12 @@ export const run = async (inputs: Inputs): Promise<void> => {
     if (diff.exitCode !== 0) throw diff
     if (diff.output === '') return
   } catch (e) {
-    console.log('Error when trying to find if changes since last release', e, 'Continuing anyway')
+    console.log(
+      `Could not find a release for v${lastReleaseVersion}. This often happens when merging a new release.
+      If this happens unexpectedly, make sure there is a release labeled "v${lastReleaseVersion}" and try again.`,
+      e,
+    )
+    return
   }
 
   // Bump version, update changelog, and push to release branch

@@ -60,7 +60,6 @@ jobs:
     if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - uses: planningcenter/pco-release-action/sync-with-labels@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -84,7 +83,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
     steps:
-      - uses: actions/checkout@v4
       - uses: planningcenter/pco-release-action/create-release-on-merge@v1
 ```
 
@@ -95,7 +93,9 @@ jobs:
 
 name: PCO-Release - Require Changelog Update
 
-on: [pull_request]
+on:
+  pull_request:
+    branches: [main]
 
 jobs:
   require-changelog-update:

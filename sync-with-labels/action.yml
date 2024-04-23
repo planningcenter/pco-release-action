@@ -1,0 +1,23 @@
+name: PCO Release - Sync PR with Labels
+description: Automates keeping the release PR up-to-date when updating labels
+
+inputs:
+  GITHUB_TOKEN:
+    description: token for access
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+      if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
+    - uses: actions/setup-node@v4
+      if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
+      with:
+        node-version: "20"
+        cache: "yarn"
+    - uses: ./.github/release-pr/
+      if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
+      with:
+        release_type: ${{ (github.event.label.name == 'pco-release-patch' && 'patch') || (github.event.label.name == 'pco-release-minor' && 'minor') || (github.event.label.name == 'pco-release-major' && 'major') }}
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}

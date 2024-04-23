@@ -1,0 +1,14 @@
+name: PCO Release - Release by PR
+description: A tool for creating and managing releases for PCO projects through Pull Requests.
+
+inputs:
+  GITHUB_TOKEN:
+    description: token for access
+    required: true
+  release_type:
+    required: false
+    default: nochange
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

@@ -153,7 +153,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Bump version, update changelog, and push to release branch
   await easyExec(`git checkout ${RELEASE_BRANCH}`)
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
-  await easyExec(`${inputs.versionCommand} --${versionBumpType} --no-git-tag-version`)
+  await easyExec(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }))
   const version = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0]
   const date = new Date().toISOString().split('T')[0]
   await replaceTextInFile(
@@ -362,4 +362,17 @@ async function requestReviewsFromAuthors({
       ],
     },
   )
+}
+
+function normalizeVersionCommand({
+  versionCommand,
+  versionBumpType,
+}: {
+  versionCommand: string
+  versionBumpType: ReleaseType
+}) {
+  if (versionCommand.includes('#{versionBumpType}'))
+    return versionCommand.replace('#{versionBumpType}', versionBumpType)
+
+  return `${versionCommand} --${versionBumpType} --no-git-tag-version`
 }

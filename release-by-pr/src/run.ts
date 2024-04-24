@@ -133,7 +133,10 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   const pullRequests = releaseBranch?.associatedPullRequests.nodes || []
   let pullRequest: PullRequest
-  const versionBumpType = inputs.releaseType === 'nochange' ? getReleaseType(pullRequests[0]) : inputs.releaseType
+  const versionBumpType = (inputs.releaseType === 'nochange' ? getReleaseType(pullRequests[0]) : inputs.releaseType) as
+    | 'patch'
+    | 'minor'
+    | 'major'
 
   // If there are no changes, exit
   try {

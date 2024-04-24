@@ -57616,7 +57616,7 @@ const run = async (inputs) => {
     }
     const pullRequests = releaseBranch?.associatedPullRequests.nodes || [];
     let pullRequest;
-    const versionBumpType = inputs.releaseType === 'nochange' ? getReleaseType(pullRequests[0]) : inputs.releaseType;
+    const versionBumpType = (inputs.releaseType === 'nochange' ? getReleaseType(pullRequests[0]) : inputs.releaseType);
     // If there are no changes, exit
     try {
         await easyExec(`git fetch origin --tags`);
@@ -57634,7 +57634,7 @@ const run = async (inputs) => {
     // Bump version, update changelog, and push to release branch
     await easyExec(`git checkout ${RELEASE_BRANCH}`);
     await easyExec(`git reset --hard origin/${MAIN_BRANCH}`);
-    await easyExec(`${inputs.versionCommand} --${versionBumpType} --no-git-tag-version`);
+    await easyExec(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }));
     const version = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
     const date = new Date().toISOString().split('T')[0];
     await replaceTextInFile(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
@@ -57752,6 +57752,11 @@ async function requestReviewsFromAuthors({ prId, commits, }) {
                 .filter((id) => id)),
         ],
     });
+}
+function normalizeVersionCommand({ versionCommand, versionBumpType, }) {
+    if (versionCommand.includes('#{versionBumpType}'))
+        return versionCommand.replace('#{versionBumpType}', versionBumpType);
+    return `${versionCommand} --${versionBumpType} --no-git-tag-version`;
 }
 
 ;// CONCATENATED MODULE: ./src/main.ts

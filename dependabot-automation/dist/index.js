@@ -26071,12 +26071,13 @@ const easyExec = async function easyExec(commandWithArgs) {
         silent: true,
         cwd: process.env.GITHUB_WORKSPACE,
     };
-    const commandParts = commandWithArgs.match(/(?:[^\s"]+|"[^"]*")+/g);
+    const commandParts = commandWithArgs.match(/(?:[^\s'"]+|"[^"]*"|'[^']*')+/g);
     if (commandParts === null)
         throw new Error("Command parts are null");
     const command = commandParts[0];
     const args = commandParts.slice(1).map((arg) => {
-        if (arg.startsWith('"') && arg.endsWith('"')) {
+        if ((arg.startsWith('"') && arg.endsWith('"')) ||
+            (arg.startsWith("'") && arg.endsWith("'"))) {
             return arg.slice(1, -1);
         }
         return arg;

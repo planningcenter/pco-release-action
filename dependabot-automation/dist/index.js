@@ -28046,9 +28046,9 @@ const { GITHUB_WORKSPACE } = process.env;
 if (!GITHUB_WORKSPACE)
     throw 'GITHUB_WORKSPACE is not defined';
 const run = async (inputs) => {
-    const commitMessage = (await (0,utils.easyExec)(`git log -1 --pretty=format:"%s"`)).output;
+    const commitMessage = (await (0,utils.easyExec)(`git log -1 --pretty=format:"%s"`)).output.replace(/^"/, '').replace(/"$/, '');
     const changelog = await (0,utils.readFileContent)(external_path_default().join(GITHUB_WORKSPACE, inputs.changelogPath));
-    const entry = `- ${commitMessage}`;
+    const entry = `- ${commitMessage.replace(/^.*?:\s*/, '')}`;
     // Find the index of "## Unreleased" in the changelog
     const unreleasedIndex = changelog.indexOf('## Unreleased');
     if (unreleasedIndex !== -1) {

@@ -1,5 +1,5 @@
 import { Octokit } from '@octokit/action'
-import { easyExec, readFileContent, replaceTextInFile } from './utils.js'
+import { easyExec, readFileContent, replaceTextInFile } from '../../shared/utils.js'
 
 type ReleaseType = 'patch' | 'minor' | 'major' | 'nochange'
 type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }

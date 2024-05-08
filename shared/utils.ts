@@ -1,9 +1,9 @@
-import { exec } from '@actions/exec'
-import fs from 'fs'
+import { exec } from "@actions/exec"
+import fs from "fs"
 
 export const easyExec = async function easyExec(commandWithArgs: string) {
-  let output = ''
-  let error = ''
+  let output = ""
+  let error = ""
 
   const options = {
     listeners: {
@@ -18,11 +18,17 @@ export const easyExec = async function easyExec(commandWithArgs: string) {
     cwd: process.env.GITHUB_WORKSPACE,
   }
 
-  const commandParts = commandWithArgs.split(' ')
+  const commandParts = commandWithArgs.match(/(?:[^\s"]+|"[^"]*")+/g)
+  if (commandParts === null) throw new Error("Command parts are null")
   const command = commandParts[0]
-  const args = commandParts.slice(1)
+  const args = commandParts.slice(1).map((arg) => {
+    if (arg.startsWith('"') && arg.endsWith('"')) {
+      return arg.slice(1, -1)
+    }
+    return arg
+  })
 
-  console.log(`${command} ${args.join(' ')}`)
+  console.log(`${command} ${args.join(" ")}`)
 
   let exitCode
   try {
@@ -47,7 +53,11 @@ export const setOutput = function setOutput(key: string, value: any) {
   exec(`echo "${key}=${value}" >> $GITHUB_OUTPUT`)
 }
 
-export async function replaceTextInFile(filePath: string, searchText: string, replacementText: string): Promise<void> {
+export async function replaceTextInFile(
+  filePath: string,
+  searchText: string,
+  replacementText: string
+): Promise<void> {
   // Don't do anything if the search text is empty
   if (!searchText) {
     return
@@ -60,14 +70,17 @@ export async function replaceTextInFile(filePath: string, searchText: string, re
 
 export async function readFileContent(filePath: string): Promise<string> {
   try {
-    const fileContentBuffer = await fs.promises.readFile(filePath, 'utf8')
+    const fileContentBuffer = await fs.promises.readFile(filePath, "utf8")
     return fileContentBuffer.toString()
   } catch (error) {
     throw new Error(`Error reading file content: ${error}`)
   }
 }
 
-async function saveFileContent(filePath: string, content: string): Promise<void> {
+export async function saveFileContent(
+  filePath: string,
+  content: string
+): Promise<void> {
   try {
     await fs.promises.writeFile(filePath, content)
   } catch (error) {

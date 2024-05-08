@@ -55432,6 +55432,98 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 709:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.saveFileContent = exports.readFileContent = exports.replaceTextInFile = exports.setOutput = exports.easyExec = void 0;
+const exec_1 = __nccwpck_require__(110);
+const fs_1 = __importDefault(__nccwpck_require__(7147));
+const easyExec = async function easyExec(commandWithArgs) {
+    let output = "";
+    let error = "";
+    const options = {
+        listeners: {
+            stdout: (data) => {
+                output += data.toString();
+            },
+            stderr: (data) => {
+                error += data.toString();
+            },
+        },
+        silent: true,
+        cwd: process.env.GITHUB_WORKSPACE,
+    };
+    const commandParts = commandWithArgs.match(/(?:[^\s"]+|"[^"]*")+/g);
+    if (commandParts === null)
+        throw new Error("Command parts are null");
+    const command = commandParts[0];
+    const args = commandParts.slice(1).map((arg) => {
+        if (arg.startsWith('"') && arg.endsWith('"')) {
+            return arg.slice(1, -1);
+        }
+        return arg;
+    });
+    console.log(`${command} ${args.join(" ")}`);
+    let exitCode;
+    try {
+        exitCode = await (0, exec_1.exec)(command, args, options);
+    }
+    catch (e) {
+        console.log({ output, error, exitCode: 2, e });
+        return { output, error, exitCode: 2 };
+    }
+    if (exitCode !== 0) {
+        throw new Error(`"${command}" returned an exit code of ${exitCode}`);
+    }
+    return {
+        output,
+        error,
+        exitCode,
+    };
+};
+exports.easyExec = easyExec;
+const setOutput = function setOutput(key, value) {
+    (0, exec_1.exec)(`echo "${key}=${value}" >> $GITHUB_OUTPUT`);
+};
+exports.setOutput = setOutput;
+async function replaceTextInFile(filePath, searchText, replacementText) {
+    // Don't do anything if the search text is empty
+    if (!searchText) {
+        return;
+    }
+    const fileContent = await readFileContent(filePath);
+    const updatedContent = fileContent.replace(searchText, replacementText);
+    await saveFileContent(filePath, updatedContent);
+}
+exports.replaceTextInFile = replaceTextInFile;
+async function readFileContent(filePath) {
+    try {
+        const fileContentBuffer = await fs_1.default.promises.readFile(filePath, "utf8");
+        return fileContentBuffer.toString();
+    }
+    catch (error) {
+        throw new Error(`Error reading file content: ${error}`);
+    }
+}
+exports.readFileContent = readFileContent;
+async function saveFileContent(filePath, content) {
+    try {
+        await fs_1.default.promises.writeFile(filePath, content);
+    }
+    catch (error) {
+        throw new Error(`Error saving file content: ${error}`);
+    }
+}
+exports.saveFileContent = saveFileContent;
+
+
+/***/ }),
+
 /***/ 9491:
 /***/ ((module) => {
 
@@ -57400,35 +57492,6 @@ module.exports = parseParams
 /******/ }
 /******/ 
 /************************************************************************/
-/******/ /* webpack/runtime/compat get default export */
-/******/ (() => {
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__nccwpck_require__.n = (module) => {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			() => (module['default']) :
-/******/ 			() => (module);
-/******/ 		__nccwpck_require__.d(getter, { a: getter });
-/******/ 		return getter;
-/******/ 	};
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/define property getters */
-/******/ (() => {
-/******/ 	// define getter functions for harmony exports
-/******/ 	__nccwpck_require__.d = (exports, definition) => {
-/******/ 		for(var key in definition) {
-/******/ 			if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
-/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 			}
-/******/ 		}
-/******/ 	};
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/hasOwnProperty shorthand */
-/******/ (() => {
-/******/ 	__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ })();
-/******/ 
 /******/ /* webpack/runtime/compat */
 /******/ 
 /******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
@@ -57442,80 +57505,8 @@ var __webpack_exports__ = {};
 var core = __nccwpck_require__(5316);
 // EXTERNAL MODULE: ../node_modules/@octokit/action/dist-node/index.js
 var dist_node = __nccwpck_require__(266);
-// EXTERNAL MODULE: ../node_modules/@actions/exec/lib/exec.js
-var lib_exec = __nccwpck_require__(110);
-// EXTERNAL MODULE: external "fs"
-var external_fs_ = __nccwpck_require__(7147);
-var external_fs_default = /*#__PURE__*/__nccwpck_require__.n(external_fs_);
-;// CONCATENATED MODULE: ./src/utils.ts
-
-
-const easyExec = async function easyExec(commandWithArgs) {
-    let output = '';
-    let error = '';
-    const options = {
-        listeners: {
-            stdout: (data) => {
-                output += data.toString();
-            },
-            stderr: (data) => {
-                error += data.toString();
-            },
-        },
-        silent: true,
-        cwd: process.env.GITHUB_WORKSPACE,
-    };
-    const commandParts = commandWithArgs.split(' ');
-    const command = commandParts[0];
-    const args = commandParts.slice(1);
-    console.log(`${command} ${args.join(' ')}`);
-    let exitCode;
-    try {
-        exitCode = await (0,lib_exec.exec)(command, args, options);
-    }
-    catch (e) {
-        console.log({ output, error, exitCode: 2, e });
-        return { output, error, exitCode: 2 };
-    }
-    if (exitCode !== 0) {
-        throw new Error(`"${command}" returned an exit code of ${exitCode}`);
-    }
-    return {
-        output,
-        error,
-        exitCode,
-    };
-};
-const setOutput = function setOutput(key, value) {
-    exec(`echo "${key}=${value}" >> $GITHUB_OUTPUT`);
-};
-async function replaceTextInFile(filePath, searchText, replacementText) {
-    // Don't do anything if the search text is empty
-    if (!searchText) {
-        return;
-    }
-    const fileContent = await readFileContent(filePath);
-    const updatedContent = fileContent.replace(searchText, replacementText);
-    await saveFileContent(filePath, updatedContent);
-}
-async function readFileContent(filePath) {
-    try {
-        const fileContentBuffer = await external_fs_default().promises.readFile(filePath, 'utf8');
-        return fileContentBuffer.toString();
-    }
-    catch (error) {
-        throw new Error(`Error reading file content: ${error}`);
-    }
-}
-async function saveFileContent(filePath, content) {
-    try {
-        await external_fs_default().promises.writeFile(filePath, content);
-    }
-    catch (error) {
-        throw new Error(`Error saving file content: ${error}`);
-    }
-}
-
+// EXTERNAL MODULE: ../shared/utils.ts
+var utils = __nccwpck_require__(709);
 ;// CONCATENATED MODULE: ./src/run.ts
 
 
@@ -57592,9 +57583,9 @@ const run = async (inputs) => {
     const MAIN_BRANCH = 'main';
     const RELEASE_BRANCH = 'pco-release--internal';
     // Find the last release version from main branch
-    await easyExec(`git fetch origin`);
-    await easyExec(`git checkout ${MAIN_BRANCH}`);
-    const lastReleaseVersion = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
+    await (0,utils.easyExec)(`git fetch origin`);
+    await (0,utils.easyExec)(`git checkout ${MAIN_BRANCH}`);
+    const lastReleaseVersion = (await (0,utils.easyExec)(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
     // Fetch information needed about the repo
     const response = await octokit.graphql(FETCH_QUERY, {
         owner,
@@ -57619,8 +57610,8 @@ const run = async (inputs) => {
     const versionBumpType = (inputs.releaseType === 'nochange' ? getReleaseType(pullRequests[0]) : inputs.releaseType);
     // If there are no changes, exit
     try {
-        await easyExec(`git fetch origin --tags`);
-        const diff = await easyExec(`git diff origin/${MAIN_BRANCH}..refs/tags/v${lastReleaseVersion}`);
+        await (0,utils.easyExec)(`git fetch origin --tags`);
+        const diff = await (0,utils.easyExec)(`git diff origin/${MAIN_BRANCH}..refs/tags/v${lastReleaseVersion}`);
         if (diff.exitCode !== 0)
             throw diff;
         if (diff.output === '')
@@ -57632,17 +57623,17 @@ const run = async (inputs) => {
         return;
     }
     // Bump version, update changelog, and push to release branch
-    await easyExec(`git checkout ${RELEASE_BRANCH}`);
-    await easyExec(`git reset --hard origin/${MAIN_BRANCH}`);
-    await easyExec(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }));
-    const version = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
+    await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
+    await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
+    await (0,utils.easyExec)(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }));
+    const version = (await (0,utils.easyExec)(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
     const date = new Date().toISOString().split('T')[0];
-    await replaceTextInFile(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
-    await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
-    await easyExec(`git config --global user.name "github-actions[bot]"`);
-    await easyExec(`git add .`);
-    await easyExec(`git commit -m v${version}`);
-    await easyExec(`git push origin ${RELEASE_BRANCH} --force`);
+    await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
+    await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
+    await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
+    await (0,utils.easyExec)(`git add .`);
+    await (0,utils.easyExec)(`git commit -m v${version}`);
+    await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --force`);
     // Create or update pull request
     if (pullRequests.length === 0) {
         pullRequest = await createPullRequest({
@@ -57717,7 +57708,7 @@ async function createPullRequest({ labelPatchId, labelPendingId, repoId, release
     return pullRequest;
 }
 async function buildBody({ version, lastReleaseVersion, }) {
-    const changelog = await readFileContent(`${GITHUB_WORKSPACE}/CHANGELOG.md`);
+    const changelog = await (0,utils.readFileContent)(`${GITHUB_WORKSPACE}/CHANGELOG.md`);
     const currentChanges = changelog.split(new RegExp(`##\\s\\[?v?((?!${version})\\d*\\.\\d*\\.\\d*)`))[0];
     const changesMatch = currentChanges.match(new RegExp(`##\\s\\[?v?${version}(\\]\\(.*\\))?\\s(.|\\n)*`, 'm'));
     if (changesMatch === null)

@@ -1,0 +1,12 @@
+name: PCO Release - Dependabot Automation
+description: Adds dependabot updates to the changelog automatically
+
+inputs:
+  changelog_path:
+    description: Location of the changelog file
+    required: false
+    default: './CHANGELOG.md'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

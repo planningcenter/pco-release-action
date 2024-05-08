@@ -115,6 +115,28 @@ jobs:
           exit 1
 ```
 
+#### Automate updating the Changelog when dependabot opens a PR
+
+```yml
+# .github/workflows/pco-release-dependabot-automation.yml
+
+name: PCO-Release - Dependabot Automation (Update changelog)
+
+on: pull_request
+
+jobs:
+  update-dependabot-pr-changelog:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: planningcenter/pco-release-action/dependabot-automation@v1
+```
+
 ## Working on this Project
 
 - Build before pushing changes with `yarn build`

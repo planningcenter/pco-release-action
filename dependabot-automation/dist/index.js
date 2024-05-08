@@ -28043,35 +28043,34 @@ var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
 
 
 const { GITHUB_WORKSPACE } = process.env;
-if (!GITHUB_WORKSPACE)
-    throw 'GITHUB_WORKSPACE is not defined';
 const run = async (inputs) => {
     const commitMessage = (await (0,utils.easyExec)(`git log -1 --pretty=format:"%s"`)).output.replace(/^"/, '').replace(/"$/, '');
-    const changelog = await (0,utils.readFileContent)(external_path_default().join(GITHUB_WORKSPACE, inputs.changelogPath));
-    const entry = `- ${commitMessage.replace(/^.*?:\s*/, '')}`;
-    // Find the index of "## Unreleased" in the changelog
-    const unreleasedIndex = changelog.indexOf('## Unreleased');
-    if (unreleasedIndex !== -1) {
-        // Check if "### Dependencies" section exists
-        const dependenciesIndex = changelog.indexOf('### Dependencies', unreleasedIndex);
-        if (dependenciesIndex !== -1) {
-            // Add entry below "### Dependencies" section
-            const insertIndex = dependenciesIndex + '### Dependencies'.length;
-            const updatedChangelog = changelog.slice(0, insertIndex) + `\n${entry}` + changelog.slice(insertIndex);
-            await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/${inputs.changelogPath}`, changelog, updatedChangelog);
-        }
-        else {
-            // Create "### Dependencies" section and add entry below it
-            const updatedChangelog = changelog.slice(0, unreleasedIndex) + `### Dependencies\n\n${entry}\n\n` + changelog.slice(unreleasedIndex);
-            await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/${inputs.changelogPath}`, changelog, updatedChangelog);
-        }
-    }
+    const changelogLocation = external_path_default().join(GITHUB_WORKSPACE, inputs.changelogPath);
+    const changelog = await (0,utils.readFileContent)(changelogLocation);
+    const updatedChangelog = updateChangelog({ changelog, message: commitMessage.replace(/^.*?:\s*/, '') });
+    (0,utils.saveFileContent)(changelogLocation, updatedChangelog);
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
     await (0,utils.easyExec)(`git add .`);
     await (0,utils.easyExec)(`git commit -m "update changelog"`);
     await (0,utils.easyExec)(`git push`);
 };
+function updateChangelog({ changelog, message }) {
+    const entryTitle = '## Unreleased';
+    const beginning = changelog.indexOf(entryTitle) + entryTitle.length;
+    const unchangedIntro = changelog.slice(0, beginning);
+    const remaining = changelog.slice(beginning);
+    const startOfOldReleases = remaining.search(/^##(?!\#)/gm) + beginning;
+    const currentRelease = changelog.slice(beginning, startOfOldReleases);
+    const oldReleases = changelog.slice(startOfOldReleases);
+    if (currentRelease.includes('### Dependencies')) {
+        const updatedCurrentRelease = currentRelease.replace(/([\s\S]*###\sDependencies\n)([\s\S]*?)(\n\n.*)/gm, `$1$2\n- ${message}$3`);
+        return `${unchangedIntro}${updatedCurrentRelease}${oldReleases}`;
+    }
+    else {
+        return `${unchangedIntro}${currentRelease || '\n\n'}### Dependencies\n\n- ${message}\n\n${oldReleases}`;
+    }
+}
 
 ;// CONCATENATED MODULE: ./src/main.ts
 

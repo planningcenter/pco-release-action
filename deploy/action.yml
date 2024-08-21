@@ -12,6 +12,9 @@ inputs:
     description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
     required: false
     default: ""
+  package-name:
+    description: "The name of the package to update"
+    required: true
 
 runs:
   using: "composite"
@@ -49,7 +52,18 @@ runs:
           ((PAGE++))
         done
 
-        REPO_LIST=$(IFS=,; echo "${REPOS[*]}")
+        PACKAGE_NAME="${{ inputs.package-name }}"
+        FILTERED_REPOS=()
+        for REPO in "${REPOS[@]}"; do
+          DEPENDENCY_FILE_CONTENT=""
+          if DEPENDENCY_FILE_CONTENT=$(gh api repos/${{ inputs.owner }}/$REPO/contents/package.json --jq '.content' 2>/dev/null); then
+            DEPENDENCY_FILE=$(echo "$DEPENDENCY_FILE_CONTENT" | base64 --decode)
+            if [[ $DEPENDENCY_FILE == *"$PACKAGE_NAME"* ]]; then
+              FILTERED_REPOS+=("$REPO")
+            fi
+          fi
+        done
+        REPO_LIST=$(IFS=,; echo "${FILTERED_REPOS[*]}")
         echo "::set-output name=repo_list::$REPO_LIST"
       env:
         GH_TOKEN: ${{ inputs.github-token }}

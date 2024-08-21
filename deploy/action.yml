@@ -41,7 +41,6 @@ runs:
         if [[ -z "$VERSION" ]]; then
           VERSION=$(jq -r '.version' package.json)
         fi
-        echo "Version: $VERSION"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
     - name: Find package_name
       id: find-package-name
@@ -51,7 +50,6 @@ runs:
         if [[ -z "$PACKAGE_NAME" ]]; then
           PACKAGE_NAME=$(jq -r '.name' package.json)
         fi
-        echo "Package Name: $PACKAGE_NAME"
         echo "package-name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
     - name: Find Repos to update
       id: find-repos
@@ -101,11 +99,10 @@ runs:
         REPO_LIST="${{ steps.find-repos.outputs.repo_list }}"
         VERSION="${{ steps.find-version.outputs.version }}"
         PACKAGE_NAME="${{ steps.find-package-name.outputs.package-name }}"
-        echo "Package Name: $PACKAGE_NAME"
-        echo "Version: $VERSION"
         IFS=',' read -r -a REPOS <<< "$REPO_LIST"
         declare -A UPGRADE_COMMANDS=$(echo '${{ inputs.upgrade-commands }}' | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]')
         declare -A REPO_ERRORS
+        declare -A REPO_PRS
         GITHUB_REPO_URL="https://github.com/${{ inputs.OWNER }}/$repo.git"
 
         report_error() {
@@ -121,6 +118,9 @@ runs:
           cd ..
           rm -rf $repo
         }
+
+        log "Package Name: $PACKAGE_NAME"
+        log "Version: $VERSION"
 
         clone_repo() {
           local repo=$1
@@ -181,7 +181,6 @@ runs:
           local repo=$1
           local title="[Automated] bump $PACKAGE_NAME to $VERSION"
           local body="This is an automated PR that updates $PACKAGE_NAME to version $VERSION. Please ensure that all checks pass."
-          log "Creating PR"
           if ! PR_URL=$(gh pr create --base main --head $BRANCH_NAME --title "$title" --body "$body"); then
             report_error $repo "; Failed to create PR"
             reset_repo $repo
@@ -220,6 +219,8 @@ runs:
           if [ -z "$PR_URL" ]; then
             continue
           fi
+
+          REPO_PRS[$REPO]=$PR_URL
           if [[ ${{ inputs.automerge }} == "true" ]]; then
             if ! merge $REPO $PR_URL; then
               continue
@@ -227,6 +228,14 @@ runs:
           fi
           reset_repo $REPO
         done
+
+        # PR Reporting
+        if [ ${#REPO_PRS[@]} -ne 0 ]; then
+          log "PRs created in the following repositories:"
+          for REPO in "${!REPO_PRS[@]}"; do
+            echo "$REPO: ${REPO_PRS[$REPO]}"
+          done
+        fi
 
         # Error Reporting
         if [ ${#REPO_ERRORS[@]} -ne 0 ]; then
@@ -236,5 +245,6 @@ runs:
           done
           exit 1
         fi
+
       env:
         GH_TOKEN: ${{ inputs.github-token }}

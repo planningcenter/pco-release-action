@@ -13,3 +13,33 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v4
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+    - name: Find Repos to update
+      id: find-repos
+      shell: bash
+      run: |
+        PAGE=1
+        REPOS=()
+        IFS=',' read -r -a ONLY_REPOS <<< "${{ inputs.only }}"
+
+        while : ; do
+          URL="https://api.github.com/orgs/${{ inputs.owner }}/repos?&per_page=100&page=$PAGE"
+          echo "URL: $URL"
+          RESPONSE=$(curl -s -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github.v3+json" $URL)
+          CURRENT_PAGE_REPOS=$(echo "$RESPONSE" | jq -r '.[] | select(.archived == false) | .name')
+          if [[ -z "$CURRENT_PAGE_REPOS" ]]; then
+            break # Exit loop if no more repos
+          fi
+          for REPO in $CURRENT_PAGE_REPOS; do
+            REPOS+=("$REPO")
+          done
+          ((PAGE++))
+        done
+
+        REPO_LIST=$(IFS=,; echo "${REPOS[*]}")
+        echo "::set-output name=repo_list::$REPO_LIST"
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}

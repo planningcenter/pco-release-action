@@ -8,6 +8,10 @@ inputs:
     description: "Owner of the repositories"
     required: false
     default: "planningcenter"
+  only:
+    description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -34,7 +38,13 @@ runs:
             break # Exit loop if no more repos
           fi
           for REPO in $CURRENT_PAGE_REPOS; do
-            REPOS+=("$REPO")
+            if [[ -n "${{ inputs.only }}" ]]; then
+              if printf '%s\n' "${ONLY_REPOS[@]}" | grep -qx "$REPO"; then
+                REPOS+=("$REPO")
+              fi
+            else
+              REPOS+=("$REPO")
+            fi
           done
           ((PAGE++))
         done

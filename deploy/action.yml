@@ -55,7 +55,7 @@ runs:
       id: find-repos
       shell: bash
       run: |
-        PACKAGE_NAME="${{ steps.find-version.outputs.package-name }}"
+        PACKAGE_NAME="${{ steps.find-package-name.outputs.package-name }}"
         PAGE=1
         REPOS=()
         IFS=',' read -r -a ONLY_REPOS <<< "${{ inputs.only }}"
@@ -80,11 +80,17 @@ runs:
         done
         FILTERED_REPOS=()
         for REPO in "${REPOS[@]}"; do
-          DEPENDENCY_FILE_CONTENT=""
-          if DEPENDENCY_FILE_CONTENT=$(gh api repos/${{ inputs.owner }}/$REPO/contents/package.json --jq '.content' 2>/dev/null); then
-            DEPENDENCY_FILE=$(echo "$DEPENDENCY_FILE_CONTENT" | base64 --decode)
-            if [[ $DEPENDENCY_FILE == *"$PACKAGE_NAME"* ]]; then
+          if [[ -n "${{ inputs.only }}" ]]; then
+            if printf '%s\n' "${ONLY_REPOS[@]}" | grep -qx "$REPO"; then
               FILTERED_REPOS+=("$REPO")
+            fi
+          else
+            DEPENDENCY_FILE_CONTENT=""
+            if DEPENDENCY_FILE_CONTENT=$(gh api repos/${{ inputs.owner }}/$REPO/contents/package.json --jq '.content' 2>/dev/null); then
+            DEPENDENCY_FILE=$(echo "$DEPENDENCY_FILE_CONTENT" | base64 --decode)
+              if [[ $DEPENDENCY_FILE == *"$PACKAGE_NAME"* ]]; then
+                FILTERED_REPOS+=("$REPO")
+              fi
             fi
           fi
         done
@@ -100,7 +106,10 @@ runs:
         VERSION="${{ steps.find-version.outputs.version }}"
         PACKAGE_NAME="${{ steps.find-package-name.outputs.package-name }}"
         IFS=',' read -r -a REPOS <<< "$REPO_LIST"
-        declare -A UPGRADE_COMMANDS=$(echo '${{ inputs.upgrade-commands }}' | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]')
+        declare -A UPGRADE_COMMANDS
+        while IFS="=" read -r key value; do
+          UPGRADE_COMMANDS["$key"]="$value"
+        done < <(echo '${{ inputs.upgrade-commands }}' | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]')
         declare -A REPO_ERRORS
         declare -A REPO_PRS
         GITHUB_REPO_URL="https://github.com/${{ inputs.OWNER }}/$repo.git"
@@ -143,6 +152,11 @@ runs:
         }
         run_upgrade_command() {
           local repo=$1
+          echo "UPGRADE_COMMANDS: ${UPGRADE_COMMANDS}"
+          echo ${UPGRADE_COMMANDS[@]}
+          echo ${!UPGRADE_COMMANDS[@]}
+          echo "UPGRADE_COMMANDS[$repo]: ${UPGRADE_COMMANDS["$repo"]}"
+          echo "UPGRADE_COMMANDS[test-js-auto-deploy-consumer]: ${UPGRADE_COMMANDS["test-js-auto-deploy-consumer"]}"
           if [[ -n "${UPGRADE_COMMANDS[$repo]}" ]]; then
             log "Running ${UPGRADE_COMMANDS[$repo]}"
             if ! eval "${UPGRADE_COMMANDS[$repo]} $PACKAGE_NAME@$VERSION"; then
@@ -200,6 +214,8 @@ runs:
             return 1
           fi
         }
+
+        log "Updating $PACKAGE_NAME to $VERSION in the following repositories: ${REPOS[@]}"
         for REPO in "${REPOS[@]}"; do
           echo "[PCO-Release] updating $PACKAGE_NAME in $REPO"
           if ! clone_repo $REPO; then
@@ -245,6 +261,5 @@ runs:
           done
           exit 1
         fi
-
       env:
         GH_TOKEN: ${{ inputs.github-token }}

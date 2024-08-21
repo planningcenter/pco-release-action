@@ -8,6 +8,9 @@ inputs:
     description: "Owner of the repositories"
     required: false
     default: "planningcenter"
+  automerge:
+    description: "Do you want to automerge the PRs?  This should be dynamic based on if it is a major release"
+    required: true
   only:
     description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
     required: false
@@ -163,7 +166,19 @@ runs:
             echo $PR_URL
           fi
         }
-
+        approve_and_merge() {
+          local repo=$1
+          local pr_url=$2
+          local pr_number=$(echo "$pr_url" | grep -o '[0-9]*$')
+          log "Approving PR $pr_number"
+          gh pr review $pr_number --approve || true
+          log "Merging PR $pr_number"
+          if ! gh pr merge $pr_number --auto --merge; then
+            report_error $repo "; Failed to merge PR"
+            reset_repo $repo
+            return 1
+          fi
+        }
         for REPO in "${REPOS[@]}"; do
           echo "[PCO-Release] updating ${{ inputs.package-name }} in $REPO"
           if ! clone_repo $REPO; then
@@ -182,6 +197,11 @@ runs:
           PR_URL=$(create_pr $REPO)
           if [ -z "$PR_URL" ]; then
             continue
+          fi
+          if [[ ${{ inputs.automerge }} == "true" ]]; then
+            if ! approve_and_merge $REPO $PR_URL; then
+              continue
+            fi
           fi
           reset_repo $REPO
         done

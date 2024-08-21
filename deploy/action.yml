@@ -67,3 +67,48 @@ runs:
         echo "::set-output name=repo_list::$REPO_LIST"
       env:
         GH_TOKEN: ${{ inputs.github-token }}
+    - name: Auto Deploy to all consumer repos
+      id: auto-deploy
+      shell: bash
+      run: |
+        REPO_LIST="${{ steps.find-repos.outputs.repo_list }}"
+        IFS=',' read -r -a REPOS <<< "$REPO_LIST"
+        declare -A REPO_ERRORS
+        GITHUB_REPO_URL="https://github.com/${{ inputs.OWNER }}/$repo.git"
+
+        report_error() {
+          local repo=$1
+          local message=$2
+          REPO_ERRORS[$repo]+="; $message"
+        }
+
+        log() {
+          echo "[PCO-Release] $1"
+        }
+
+        clone_repo() {
+          local repo=$1
+          log "Cloning $GITHUB_REPO_URL"
+          if ! git clone https://${GH_TOKEN}:x-oauth-basic@github.com/${{ inputs.OWNER }}/$repo.git --depth=1; then
+            report_error $repo "Failed to clone repository"
+            return 1
+          fi
+        }
+
+        for REPO in "${REPOS[@]}"; do
+          echo "[PCO-Release] updating ${{ inputs.package-name }} in $REPO"
+          if ! clone_repo $REPO; then
+            continue
+          fi
+        done
+
+        # Error Reporting
+        if [ ${#REPO_ERRORS[@]} -ne 0 ]; then
+          log "Errors occurred in the following repositories:"
+          for REPO in "${!REPO_ERRORS[@]}"; do
+            log "$REPO: ${REPO_ERRORS[$REPO]}"
+          done
+          exit 1
+        fi
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}

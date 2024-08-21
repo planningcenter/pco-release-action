@@ -150,6 +150,19 @@ runs:
             fi
           fi
         }
+        create_pr() {
+          local repo=$1
+          local title="[Automated] bump ${{ inputs.package-name }} to ${{ inputs.version }}"
+          local body="This is an automated PR that updates ${{ inputs.package-name }} to version ${{ inputs.version }}. Please ensure that all checks pass."
+          log "Creating PR"
+          if ! PR_URL=$(gh pr create --base main --head $BRANCH_NAME --title "$title" --body "$body"); then
+            report_error $repo "; Failed to create PR"
+            reset_repo $repo
+            return 1
+          else
+            echo $PR_URL
+          fi
+        }
 
         for REPO in "${REPOS[@]}"; do
           echo "[PCO-Release] updating ${{ inputs.package-name }} in $REPO"
@@ -164,6 +177,10 @@ runs:
             continue
           fi
           if ! commit_and_push_changes $REPO; then
+            continue
+          fi
+          PR_URL=$(create_pr $REPO)
+          if [ -z "$PR_URL" ]; then
             continue
           fi
           reset_repo $REPO

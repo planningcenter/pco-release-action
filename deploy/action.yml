@@ -1,0 +1,15 @@
+name: "PCO Release Deploy"
+description: "Deploys updates of a new release to all planningcenter repos that have a package as its dependency"
+inputs:
+  github-token:
+    description: "GitHub token for authentication"
+    required: true
+  owner:
+    description: "Owner of the repositories"
+    required: false
+    default: "planningcenter"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4

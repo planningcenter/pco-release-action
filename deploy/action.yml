@@ -17,10 +17,10 @@ inputs:
     default: ""
   package-name:
     description: "The name of the package to update"
-    required: true
+    required: false
   version:
     description: "The version to update the package to"
-    required: true
+    required: false
   upgrade-commands:
     description: "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory."
     required: false
@@ -33,10 +33,31 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: "20"
+    - name: Find new version
+      id: find-version
+      shell: bash
+      run: |
+        VERSION="${{ inputs.version }}"
+        if [[ -z "$VERSION" ]]; then
+          VERSION=$(jq -r '.version' package.json)
+        fi
+        echo "Version: $VERSION"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+    - name: Find package_name
+      id: find-package-name
+      shell: bash
+      run: |
+        PACKAGE_NAME="${{ inputs.package-name }}"
+        if [[ -z "$PACKAGE_NAME" ]]; then
+          PACKAGE_NAME=$(jq -r '.name' package.json)
+        fi
+        echo "Package Name: $PACKAGE_NAME"
+        echo "package-name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
     - name: Find Repos to update
       id: find-repos
       shell: bash
       run: |
+        PACKAGE_NAME="${{ steps.find-version.outputs.package-name }}"
         PAGE=1
         REPOS=()
         IFS=',' read -r -a ONLY_REPOS <<< "${{ inputs.only }}"
@@ -59,7 +80,6 @@ runs:
           done
           ((PAGE++))
         done
-        PACKAGE_NAME="${{ inputs.package-name }}"
         FILTERED_REPOS=()
         for REPO in "${REPOS[@]}"; do
           DEPENDENCY_FILE_CONTENT=""
@@ -71,7 +91,7 @@ runs:
           fi
         done
         REPO_LIST=$(IFS=,; echo "${FILTERED_REPOS[*]}")
-        echo "::set-output name=repo_list::$REPO_LIST"
+        echo "repo_list=$REPO_LIST" >> $GITHUB_OUTPUT
       env:
         GH_TOKEN: ${{ inputs.github-token }}
     - name: Auto Deploy to all consumer repos
@@ -79,6 +99,10 @@ runs:
       shell: bash
       run: |
         REPO_LIST="${{ steps.find-repos.outputs.repo_list }}"
+        VERSION="${{ steps.find-version.outputs.version }}"
+        PACKAGE_NAME="${{ steps.find-package-name.outputs.package-name }}"
+        echo "Package Name: $PACKAGE_NAME"
+        echo "Version: $VERSION"
         IFS=',' read -r -a REPOS <<< "$REPO_LIST"
         declare -A UPGRADE_COMMANDS=$(echo '${{ inputs.upgrade-commands }}' | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]')
         declare -A REPO_ERRORS
@@ -106,7 +130,7 @@ runs:
             return 1
           fi
         }
-        UNSANITIZED_BRANCH_NAME="pco-release-${{ inputs.package-name }}-${{ inputs.version }}"
+        UNSANITIZED_BRANCH_NAME="pco-release-$PACKAGE_NAME-$VERSION"
         BRANCH_NAME=$(echo $UNSANITIZED_BRANCH_NAME | sed 's/[^a-zA-Z0-9]/-/g')
         create_branch() {
           local repo=$1
@@ -121,14 +145,14 @@ runs:
           local repo=$1
           if [[ -n "${UPGRADE_COMMANDS[$repo]}" ]]; then
             log "Running ${UPGRADE_COMMANDS[$repo]}"
-            if ! eval "${UPGRADE_COMMANDS[$repo]}"; then
+            if ! eval "${UPGRADE_COMMANDS[$repo]} $PACKAGE_NAME@$VERSION"; then
               report_error $repo "Upgrade command failed: ${UPGRADE_COMMANDS[$repo]}"
               reset_repo $repo
               return 1
             fi
           else
-            log "Running yarn upgrade ${{ inputs.package-name }}@${{ inputs.version }}"
-            if ! yarn upgrade ${{ inputs.package-name }}@${{ inputs.version }}; then
+            log "Running yarn upgrade $PACKAGE_NAME@$VERSION"
+            if ! yarn upgrade $PACKAGE_NAME@$VERSION; then
               report_error $repo "Yarn upgrade failed"
               reset_repo $repo
               return 1
@@ -140,7 +164,7 @@ runs:
           git config --global user.email "pco-release-bot[bot]@users.noreply.github.com"
           git config --global user.name "pco-release-bot[bot]"
           git add .
-          if ! git commit -m "bump ${{ inputs.package-name }} to version ${{ inputs.version }}"; then
+          if ! git commit -m "bump $PACKAGE_NAME to version $VERSION"; then
             report_error $repo "; Failed to commit changes"
             reset_repo $repo
             return 1
@@ -155,8 +179,8 @@ runs:
         }
         create_pr() {
           local repo=$1
-          local title="[Automated] bump ${{ inputs.package-name }} to ${{ inputs.version }}"
-          local body="This is an automated PR that updates ${{ inputs.package-name }} to version ${{ inputs.version }}. Please ensure that all checks pass."
+          local title="[Automated] bump $PACKAGE_NAME to $VERSION"
+          local body="This is an automated PR that updates $PACKAGE_NAME to version $VERSION. Please ensure that all checks pass."
           log "Creating PR"
           if ! PR_URL=$(gh pr create --base main --head $BRANCH_NAME --title "$title" --body "$body"); then
             report_error $repo "; Failed to create PR"
@@ -178,7 +202,7 @@ runs:
           fi
         }
         for REPO in "${REPOS[@]}"; do
-          echo "[PCO-Release] updating ${{ inputs.package-name }} in $REPO"
+          echo "[PCO-Release] updating $PACKAGE_NAME in $REPO"
           if ! clone_repo $REPO; then
             continue
           fi

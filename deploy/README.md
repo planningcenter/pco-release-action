@@ -12,25 +12,25 @@ It searches all repos of an owner and creates PRs to update to the new version o
 
 ## Usage
 
-To use, add a github workflow to your library like this:
+To use, add a github workflow to your current publish action like this:
 
 ```yml
-# .github/workflows/auto-deploy.yml
+# .github/workflows/publish.yml
 
-name: PCO-Release Auto Deploy
-on:
-  workflow_dispatch:
+name: Publish
 
+---
 jobs:
+  publish-to-npm: ...
+
   auto-deploy-after-release:
+    needs: publish-to-npm
     runs-on: ubuntu-latest
     permissions: read-all
     steps:
       - uses: planningcenter/pco-release-action/deploy@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          package-name: "@planningcenter/icons"
-          version: "16.15.0"
           automerge: true
-          upgrade-commands: "{"tapestry-react":"yarn tr upgrade @planningcenter/icons@16.15.0}"
+          upgrade-commands: '{"tapestry-react":"yarn tr upgrade"}' # this is assuming that you're upgrading
 ```

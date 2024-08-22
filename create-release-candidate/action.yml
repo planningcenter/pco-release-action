@@ -1,0 +1,51 @@
+name: "PCO Release RC release"
+inputs:
+  GITHUB_TOKEN:
+    description: token for access
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+    - run: git checkout -b rc
+      shell: bash
+    - name: Set Git user
+      shell: bash
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+    - name: Find new version
+      id: version_step
+      shell: bash
+      run: |
+        current_version=$(jq -r .version package.json)
+        i=0
+        new_version=${current_version}-rc.$i
+        while [ "$finished" != "true" ]
+        do
+          new_version=v$(jq -r .version package.json)
+          if [ $(git tag -l | grep -w "$new_version") ]; then
+            echo "Version $new_version already exists, trying again"
+            i+=1
+          else
+            echo "Version $new_version is new, continuing"
+            finished="true"
+          fi
+        done
+        yarn version --new-version $new_version --no-git-tag-version
+        echo "new_version=$new_version" >> $GITHUB_ENV
+    - name: Push changes
+      shell: bash
+      run: git push --force-with-lease origin rc
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      with:
+        prerelease: true
+        tag: ${{ env.new_version }}
+        commit: rc
+        generateReleaseNotes: true
+        body: ${{ github.event.inputs.prerelease_notes }}

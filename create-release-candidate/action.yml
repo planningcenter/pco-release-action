@@ -6,7 +6,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v4
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
@@ -22,15 +21,15 @@ runs:
       id: version_step
       shell: bash
       run: |
+        git fetch origin 'refs/tags/*:refs/tags/*'
         current_version=$(jq -r .version package.json)
         i=0
-        new_version=${current_version}-rc.$i
         while [ "$finished" != "true" ]
         do
-          new_version=v$(jq -r .version package.json)
-          if [ $(git tag -l | grep -w "$new_version") ]; then
+          new_version=${current_version}-rc.$i
+          if [ $(git tag -l | grep -w "v$new_version") ]; then
             echo "Version $new_version already exists, trying again"
-            i+=1
+            i=$((i+1))
           else
             echo "Version $new_version is new, continuing"
             finished="true"
@@ -38,14 +37,22 @@ runs:
         done
         yarn version --new-version $new_version --no-git-tag-version
         echo "new_version=$new_version" >> $GITHUB_ENV
+    - name: Commit changes
+      shell: bash
+      run: |
+        git add .
+        git commit -m "Release candidate v${{ env.new_version }}"
+        git tag v${{ env.new_version }}
     - name: Push changes
       shell: bash
-      run: git push --force-with-lease origin rc
+      run: |
+        git push --force origin rc
+        git push --tags
     - name: Create Release
       uses: ncipollo/release-action@v1
       with:
         prerelease: true
-        tag: ${{ env.new_version }}
+        tag: v${{ env.new_version }}
         commit: rc
         generateReleaseNotes: true
         body: ${{ github.event.inputs.prerelease_notes }}

@@ -78,6 +78,14 @@ runs:
       run: |
         git push --force origin rc
         git push --tags
+    - name: Set Release notes
+      id: set_release_notes
+      shell: bash
+      run: |
+        touch release_notes.md
+        MODIFIED_COMMENT="${{ github.event.comment.body }}"
+        MODIFIED_COMMENT="${MODIFIED_COMMENT//@pco-release rc/}"
+        echo "$MODIFIED_COMMENT" > release_notes.md
     - name: Create Release
       uses: ncipollo/release-action@v1
       with:
@@ -85,4 +93,4 @@ runs:
         tag: v${{ env.new_version }}
         commit: rc
         generateReleaseNotes: true
-        body: ${{ github.event.inputs.prerelease_notes }}
+        bodyFile: release_notes.md

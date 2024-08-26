@@ -91,10 +91,9 @@ class Runner
           pr_title,
           pr_body
         )
-      puts response.methods - Object.methods
-      raise FailedToCreatePRError, response if response.status >= 400
+      raise FailedToCreatePRError, response if response?.number.nil?
 
-      @pr_number = response["number"]
+      @pr_number = response.number
     end
 
     def automerge_pr

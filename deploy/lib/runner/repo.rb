@@ -91,7 +91,7 @@ class Runner
           pr_title,
           pr_body
         )
-      raise FailedToCreatePRError, response if response?.number.nil?
+      raise FailedToCreatePRError, response if response.number.nil?
 
       @pr_number = response.number
     end

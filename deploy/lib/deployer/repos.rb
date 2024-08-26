@@ -38,8 +38,8 @@ class Deployer
     def select_packages_that_consume_package(repos)
       repos.select do |repo|
         next false if repo["archived"]
-        next true if config.includes.includes?(repo["name"])
-        next false if config.excludes.include?(repo["name"])
+        next true if config.include.includes?(repo["name"])
+        next false if config.exclude.include?(repo["name"])
 
         consumer_of_package?(repo)
       rescue Octokit::NotFound

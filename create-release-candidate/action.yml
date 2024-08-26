@@ -3,6 +3,14 @@ inputs:
   GITHUB_TOKEN:
     description: token for access
     required: true
+  package-json-path:
+    description: "path to package.json"
+    required: false
+    default: "package.json"
+  yarn-version-command:
+    description: "command to run to update version"
+    required: false
+    default: "yarn version"
 runs:
   using: "composite"
   steps:
@@ -22,7 +30,7 @@ runs:
       shell: bash
       run: |
         git fetch origin 'refs/tags/*:refs/tags/*'
-        current_version=$(jq -r .version package.json)
+        current_version=$(jq -r .version ${{ inputs.package-json-path }})
         i=0
         while [ "$finished" != "true" ]
         do
@@ -35,7 +43,7 @@ runs:
             finished="true"
           fi
         done
-        yarn version --new-version $new_version --no-git-tag-version
+        ${{ inputs.yarn-version-command }} --new-version $new_version --no-git-tag-version
         echo "new_version=$new_version" >> $GITHUB_ENV
     - name: Commit changes
       shell: bash

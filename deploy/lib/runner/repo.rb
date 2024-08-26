@@ -64,16 +64,9 @@ class Runner
     end
 
     def run_upgrade_command
-      command =
-        (
-          if upgrade_commands[name].nil?
-            "yarn_upgrade"
-          else
-            upgrade_commands[name]
-          end
-        )
-      log "Running #{upgrade_commands[name]}"
-      stdout, status = Open3.capture2("#{command} #{package_name}@#{version}")
+      log "Running #{upgrade_command}"
+      stdout, status =
+        Open3.capture2("#{upgrade_command} #{package_name}@#{version}")
 
       raise UpgradeCommandFailure, stdout unless status.success?
     end
@@ -88,7 +81,6 @@ class Runner
     end
 
     def create_pr
-      raise FailedToCreatePRError, "Don't want to accidentally do this"
       response =
         client.create_pull_request(
           "#{owner}/#{name}",
@@ -129,6 +121,10 @@ class Runner
     def branch_name
       unsanitized_branch_name = "pco-release-#{package_name}-#{version}"
       unsanitized_branch_name.gsub(/[^a-zA-Z0-9]/, "-")
+    end
+
+    def upgrade_command
+      upgrade_commands[name].nil? ? "yarn_upgrade" : upgrade_commands[name]
     end
 
     def pr_title

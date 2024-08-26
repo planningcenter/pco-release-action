@@ -6,6 +6,7 @@ class Runner
       package_name:,
       automerge:,
       github_token:,
+      version:,
       only: []
     )
       @client = client
@@ -14,6 +15,7 @@ class Runner
       @package_name = package_name
       @automerge = automerge
       @github_token = github_token
+      @version = version
     end
 
     def find
@@ -22,14 +24,22 @@ class Runner
           repo["name"],
           automerge: automerge,
           owner: owner,
-          github_token: github_token
+          github_token: github_token,
+          package_name: package_name,
+          version: version
         )
       end
     end
 
     private
 
-    attr_reader :client, :owner, :only, :package_name, :automerge, :github_token
+    attr_reader :client,
+                :owner,
+                :only,
+                :package_name,
+                :automerge,
+                :github_token,
+                :version
 
     def find_repos
       repos = client.org_repos(owner)

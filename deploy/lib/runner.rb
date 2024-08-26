@@ -43,7 +43,8 @@ class Runner
         package_name: package_name,
         automerge: automerge,
         github_token: github_token,
-        only: only
+        only: only,
+        version: version
       ).find
   end
 

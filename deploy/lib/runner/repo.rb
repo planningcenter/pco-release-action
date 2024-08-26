@@ -1,10 +1,19 @@
 class Runner
   class Repo
-    def initialize(name, automerge:, owner:, github_token:)
+    def initialize(
+      name,
+      automerge:,
+      owner:,
+      github_token:,
+      package_name:,
+      version:
+    )
       @name = name
       @automerge = automerge
       @owner = owner
       @github_token = github_token
+      @package_name = package_name
+      @version = version
     end
 
     def update_package
@@ -103,7 +112,12 @@ class Runner
       FileUtils.rm_rf(name)
     end
 
-    attr_reader :pr_number, :automerge, :owner, :github_token
+    attr_reader :pr_number,
+                :automerge,
+                :owner,
+                :github_token,
+                :package_name,
+                :version
 
     def log(message)
       puts "[PCO-Release] #{message}"

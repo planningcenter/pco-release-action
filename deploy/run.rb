@@ -8,6 +8,8 @@ config =
     owner: ENV["OWNER"],
     only: ENV["ONLY"].split(","),
     automerge: ENV["AUTOMERGE"] == "true",
-    upgrade_commands: JSON.parse(ENV["UPGRADE_COMMANDS"])
+    upgrade_commands: JSON.parse(ENV["UPGRADE_COMMANDS"]),
+    include: ENV["INCLUDE"].split(","),
+    exclude: ENV["EXCLUDE"].split(",")
   )
 Deployer.new(config).run

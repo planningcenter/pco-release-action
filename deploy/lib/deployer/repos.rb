@@ -37,16 +37,21 @@ class Deployer
 
     def select_packages_that_consume_package(repos)
       repos.select do |repo|
-        next false if IGNORED_REPOS.include?(repo["name"])
         next false if repo["archived"]
+        next true if config.include.include?(repo["name"])
+        next false if config.exclude.include?(repo["name"])
 
-        response =
-          client.contents("#{owner}/#{repo["name"]}", path: "package.json")
-        contents = Base64.decode64(response.content)
-        contents.include?(package_name)
+        consumer_of_package?(repo)
       rescue Octokit::NotFound
         false
       end
+    end
+
+    def consumer_of_package?(repo)
+      response =
+        client.contents("#{owner}/#{repo["name"]}", path: "package.json")
+      contents = Base64.decode64(response.content)
+      contents.include?(package_name)
     end
   end
 end

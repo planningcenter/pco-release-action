@@ -6,7 +6,7 @@ Metrics/ClassLength:
   CountAsOne: ["array", "hereodoc", "hash", "method_call"]
 
 Metrics/ParameterLists:
-  Max: 7
+  Max: 10
 
 Style/Documentation:
   Enabled: false

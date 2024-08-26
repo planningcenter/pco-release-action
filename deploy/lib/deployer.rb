@@ -12,9 +12,9 @@ class Deployer
   end
 
   def run
-    log "Updating #{package_name} to #{version} in the following repositories: #{repos.join(", ")}"
+    log "Updating #{package_name} to #{version} in the following repositories: #{repos.map(&:name).join(", ")}"
     repos.each do |repo|
-      log "updating #{package_name} in #{repo}"
+      log "updating #{package_name} in #{repo.name}"
       repo.update_package
     rescue BaseError => e
       log "Failed to update #{package_name} in #{repo}: #{e}"

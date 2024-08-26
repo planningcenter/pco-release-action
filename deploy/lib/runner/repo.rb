@@ -73,6 +73,7 @@ class Runner
     end
 
     def create_pr
+      raise FailedToCreatePRError, "Don't want to accidentally do this"
       response =
         client.create_pull_request(
           "#{owner}/#{name}",

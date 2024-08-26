@@ -63,7 +63,7 @@ runs:
         working-directory: ${{ github.action_path}}
     - name: Setup Upgrade PRs
       shell: bash
-      run: bundle exec ${{ github.action_path }}/run.rb
+      run: bundle exec ruby ${{ github.action_path }}/run.rb
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         PACKAGE_NAME: ${{ steps.find-package-name.outputs.package-name }}

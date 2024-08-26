@@ -64,7 +64,14 @@ class Runner
     end
 
     def run_upgrade_command
-      command = upgrade_commands[name].presence || "yarn_upgrade"
+      command =
+        (
+          if upgrade_commands[name].present?
+            upgrade_commands[name]
+          else
+            "yarn_upgrade"
+          end
+        )
       log "Running #{upgrade_commands[name]}"
       stdout, status = Open3.capture2("#{command} #{package_name}@#{version}")
 

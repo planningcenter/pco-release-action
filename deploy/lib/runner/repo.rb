@@ -91,7 +91,7 @@ class Runner
           pr_title,
           pr_body
         )
-      puts response.to_hash
+      puts response.methods - Object.methods
       raise FailedToCreatePRError, response if response.status >= 400
 
       @pr_number = response["number"]

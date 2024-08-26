@@ -6,6 +6,6 @@ Runner.new(
   version: ENV["PACKAGE_VERSION"],
   owner: ENV["OWNER"],
   only: ENV["ONLY"].split(","),
-  automerge: ENV["AUTOMERGE"],
+  automerge: ENV["AUTOMERGE"] == "true",
   upgrade_commands: JSON.parse(ENV["UPGRADE_COMMANDS"])
 ).run

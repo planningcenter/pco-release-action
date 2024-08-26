@@ -1,0 +1,21 @@
+Metrics/BlockLength:
+  Exclude:
+    - "**/spec/**/*"
+
+Style/Documentation:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/StringLiteralsInInterpolation:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented

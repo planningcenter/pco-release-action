@@ -8,12 +8,7 @@ class Deployer
     def update_package
       run
       log "Successfully updated #{package_name} to #{version} in #{name}"
-    rescue CreateBranchFailure,
-           UpgradeCommandFailure,
-           CommitChangesFailure,
-           PushBranchFailure,
-           FailedToCreatePRError,
-           AutoMergeFailure => e
+    rescue StandardError => e
       cleanup
       raise e
     end
@@ -101,7 +96,7 @@ class Deployer
     end
 
     def upgrade_command
-      upgrade_commands[name].nil? ? "yarn_upgrade" : upgrade_commands[name]
+      upgrade_commands[name].nil? ? "yarn upgrade" : upgrade_commands[name]
     end
 
     def pr_title

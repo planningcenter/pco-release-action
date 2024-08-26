@@ -66,10 +66,10 @@ class Runner
     def run_upgrade_command
       command =
         (
-          if upgrade_commands[name].present?
-            upgrade_commands[name]
-          else
+          if upgrade_commands[name].nil?
             "yarn_upgrade"
+          else
+            upgrade_commands[name]
           end
         )
       log "Running #{upgrade_commands[name]}"

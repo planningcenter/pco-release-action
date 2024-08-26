@@ -1,23 +1,8 @@
-class Runner
+class Deployer
   class Repo
-    def initialize(
-      name,
-      automerge:,
-      owner:,
-      github_token:,
-      package_name:,
-      version:,
-      upgrade_commands:,
-      client:
-    )
+    def initialize(name, config:)
       @name = name
-      @automerge = automerge
-      @owner = owner
-      @github_token = github_token
-      @package_name = package_name
-      @version = version
-      @upgrade_commands = upgrade_commands
-      @client = client
+      @config = config
     end
 
     def update_package
@@ -37,6 +22,8 @@ class Runner
 
     private
 
+    attr_reader :config, :pr_number
+
     def run
       clone_repo
       Dir.chdir(name) do
@@ -54,7 +41,7 @@ class Runner
       log "Cloning #{name}"
       stdout, status =
         Open3.capture2(
-          "git clone https://#{github_token}:x-oauth-basic@#{url} --depth=1"
+          "git clone https://#{config.github_token}:x-oauth-basic@#{url} --depth=1"
         )
       raise FailedToCloneRepo, stdout unless status.success?
     end
@@ -108,19 +95,6 @@ class Runner
       FileUtils.rm_rf(name)
     end
 
-    attr_reader :pr_number,
-                :automerge,
-                :owner,
-                :github_token,
-                :package_name,
-                :version,
-                :upgrade_commands,
-                :client
-
-    def log(message)
-      puts "[PCO-Release] #{message}"
-    end
-
     def branch_name
       unsanitized_branch_name = "pco-release-#{package_name}-#{version}"
       unsanitized_branch_name.gsub(/[^a-zA-Z0-9]/, "-")
@@ -136,6 +110,34 @@ class Runner
 
     def pr_body
       "This is an automated PR that updates #{package_name} to version #{version}. Please ensure that all checks pass."
+    end
+
+    def log(message)
+      config.log(message)
+    end
+
+    def owner
+      config.owner
+    end
+
+    def package_name
+      config.package_name
+    end
+
+    def version
+      config.version
+    end
+
+    def upgrade_commands
+      config.upgrade_commands
+    end
+
+    def client
+      config.client
+    end
+
+    def automerge
+      config.automerge
     end
   end
 end

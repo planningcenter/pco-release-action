@@ -1,1 +1,3 @@
 node_modules
+.byebug_history
+deploy/topbar/*

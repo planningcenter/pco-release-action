@@ -1,4 +1,4 @@
-require_relative "../lib/runner"
+require_relative "../lib/deployer"
 require "byebug"
 require "webmock/rspec"
 

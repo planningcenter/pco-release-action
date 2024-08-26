@@ -112,7 +112,8 @@ class Runner
                 :owner,
                 :github_token,
                 :package_name,
-                :version
+                :version,
+                :upgrade_commands
 
     def log(message)
       puts "[PCO-Release] #{message}"

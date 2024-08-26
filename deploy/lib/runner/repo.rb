@@ -26,12 +26,13 @@ class Runner
 
     def run
       clone_repo
-      enter_folder
-      create_branch
-      run_upgrade_command
-      commit_and_push_changes
-      create_pr
-      automerge_pr
+      Dir.chdir(name) do
+        create_branch
+        run_upgrade_command
+        commit_and_push_changes
+        create_pr
+        automerge_pr
+      end
       reset_folder
     end
 
@@ -99,7 +100,6 @@ class Runner
     end
 
     def reset_folder
-      Open3.capture2("cd ..")
       FileUtils.rm_rf(name)
     end
 

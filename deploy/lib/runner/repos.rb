@@ -7,6 +7,7 @@ class Runner
       automerge:,
       github_token:,
       version:,
+      upgrade_commands:,
       only: []
     )
       @client = client
@@ -16,6 +17,7 @@ class Runner
       @automerge = automerge
       @github_token = github_token
       @version = version
+      @upgrade_commands = upgrade_commands
     end
 
     def find
@@ -26,7 +28,8 @@ class Runner
           owner: owner,
           github_token: github_token,
           package_name: package_name,
-          version: version
+          version: version,
+          upgrade_commands: upgrade_commands
         )
       end
     end
@@ -39,7 +42,8 @@ class Runner
                 :package_name,
                 :automerge,
                 :github_token,
-                :version
+                :version,
+                :upgrade_commands
 
     def find_repos
       repos = client.org_repos(owner)

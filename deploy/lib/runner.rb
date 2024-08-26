@@ -44,7 +44,8 @@ class Runner
         automerge: automerge,
         github_token: github_token,
         only: only,
-        version: version
+        version: version,
+        upgrade_commands: upgrade_commands
       ).find
   end
 

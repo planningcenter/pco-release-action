@@ -6,7 +6,8 @@ class Runner
       owner:,
       github_token:,
       package_name:,
-      version:
+      version:,
+      upgrade_commands:
     )
       @name = name
       @automerge = automerge
@@ -14,6 +15,7 @@ class Runner
       @github_token = github_token
       @package_name = package_name
       @version = version
+      @upgrade_commands = upgrade_commands
     end
 
     def update_package
@@ -25,7 +27,7 @@ class Runner
            PushBranchFailure,
            FailedToCreatePRError,
            AutoMergeFailure => e
-      reset_folder
+      cleanup
       raise e
     end
 
@@ -42,7 +44,7 @@ class Runner
         create_pr
         automerge_pr
       end
-      reset_folder
+      cleanup
     end
 
     def clone_repo
@@ -53,13 +55,6 @@ class Runner
           "git clone https://#{github_token}:x-oauth-basic@#{url} --depth=1"
         )
       raise FailedToCloneRepo, stdout unless status.success?
-    end
-
-    def enter_folder
-      stdout, status = Open3.capture2("ls")
-      puts stdout
-      puts "Going into folder: #{name}"
-      Open3.capture2("cd #{name}")
     end
 
     def create_branch
@@ -108,7 +103,7 @@ class Runner
       raise AutoMergeFailure, stdout unless status.success?
     end
 
-    def reset_folder
+    def cleanup
       FileUtils.rm_rf(name)
     end
 

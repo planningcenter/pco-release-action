@@ -96,7 +96,7 @@ class Deployer
     end
 
     def upgrade_command
-      upgrade_commands[name].nil? ? "yarn_upgrade" : upgrade_commands[name]
+      upgrade_commands[name].nil? ? "yarn upgrade" : upgrade_commands[name]
     end
 
     def pr_title

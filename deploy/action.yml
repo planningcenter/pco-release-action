@@ -72,3 +72,4 @@ runs:
         ONLY: ${{ inputs.only }}
         AUTOMERGE: ${{ inputs.automerge }}
         UPGRADE_COMMANDS: ${{ inputs.upgrade-commands }}
+      working-directory: ${{ github.action_path}}

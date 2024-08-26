@@ -25,6 +25,14 @@ inputs:
     description: "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory."
     required: false
     default: "{}"
+  include:
+    description: "repos to include without checking. Comma separated list"
+    required: false
+    default: ""
+  exclude:
+    description: "repos to exclude without checking. Comma separated list"
+    required: false
+    default: ""
 runs:
   using: "composite"
   steps:
@@ -51,200 +59,27 @@ runs:
           PACKAGE_NAME=$(jq -r '.name' package.json)
         fi
         echo "package-name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
-    - name: Find Repos to update
-      id: find-repos
+    - name: Setup github user info
       shell: bash
       run: |
-        PACKAGE_NAME="${{ steps.find-version.outputs.package-name }}"
-        PAGE=1
-        REPOS=()
-        IFS=',' read -r -a ONLY_REPOS <<< "${{ inputs.only }}"
-        while : ; do
-          URL="https://api.github.com/orgs/${{ inputs.owner }}/repos?&per_page=100&page=$PAGE"
-          echo "URL: $URL"
-          RESPONSE=$(curl -s -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github.v3+json" $URL)
-          CURRENT_PAGE_REPOS=$(echo "$RESPONSE" | jq -r '.[] | select(.archived == false) | .name')
-          if [[ -z "$CURRENT_PAGE_REPOS" ]]; then
-            break # Exit loop if no more repos
-          fi
-          for REPO in $CURRENT_PAGE_REPOS; do
-            if [[ -n "${{ inputs.only }}" ]]; then
-              if printf '%s\n' "${ONLY_REPOS[@]}" | grep -qx "$REPO"; then
-                REPOS+=("$REPO")
-              fi
-            else
-              REPOS+=("$REPO")
-            fi
-          done
-          ((PAGE++))
-        done
-        FILTERED_REPOS=()
-        for REPO in "${REPOS[@]}"; do
-          DEPENDENCY_FILE_CONTENT=""
-          if DEPENDENCY_FILE_CONTENT=$(gh api repos/${{ inputs.owner }}/$REPO/contents/package.json --jq '.content' 2>/dev/null); then
-            DEPENDENCY_FILE=$(echo "$DEPENDENCY_FILE_CONTENT" | base64 --decode)
-            if [[ $DEPENDENCY_FILE == *"$PACKAGE_NAME"* ]]; then
-              FILTERED_REPOS+=("$REPO")
-            fi
-          fi
-        done
-        REPO_LIST=$(IFS=,; echo "${FILTERED_REPOS[*]}")
-        echo "repo_list=$REPO_LIST" >> $GITHUB_OUTPUT
-      env:
-        GH_TOKEN: ${{ inputs.github-token }}
-    - name: Auto Deploy to all consumer repos
-      id: auto-deploy
+        git config --global user.email "pco-release-bot[bot]@users.noreply.github.com"
+        git config --global user.name "pco-release-bot[bot]"
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: "3.3"
+        bundler-cache: true
+        working-directory: ${{ github.action_path}}
+    - name: Setup Upgrade PRs
       shell: bash
-      run: |
-        REPO_LIST="${{ steps.find-repos.outputs.repo_list }}"
-        VERSION="${{ steps.find-version.outputs.version }}"
-        PACKAGE_NAME="${{ steps.find-package-name.outputs.package-name }}"
-        IFS=',' read -r -a REPOS <<< "$REPO_LIST"
-        declare -A UPGRADE_COMMANDS=$(echo '${{ inputs.upgrade-commands }}' | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]')
-        declare -A REPO_ERRORS
-        declare -A REPO_PRS
-        GITHUB_REPO_URL="https://github.com/${{ inputs.OWNER }}/$repo.git"
-
-        report_error() {
-          local repo=$1
-          local message=$2
-          REPO_ERRORS[$repo]+="; $message"
-        }
-        log() {
-          echo "[PCO-Release] $1"
-        }
-        reset_repo() {
-          local repo=$1
-          cd ..
-          rm -rf $repo
-        }
-
-        log "Package Name: $PACKAGE_NAME"
-        log "Version: $VERSION"
-
-        clone_repo() {
-          local repo=$1
-          log "Cloning $GITHUB_REPO_URL"
-          if ! git clone https://${GH_TOKEN}:x-oauth-basic@github.com/${{ inputs.OWNER }}/$repo.git --depth=1; then
-            report_error $repo "Failed to clone repository"
-            return 1
-          fi
-        }
-        UNSANITIZED_BRANCH_NAME="pco-release-$PACKAGE_NAME-$VERSION"
-        BRANCH_NAME=$(echo $UNSANITIZED_BRANCH_NAME | sed 's/[^a-zA-Z0-9]/-/g')
-        create_branch() {
-          local repo=$1
-          log "Creating branch $BRANCH_NAME"
-          if ! git checkout -b $BRANCH_NAME; then
-            report_error $repo "Failed to create branch $BRANCH_NAME"
-            reset_repo $repo
-            return 1
-          fi
-        }
-        run_upgrade_command() {
-          local repo=$1
-          if [[ -n "${UPGRADE_COMMANDS[$repo]}" ]]; then
-            log "Running ${UPGRADE_COMMANDS[$repo]}"
-            if ! eval "${UPGRADE_COMMANDS[$repo]} $PACKAGE_NAME@$VERSION"; then
-              report_error $repo "Upgrade command failed: ${UPGRADE_COMMANDS[$repo]}"
-              reset_repo $repo
-              return 1
-            fi
-          else
-            log "Running yarn upgrade $PACKAGE_NAME@$VERSION"
-            if ! yarn upgrade $PACKAGE_NAME@$VERSION; then
-              report_error $repo "Yarn upgrade failed"
-              reset_repo $repo
-              return 1
-            fi
-          fi
-        }
-        commit_and_push_changes() {
-          local repo=$1
-          git config --global user.email "pco-release-bot[bot]@users.noreply.github.com"
-          git config --global user.name "pco-release-bot[bot]"
-          git add .
-          if ! git commit -m "bump $PACKAGE_NAME to version $VERSION"; then
-            report_error $repo "; Failed to commit changes"
-            reset_repo $repo
-            return 1
-          else
-            log "Pushing changes to $repo"
-            if ! git push origin $BRANCH_NAME -f; then
-              report_error $repo "; Failed to push changes"
-              reset_repo $repo
-              return 1
-            fi
-          fi
-        }
-        create_pr() {
-          local repo=$1
-          local title="[Automated] bump $PACKAGE_NAME to $VERSION"
-          local body="This is an automated PR that updates $PACKAGE_NAME to version $VERSION. Please ensure that all checks pass."
-          if ! PR_URL=$(gh pr create --base main --head $BRANCH_NAME --title "$title" --body "$body"); then
-            report_error $repo "; Failed to create PR"
-            reset_repo $repo
-            return 1
-          else
-            echo $PR_URL
-          fi
-        }
-        merge() {
-          local repo=$1
-          local pr_url=$2
-          local pr_number=$(echo "$pr_url" | grep -o '[0-9]*$')
-          log "Merging PR $pr_number"
-          if ! gh pr merge $pr_number --auto --merge; then
-            report_error $repo "; Failed to merge PR"
-            reset_repo $repo
-            return 1
-          fi
-        }
-        for REPO in "${REPOS[@]}"; do
-          echo "[PCO-Release] updating $PACKAGE_NAME in $REPO"
-          if ! clone_repo $REPO; then
-            continue
-          fi
-          cd $REPO
-          if ! create_branch $REPO; then
-            continue
-          fi
-          if ! run_upgrade_command $REPO; then
-            continue
-          fi
-          if ! commit_and_push_changes $REPO; then
-            continue
-          fi
-          PR_URL=$(create_pr $REPO)
-          if [ -z "$PR_URL" ]; then
-            continue
-          fi
-
-          REPO_PRS[$REPO]=$PR_URL
-          if [[ ${{ inputs.automerge }} == "true" ]]; then
-            if ! merge $REPO $PR_URL; then
-              continue
-            fi
-          fi
-          reset_repo $REPO
-        done
-
-        # PR Reporting
-        if [ ${#REPO_PRS[@]} -ne 0 ]; then
-          log "PRs created in the following repositories:"
-          for REPO in "${!REPO_PRS[@]}"; do
-            echo "$REPO: ${REPO_PRS[$REPO]}"
-          done
-        fi
-
-        # Error Reporting
-        if [ ${#REPO_ERRORS[@]} -ne 0 ]; then
-          log "Errors occurred in the following repositories:"
-          for REPO in "${!REPO_ERRORS[@]}"; do
-            log "$REPO: ${REPO_ERRORS[$REPO]}"
-          done
-          exit 1
-        fi
-
+      run: bundle exec ruby ${{ github.action_path }}/run.rb
       env:
-        GH_TOKEN: ${{ inputs.github-token }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PACKAGE_NAME: ${{ steps.find-package-name.outputs.package-name }}
+        PACKAGE_VERSION: ${{ steps.find-version.outputs.version }}
+        OWNER: ${{ inputs.owner }}
+        ONLY: ${{ inputs.only }}
+        AUTOMERGE: ${{ inputs.automerge }}
+        UPGRADE_COMMANDS: ${{ inputs.upgrade-commands }}
+        INCLUDE: ${{ inputs.include }}
+        EXCLUDE: ${{ inputs.exclude }}
+      working-directory: ${{ github.action_path}}

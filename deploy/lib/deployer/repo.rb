@@ -8,12 +8,7 @@ class Deployer
     def update_package
       run
       log "Successfully updated #{package_name} to #{version} in #{name}"
-    rescue CreateBranchFailure,
-           UpgradeCommandFailure,
-           CommitChangesFailure,
-           PushBranchFailure,
-           FailedToCreatePRError,
-           AutoMergeFailure => e
+    rescue StandardError => e
       cleanup
       raise e
     end

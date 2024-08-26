@@ -17,8 +17,7 @@ class Deployer
       log "updating #{package_name} in #{repo.name}"
       repo.update_package
     rescue BaseError => e
-      log "Failed to update #{package_name} in #{repo}: #{e}"
-      raise e
+      log "Failed to update #{package_name} in #{repo}: #{e} #{e.message} #{e.backtrace}"
     end
   end
 

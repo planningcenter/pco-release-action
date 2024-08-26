@@ -7,7 +7,9 @@ class Deployer
       version:,
       automerge: false,
       only: [],
-      upgrade_commands: {}
+      upgrade_commands: {},
+      include: [],
+      exclude: []
     )
       @github_token = github_token
       @owner = owner
@@ -16,6 +18,8 @@ class Deployer
       @automerge = automerge
       @only = only
       @upgrade_commands = upgrade_commands
+      @include = include
+      @exclude = exclude
     end
 
     attr_reader :github_token,
@@ -24,7 +28,9 @@ class Deployer
                 :version,
                 :automerge,
                 :only,
-                :upgrade_commands
+                :upgrade_commands,
+                :include,
+                :exclude
 
     def client
       @client ||=

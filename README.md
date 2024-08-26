@@ -137,6 +137,10 @@ jobs:
       - uses: planningcenter/pco-release-action/dependabot-automation@v1
 ```
 
+#### Automate the creation of Release candidate releases
+
+See [create-prerelease-candidate](./create-release-candidate/action.yml)
+
 ## Working on this Project
 
 - Build before pushing changes with `yarn build`

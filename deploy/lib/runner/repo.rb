@@ -36,7 +36,7 @@ class Runner
     end
 
     def clone_repo
-      url = "https://github.com/#{owner}/#{name}.git"
+      url = "github.com/#{owner}/#{name}.git"
       log "Cloning #{name}"
       stdout, status =
         Open3.capture2(

@@ -29,7 +29,8 @@ class Runner
           github_token: github_token,
           package_name: package_name,
           version: version,
-          upgrade_commands: upgrade_commands
+          upgrade_commands: upgrade_commands,
+          client: client
         )
       end
     end

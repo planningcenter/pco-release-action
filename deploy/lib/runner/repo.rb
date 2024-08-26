@@ -7,7 +7,8 @@ class Runner
       github_token:,
       package_name:,
       version:,
-      upgrade_commands:
+      upgrade_commands:,
+      client:
     )
       @name = name
       @automerge = automerge
@@ -16,6 +17,7 @@ class Runner
       @package_name = package_name
       @version = version
       @upgrade_commands = upgrade_commands
+      @client = client
     end
 
     def update_package
@@ -112,7 +114,8 @@ class Runner
                 :github_token,
                 :package_name,
                 :version,
-                :upgrade_commands
+                :upgrade_commands,
+                :client
 
     def log(message)
       puts "[PCO-Release] #{message}"

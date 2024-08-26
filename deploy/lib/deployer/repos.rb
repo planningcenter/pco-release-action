@@ -50,8 +50,9 @@ class Deployer
     def consumer_of_package?(repo)
       response =
         client.contents("#{owner}/#{repo["name"]}", path: "package.json")
-      contents = Base64.decode64(response.content)
-      contents.include?(package_name)
+      contents = JSON.parse(Base64.decode64(response.content))
+      contents["dependencies"]&.keys&.include?(package_name) ||
+        contents["devDependencies"]&.keys&.include?(package_name)
     end
   end
 end

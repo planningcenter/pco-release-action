@@ -16,7 +16,7 @@ class Deployer
     repos.each do |repo|
       log "updating #{package_name} in #{repo.name}"
       repo.update_package
-    rescue BaseError => e
+    rescue BaseError, StandardError => e
       log "Failed to update #{package_name} in #{repo}: #{e} #{e.message} #{e.backtrace}"
     end
   end

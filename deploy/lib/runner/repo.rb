@@ -48,6 +48,7 @@ class Runner
     def enter_folder
       stdout, status = Open3.capture2("ls")
       puts stdout
+      puts "Going into folder: #{name}"
       Open3.capture2("cd #{name}")
     end
 

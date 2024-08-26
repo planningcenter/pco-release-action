@@ -97,6 +97,7 @@ class Runner
 
     def reset_folder
       Open3.capture2("cd ..")
+      FileUtils.rm_rf(name)
     end
 
     attr_reader :pr_number, :automerge, :owner, :github_token

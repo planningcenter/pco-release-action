@@ -2,6 +2,12 @@ Metrics/BlockLength:
   Exclude:
     - "**/spec/**/*"
 
+Metrics/ClassLength:
+  CountAsOne: ["array", "hereodoc", "hash", "method_call"]
+
+Metrics/ParameterLists:
+  Max: 7
+
 Style/Documentation:
   Enabled: false
 

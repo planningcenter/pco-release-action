@@ -14,17 +14,18 @@ class Deployer
 
   def run
     log "Updating #{package_name} to #{version} in the following repositories: #{repos.map(&:name).join(", ")}"
-    errors = []
+    failed_repos = []
     repos.each do |repo|
       log "updating #{package_name} in #{repo.name}"
       repo.update_package
       log repo.success_message
     rescue BaseError, StandardError => e
-      errors.push(e)
+      failed_repos.push(repo)
       log failure_message(error: e, repo: repo)
     end
+    return unless failed_repos.any?
 
-    raise MultipleErrors.new(errors) if errors.any? # rubocop:disable Style/RaiseArgs
+    raise "[PCO-Release]: Failed in the following repos:\n- #{failed_repos.join("\n- ")}"
   end
 
   def repos

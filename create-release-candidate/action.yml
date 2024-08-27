@@ -1,0 +1,96 @@
+name: "PCO Release RC release"
+inputs:
+  GITHUB_TOKEN:
+    description: token for access
+    required: true
+  package-json-path:
+    description: "path to package.json"
+    required: false
+    default: "package.json"
+  yarn-version-command:
+    description: "command to run to update version"
+    required: false
+    default: "yarn version"
+  node-version:
+    description: "node version to use"
+    required: false
+    default: "20"
+runs:
+  using: "composite"
+  steps:
+    - name: Get PR head ref
+      id: get-pr-ref
+      uses: actions/github-script@v5
+      with:
+        script: |
+          const issueUrl = context.payload.issue.pull_request.url;
+          const prNumber = issueUrl.split('/').pop();
+          const pr = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: prNumber,
+          });
+          return pr.data.head.ref;
+        result-encoding: string
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.get-pr-ref.outputs.result }}
+        fetch-tags: true
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version}}
+    - run: git checkout -b rc
+      shell: bash
+    - name: Set Git user
+      shell: bash
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+    - name: Find new version
+      id: version_step
+      shell: bash
+      run: |
+        git fetch origin 'refs/tags/*:refs/tags/*'
+        current_version=$(jq -r .version ${{ inputs.package-json-path }})
+        i=0
+        while [ "$finished" != "true" ]
+        do
+          new_version=${current_version}-rc.$i
+          if [ $(git tag -l | grep -w "v$new_version") ]; then
+            echo "Version $new_version already exists, trying again"
+            i=$((i+1))
+          else
+            echo "Version $new_version is new, continuing"
+            finished="true"
+          fi
+        done
+        ${{ inputs.yarn-version-command }} --new-version $new_version --no-git-tag-version
+        echo "new_version=$new_version" >> $GITHUB_ENV
+    - name: Commit changes
+      shell: bash
+      run: |
+        git add .
+        git commit -m "Release candidate v${{ env.new_version }}"
+        git tag v${{ env.new_version }}
+    - name: Push changes
+      shell: bash
+      run: |
+        git push --force origin rc
+        git push --tags
+    - name: Set Release notes
+      id: set_release_notes
+      shell: bash
+      run: |
+        touch release_notes.md
+        MODIFIED_COMMENT="${{ github.event.comment.body }}"
+        MODIFIED_COMMENT="${MODIFIED_COMMENT//@pco-release rc/}"
+        echo "$MODIFIED_COMMENT" > release_notes.md
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      with:
+        prerelease: true
+        tag: v${{ env.new_version }}
+        commit: rc
+        generateReleaseNotes: true
+        bodyFile: release_notes.md

@@ -34,7 +34,8 @@ class Deployer
     private
 
     def build_message
-      @errors.map(&:message).join(", ")
+      "[PCO-Release]: Failed to deploy to all repos. Look through the logs for failed repos. " \
+        "#{@errors.map(&:message).join(", ")}"
     end
   end
 end

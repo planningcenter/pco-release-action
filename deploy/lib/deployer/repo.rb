@@ -37,7 +37,7 @@ class Deployer
     def clone_repo
       log "Cloning #{name}"
       command_line.execute(
-        "gh repo clone #{owner}/#{name} -- --depth=1",
+        "git clone https://#{config.github_token}:x-oauth-basic@github.com/#{owner}/#{name}.git --depth=1",
         error_class: FailedToCloneRepo
       )
     end

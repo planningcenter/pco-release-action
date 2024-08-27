@@ -141,6 +141,10 @@ jobs:
 
 See [create-prerelease-candidate](./create-release-candidate/README.md)
 
+#### Automate the creation of QA releases
+
+See [create-qa-release](./create-qa-release/README.md)
+
 #### Set up Auto Deploys
 
 See the [`deploy` action readme](./deploy/README.md).

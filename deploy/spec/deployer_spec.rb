@@ -31,7 +31,7 @@ describe Deployer do
         "git checkout -b pco-release--planningcenter-tapestry-react-1-0-1"
       ).and_return(["", double(success?: true)])
       allow(Open3).to receive(:capture2).with(
-        "yarn_upgrade @planningcenter/tapestry-react@1.0.1"
+        "yarn upgrade @planningcenter/tapestry-react@1.0.1"
       ).and_return(["", double(success?: true)])
       allow(Open3).to receive(:capture2).with(
         "git commit -am 'bump @planningcenter/tapestry-react to 1.0.1'"
@@ -55,7 +55,7 @@ describe Deployer do
       allow(config).to receive(:log)
       described_class.new(config).run
       expect(config).to have_received(:log).with(
-        "Successfully updated @planningcenter/tapestry-react to 1.0.1 in topbar"
+        "Successfully updated @planningcenter/tapestry-react to 1.0.1 in topbar (https://github.com/planningcenter/topbar/pull/1)"
       )
     end
   end

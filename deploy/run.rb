@@ -9,6 +9,8 @@ config =
     only: ENV["ONLY"].split(","),
     automerge: ENV["AUTOMERGE"] == "true",
     upgrade_commands: JSON.parse(ENV["UPGRADE_COMMANDS"]),
+    branch_name: ENV["BRANCH_NAME"],
+    change_method: ENV["CHANGE_METHOD"],
     include: ENV["INCLUDE"].split(","),
     exclude: ENV["EXCLUDE"].split(",")
   )

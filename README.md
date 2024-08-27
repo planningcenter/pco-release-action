@@ -139,7 +139,7 @@ jobs:
 
 #### Automate the creation of Release candidate releases
 
-See [create-prerelease-candidate](./create-release-candidate/action.yml)
+See [create-prerelease-candidate](./create-release-candidate/README.md)
 
 ## Working on this Project
 

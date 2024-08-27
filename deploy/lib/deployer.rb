@@ -32,7 +32,7 @@ class Deployer
   attr_reader :config
 
   def failure_message(error:, repo:)
-    "Failed to update #{package_name} in #{repo.name}: #{error.class} #{error.message} #{error.backtrace}"
+    "Failed to update #{package_name} in #{repo.name}: #{error.class} #{error.message}"
   end
 
   def package_name

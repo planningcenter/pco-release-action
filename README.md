@@ -137,6 +137,10 @@ jobs:
       - uses: planningcenter/pco-release-action/dependabot-automation@v1
 ```
 
+#### Automate the creation of QA releases
+
+See [create-qa-release](./create-qa-release/README.md)
+
 ## Working on this Project
 
 - Build before pushing changes with `yarn build`

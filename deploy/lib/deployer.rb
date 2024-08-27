@@ -14,13 +14,17 @@ class Deployer
 
   def run
     log "Updating #{package_name} to #{version} in the following repositories: #{repos.map(&:name).join(", ")}"
+    errors = []
     repos.each do |repo|
       log "updating #{package_name} in #{repo.name}"
       repo.update_package
       log repo.success_message
     rescue BaseError, StandardError => e
+      errors.push(e)
       log failure_message(error: e, repo: repo)
     end
+
+    raise MultipleErrors errors if errors.any?
   end
 
   def repos

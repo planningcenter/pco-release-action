@@ -3,7 +3,7 @@ Metrics/BlockLength:
     - "**/spec/**/*"
 
 Metrics/ClassLength:
-  CountAsOne: ["array", "hereodoc", "hash", "method_call"]
+  CountAsOne: ["array", "heredoc", "hash", "method_call"]
 
 Metrics/ParameterLists:
   Max: 10

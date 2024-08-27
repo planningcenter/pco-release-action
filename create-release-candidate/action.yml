@@ -18,7 +18,24 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Get PR head ref
+      id: get-pr-ref
+      uses: actions/github-script@v5
+      with:
+        script: |
+          const issueUrl = context.payload.issue.pull_request.url;
+          const prNumber = issueUrl.split('/').pop();
+          const pr = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: prNumber,
+          });
+          return pr.data.head.ref;
+        result-encoding: string
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.get-pr-ref.outputs.result }}
+        fetch-tags: true
     - name: Setup Node
       uses: actions/setup-node@v4
       with:

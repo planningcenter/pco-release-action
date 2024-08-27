@@ -1,6 +1,7 @@
 require "octokit"
 require "open3"
 require "base64"
+require_relative "deployer/command_line"
 require_relative "deployer/config"
 require_relative "deployer/errors"
 require_relative "deployer/repo"
@@ -18,7 +19,7 @@ class Deployer
       repo.update_package
       log repo.success_message
     rescue BaseError, StandardError => e
-      log failure_message(e)
+      log failure_message(error: e, repo: repo)
     end
   end
 
@@ -30,8 +31,8 @@ class Deployer
 
   attr_reader :config
 
-  def failure_message(error)
-    "Failed to update #{package_name} in #{repo}: #{error.class} #{error.message} #{error.backtrace}"
+  def failure_message(error:, repo:)
+    "Failed to update #{package_name} in #{repo.name}: #{error.class} #{error.message} #{error.backtrace}"
   end
 
   def package_name

@@ -36,32 +36,37 @@ class Deployer
 
     def clone_repo
       log "Cloning #{name}"
-      stdout, status =
-        Open3.capture2("gh repo clone #{owner}/#{name} --depth=1")
-      raise FailedToCloneRepo, stdout unless status.success?
+      command_line.execute(
+        "gh repo clone #{owner}/#{name} --depth=1",
+        error_class: FailedToCloneRepo
+      )
     end
 
     def create_branch
       log "Creating branch #{branch_name}"
-      stdout, status = Open3.capture2("git checkout -b #{branch_name}")
-      raise CreateBranchFailure, stdout unless status.success?
+      command_line.execute(
+        "git checkout -b #{branch_name}",
+        error_class: CreateBranchFailure
+      )
     end
 
     def run_upgrade_command
       log "Running #{upgrade_command}"
-      stdout, status =
-        Open3.capture2("#{upgrade_command} #{package_name}@#{version}")
-
-      raise UpgradeCommandFailure, stdout unless status.success?
+      command_line.execute(
+        "#{upgrade_command} #{package_name}@#{version}",
+        error_class: UpgradeCommandFailure
+      )
     end
 
     def commit_and_push_changes
-      stdout, status =
-        Open3.capture2("git commit -am 'bump #{package_name} to #{version}'")
-      raise CommitChangesFailure, stdout unless status.success?
-
-      stdout2, status2 = Open3.capture2("git push origin #{branch_name} -f")
-      raise PushBranchFailure, stdout2 unless status2.success?
+      command_line.execute(
+        "git commit -am 'bump #{package_name} to #{version}'",
+        error_class: CommitChangesFailure
+      )
+      command_line.execute(
+        "git push origin #{branch_name} -f",
+        error_class: PushBranchFailure
+      )
     end
 
     def create_pr
@@ -82,8 +87,10 @@ class Deployer
       return unless automerge
 
       log "Merging PR #{pr_number}"
-      stdout, status = Open3.capture2("gh pr merge #{pr_number} --auto --merge")
-      raise AutoMergeFailure, stdout unless status.success?
+      command_line.execute(
+        "gh pr merge #{pr_number} --auto --merge",
+        error_class: AutoMergeFailure
+      )
     end
 
     def cleanup
@@ -133,6 +140,10 @@ class Deployer
 
     def automerge
       config.automerge
+    end
+
+    def command_line
+      @command_line ||= CommandLine.new(config)
     end
   end
 end

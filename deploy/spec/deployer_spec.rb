@@ -21,24 +21,24 @@ describe Deployer do
         headers: json_headers
       )
 
-      allow(Open3).to receive(:capture2).with(
-        "git clone https://:x-oauth-basic@github.com/planningcenter/topbar.git --depth=1"
+      allow(Open3).to receive(:capture3).with(
+        "gh repo clone planningcenter/topbar --depth=1"
       ) do
         Dir.mkdir("topbar") unless Dir.exist?("topbar")
-        ["", double(success?: true)]
+        ["", "", double(success?: true)]
       end
-      allow(Open3).to receive(:capture2).with(
+      allow(Open3).to receive(:capture3).with(
         "git checkout -b pco-release--planningcenter-tapestry-react-1-0-1"
-      ).and_return(["", double(success?: true)])
-      allow(Open3).to receive(:capture2).with(
+      ).and_return(["", "", double(success?: true)])
+      allow(Open3).to receive(:capture3).with(
         "yarn upgrade @planningcenter/tapestry-react@1.0.1"
-      ).and_return(["", double(success?: true)])
-      allow(Open3).to receive(:capture2).with(
+      ).and_return(["", "", double(success?: true)])
+      allow(Open3).to receive(:capture3).with(
         "git commit -am 'bump @planningcenter/tapestry-react to 1.0.1'"
-      ).and_return(["", double(success?: true)])
-      allow(Open3).to receive(:capture2).with(
+      ).and_return(["", "", double(success?: true)])
+      allow(Open3).to receive(:capture3).with(
         "git push origin pco-release--planningcenter-tapestry-react-1-0-1 -f"
-      ).and_return(["", double(success?: true)])
+      ).and_return(["", "", double(success?: true)])
 
       stub_request(
         :post,

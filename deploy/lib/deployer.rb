@@ -23,7 +23,7 @@ class Deployer
       repo.update_package
       log repo.success_message
     rescue BaseError, StandardError => e
-      failed_repos.push(repo)
+      failed_repos.push(repo.name)
       log failure_message(error: e, repo: repo)
     end
     return unless failed_repos.any?

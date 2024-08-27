@@ -1,0 +1,27 @@
+Metrics/BlockLength:
+  Exclude:
+    - "**/spec/**/*"
+
+Metrics/ClassLength:
+  CountAsOne: ["array", "heredoc", "hash", "method_call"]
+
+Metrics/ParameterLists:
+  Max: 10
+
+Style/Documentation:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/StringLiteralsInInterpolation:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented

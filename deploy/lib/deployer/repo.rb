@@ -35,12 +35,9 @@ class Deployer
     end
 
     def clone_repo
-      url = "github.com/#{owner}/#{name}.git"
       log "Cloning #{name}"
       stdout, status =
-        Open3.capture2(
-          "git clone https://#{config.github_token}:x-oauth-basic@#{url} --depth=1"
-        )
+        Open3.capture2("gh repo clone #{owner}/#{name} --depth=1")
       raise FailedToCloneRepo, stdout unless status.success?
     end
 

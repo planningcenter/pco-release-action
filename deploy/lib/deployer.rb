@@ -16,8 +16,9 @@ class Deployer
     repos.each do |repo|
       log "updating #{package_name} in #{repo.name}"
       repo.update_package
+      log repo.success_message
     rescue BaseError, StandardError => e
-      log "Failed to update #{package_name} in #{repo}: #{e} #{e.message} #{e.backtrace}"
+      log failure_message(e)
     end
   end
 
@@ -28,6 +29,10 @@ class Deployer
   private
 
   attr_reader :config
+
+  def failure_message(error)
+    "Failed to update #{package_name} in #{repo}: #{error.class} #{error.message} #{error.backtrace}"
+  end
 
   def package_name
     config.package_name

@@ -7,10 +7,13 @@ class Deployer
 
     def update_package
       run
-      log "Successfully updated #{package_name} to #{version} in #{name} (https://github.com/#{owner}/#{name}/pull/#{pr_number})"
     rescue StandardError => e
       cleanup
       raise e
+    end
+
+    def success_message
+      "Successfully updated #{package_name} to #{version} in #{name} (https://github.com/#{owner}/#{name}/pull/#{pr_number})"
     end
 
     attr_reader :name

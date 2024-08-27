@@ -103,6 +103,6 @@ runs:
     - name: Comment Release URL
       shell: bash
       run: |
-        gh pr comment ${{ github.event.issue.number }} -b "[PCO-Release] [**Release created**](${{ steps.create-release.outputs.html_url }})"
+        gh pr comment ${{ github.event.issue.number }} -b "[PCO-Release] [**Release ${{ env.new_version }} created**](${{ steps.create-release.outputs.html_url }})"
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}

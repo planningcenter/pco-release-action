@@ -37,7 +37,7 @@ class Deployer
     def clone_repo
       log "Cloning #{name}"
       command_line.execute(
-        "gh repo clone #{owner}/#{name} --depth=1",
+        "gh repo clone #{owner}/#{name} -- --depth=1",
         error_class: FailedToCloneRepo
       )
     end

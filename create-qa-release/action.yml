@@ -88,13 +88,21 @@ runs:
         touch release_notes.md
         MODIFIED_COMMENT="${{ github.event.comment.body }}"
         MODIFIED_COMMENT="${MODIFIED_COMMENT//@pco-release qa/}"
-        echo "QA build for ${{ github.event.issue.url }}.\n\n" >> release_notes.md
-        echo "$MODIFIED_COMMENT" > release_notes.md
+        echo "QA build for ${{ github.event.issue.url }}
+
+        $MODIFIED_COMMENT" > release_notes.md
     - name: Create Release
       uses: ncipollo/release-action@v1
+      id: create-release
       with:
         prerelease: true
         tag: v${{ env.new_version }}
         commit: ${{ env.RELEASE_NAME}}
         generateReleaseNotes: true
         bodyFile: release_notes.md
+    - name: Comment Release URL
+      shell: bash
+      run: |
+        gh pr comment ${{ github.event.issue.number }} -b "[PCO-Release] [**Release created**](${{ steps.create-release.outputs.html_url }})"
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}

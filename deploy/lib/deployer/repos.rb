@@ -42,8 +42,6 @@ class Deployer
         next false if config.exclude.include?(repo["name"])
 
         consumer_of_package?(repo)
-      rescue Octokit::NotFound
-        false
       end
     end
 
@@ -51,8 +49,10 @@ class Deployer
       response =
         client.contents("#{owner}/#{repo["name"]}", path: "package.json")
       contents = JSON.parse(Base64.decode64(response.content))
-      contents["dependencies"]&.keys&.include?(package_name) ||
-        contents["devDependencies"]&.keys&.include?(package_name)
+      contents["dependencies"]&.key?(package_name) ||
+        contents["devDependencies"]&.key?(package_name)
+    rescue Octokit::NotFound
+      false
     end
   end
 end

@@ -22,7 +22,7 @@ describe Deployer do
       )
 
       allow(Open3).to receive(:capture3).with(
-        "gh repo clone planningcenter/topbar -- --depth=1"
+        "git clone https://:x-oauth-basic@github.com/planningcenter/topbar.git --depth=1"
       ) do
         Dir.mkdir("topbar") unless Dir.exist?("topbar")
         ["", "", double(success?: true)]

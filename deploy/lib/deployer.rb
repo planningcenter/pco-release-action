@@ -24,7 +24,7 @@ class Deployer
       log failure_message(error: e, repo: repo)
     end
 
-    raise MultipleErrors errors if errors.any?
+    raise MultipleErrors.new(errors) if errors.any? # rubocop:disable Style/RaiseArgs
   end
 
   def repos

@@ -141,6 +141,10 @@ jobs:
 
 See [create-qa-release](./create-qa-release/README.md)
 
+#### Set up Auto Deploys
+
+See the [`deploy` action readme](./deploy/README.md).
+
 ## Working on this Project
 
 - Build before pushing changes with `yarn build`

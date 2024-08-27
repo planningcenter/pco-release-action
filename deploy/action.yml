@@ -1,0 +1,85 @@
+name: "PCO Release Deploy"
+description: "Deploys updates of a new release to all planningcenter repos that have a package as its dependency"
+inputs:
+  github-token:
+    description: "GitHub token for authentication"
+    required: true
+  owner:
+    description: "Owner of the repositories"
+    required: false
+    default: "planningcenter"
+  automerge:
+    description: "Do you want to automerge the PRs?  This should be dynamic based on if it is a major release"
+    required: true
+  only:
+    description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
+    required: false
+    default: ""
+  package-name:
+    description: "The name of the package to update"
+    required: false
+  version:
+    description: "The version to update the package to"
+    required: false
+  upgrade-commands:
+    description: "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory."
+    required: false
+    default: "{}"
+  include:
+    description: "repos to include without checking. Comma separated list"
+    required: false
+    default: ""
+  exclude:
+    description: "repos to exclude without checking. Comma separated list"
+    required: false
+    default: ""
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+    - name: Find new version
+      id: find-version
+      shell: bash
+      run: |
+        VERSION="${{ inputs.version }}"
+        if [[ -z "$VERSION" ]]; then
+          VERSION=$(jq -r '.version' package.json)
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+    - name: Find package_name
+      id: find-package-name
+      shell: bash
+      run: |
+        PACKAGE_NAME="${{ inputs.package-name }}"
+        if [[ -z "$PACKAGE_NAME" ]]; then
+          PACKAGE_NAME=$(jq -r '.name' package.json)
+        fi
+        echo "package-name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+    - name: Setup github user info
+      shell: bash
+      run: |
+        git config --global user.email "pco-release-bot[bot]@users.noreply.github.com"
+        git config --global user.name "pco-release-bot[bot]"
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: "3.3"
+        bundler-cache: true
+        working-directory: ${{ github.action_path}}
+    - name: Setup Upgrade PRs
+      shell: bash
+      run: bundle exec ruby ${{ github.action_path }}/run.rb
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PACKAGE_NAME: ${{ steps.find-package-name.outputs.package-name }}
+        PACKAGE_VERSION: ${{ steps.find-version.outputs.version }}
+        OWNER: ${{ inputs.owner }}
+        ONLY: ${{ inputs.only }}
+        AUTOMERGE: ${{ inputs.automerge }}
+        UPGRADE_COMMANDS: ${{ inputs.upgrade-commands }}
+        INCLUDE: ${{ inputs.include }}
+        EXCLUDE: ${{ inputs.exclude }}
+      working-directory: ${{ github.action_path}}

@@ -22,4 +22,19 @@ class Deployer
 
   class AutoMergeFailure < BaseError
   end
+
+  class MultipleErrors < BaseError
+    attr_reader :errors
+
+    def initialize(errors = [])
+      @errors = errors
+      super(build_message)
+    end
+
+    private
+
+    def build_message
+      @errors.map(&:message).join(", ")
+    end
+  end
 end

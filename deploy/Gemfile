@@ -1,0 +1,12 @@
+source "https://rubygems.org"
+
+gem "base64"
+gem "octokit"
+
+group :development, :test do
+  gem "byebug"
+  gem "faraday-multipart"
+  gem "faraday-retry"
+  gem "rspec"
+  gem "webmock"
+end

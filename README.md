@@ -137,6 +137,10 @@ jobs:
       - uses: planningcenter/pco-release-action/dependabot-automation@v1
 ```
 
+#### Set up Auto Deploys
+
+See the [`deploy` action readme](./deploy/README.md).
+
 ## Working on this Project
 
 - Build before pushing changes with `yarn build`

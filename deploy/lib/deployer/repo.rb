@@ -17,14 +17,19 @@ class Deployer
 
     private
 
-    attr_reader :config, :pr_number
+    attr_reader :config
 
     def updater
       @updater ||= updater_class.new(name, config: config)
     end
 
     def updater_class
-      PullRequestUpdater
+      case config.change_method
+      when "merge"
+        MergeUpdater
+      else
+        PullRequestUpdater
+      end
     end
 
     def package_name

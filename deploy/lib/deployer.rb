@@ -5,6 +5,8 @@ require_relative "deployer/command_line"
 require_relative "deployer/config"
 require_relative "deployer/errors"
 require_relative "deployer/repo"
+require_relative "deployer/repo/base_updater"
+require_relative "deployer/repo/merge_updater"
 require_relative "deployer/repo/pull_request_updater"
 require_relative "deployer/repos"
 

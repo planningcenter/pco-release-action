@@ -30,6 +30,7 @@ class Deployer
 
     def find_repos
       repos = client.org_repos(owner)
+      config.log("Found #{repos.size} repos in #{owner}")
       return repos.select { |repo| only.include?(repo.name) } if only.any?
 
       select_packages_that_consume_package(repos)

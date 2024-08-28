@@ -10,7 +10,7 @@ inputs:
     default: "planningcenter"
   automerge:
     description: "Do you want to automerge the PRs?  This should be dynamic based on if it is a major release"
-    required: true
+    required: false
   only:
     description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
     required: false

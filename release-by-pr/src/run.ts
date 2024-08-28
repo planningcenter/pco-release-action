@@ -3,7 +3,6 @@ import { easyExec, readFileContent, replaceTextInFile } from '../../shared/utils
 
 type ReleaseType = 'patch' | 'minor' | 'major' | 'nochange'
 type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
-type ValueOf<T> = T[keyof T]
 type Label = { id: string }
 type PullRequest<Label extends Record<string, any> = { id: string; name: string }> = {
   id: string
@@ -212,7 +211,6 @@ async function findOrCreateLabels(
   labels: Record<keyof typeof LABEL_NAMES, Label>,
   { octokit, repoId }: { octokit: Octokit; repoId: string },
 ): Promise<LabelIds> {
-  const keys = Object.keys(labels)
   const result: Partial<LabelIds> = {}
   for (const key in labels) {
     const typedKey = key as keyof typeof LABEL_NAMES

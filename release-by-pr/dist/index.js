@@ -58512,7 +58512,6 @@ const FOOTER = `## 🚀 PCO-Release
   - Add comment **\`@pco-release rc\`** - Create a release candidate and deploy to staging in all products that use this package.  Write more in the comment to add details on the release.
   `;
 async function findOrCreateLabels(labels, { octokit, repoId }) {
-    const keys = Object.keys(labels);
     const result = {};
     for (const key in labels) {
         const typedKey = key;

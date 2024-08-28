@@ -5,6 +5,9 @@ Metrics/BlockLength:
 Metrics/ClassLength:
   CountAsOne: ["array", "heredoc", "hash", "method_call"]
 
+Metrics/MethodLength:
+  CountAsOne: ["array", "heredoc", "method_call"]
+
 Metrics/ParameterLists:
   Max: 10
 

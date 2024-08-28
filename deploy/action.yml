@@ -10,7 +10,7 @@ inputs:
     default: "planningcenter"
   automerge:
     description: "Do you want to automerge the PRs?  This should be dynamic based on if it is a major release"
-    required: true
+    required: false
   only:
     description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
     required: false
@@ -25,6 +25,14 @@ inputs:
     description: "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory."
     required: false
     default: "{}"
+  change-method:
+    description: "The method to use to create the changes. Options are 'pr' or 'merge'."
+    required: false
+    default: "pr"
+  branch-name:
+    description: "When `merge` is used as the change-method, this is the branch where the changes will be merged."
+    required: false
+    default: "staging"
   include:
     description: "repos to include without checking. Comma separated list"
     required: false
@@ -80,6 +88,8 @@ runs:
         ONLY: ${{ inputs.only }}
         AUTOMERGE: ${{ inputs.automerge }}
         UPGRADE_COMMANDS: ${{ inputs.upgrade-commands }}
+        BRANCH_NAME: ${{ inputs.branch-name }}
+        CHANGE_METHOD: ${{ inputs.change-method }}
         INCLUDE: ${{ inputs.include }}
         EXCLUDE: ${{ inputs.exclude }}
       working-directory: ${{ github.action_path}}

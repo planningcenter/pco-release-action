@@ -1,10 +1,12 @@
 class Deployer
   class Config
-    def initialize(
+    def initialize( # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
       github_token:,
       owner:,
       package_name:,
       version:,
+      change_method: "pr",
+      branch_name: "main",
       automerge: false,
       only: [],
       upgrade_commands: {},
@@ -20,6 +22,8 @@ class Deployer
       @upgrade_commands = upgrade_commands
       @include = include
       @exclude = exclude
+      @branch_name = branch_name
+      @change_method = change_method
     end
 
     attr_reader :github_token,
@@ -27,10 +31,12 @@ class Deployer
                 :package_name,
                 :version,
                 :automerge,
+                :branch_name,
                 :only,
                 :upgrade_commands,
                 :include,
-                :exclude
+                :exclude,
+                :change_method
 
     def client
       @client ||=

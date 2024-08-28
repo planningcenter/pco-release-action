@@ -4,7 +4,7 @@ import { easyExec, readFileContent, replaceTextInFile } from '../../shared/utils
 type ReleaseType = 'patch' | 'minor' | 'major' | 'nochange'
 type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
 type ValueOf<T> = T[keyof T]
-type Label = { id: string } | null
+type Label = { id: string }
 type PullRequest<Label extends Record<string, any> = { id: string; name: string }> = {
   id: string
   labels: { nodes: Label[] }
@@ -223,10 +223,10 @@ async function findOrCreateLabels(
     } else {
       const {
         createLabel: { label },
-      } = (await octokit.graphql(
+      } = await octokit.graphql<{ createLabel: { label: Label } }>(
         `mutation($repoId: ID!, $name: String!) { createLabel(input: { repositoryId: $repoId, name: $name, color: "dddddd" }) { label { id } } }`,
         { repoId, name: LABEL_NAMES[typedKey] },
-      )) as { createLabel: { label: { id: string } } }
+      )
 
       result[keyId] = label.id
     }
@@ -264,7 +264,7 @@ async function createPullRequest({
   // Create a pull request
   const {
     createPullRequest: { pullRequest },
-  } = (await octokit.graphql(
+  } = await octokit.graphql<{ createPullRequest: { pullRequest: PullRequest } }>(
     `mutation($repoId: ID!, $baseRefName: String!, $headRefName: String!, $body: String!, $title: String!) {
         createPullRequest(input: { repositoryId: $repoId, baseRefName: $baseRefName, headRefName: $headRefName, body: $body, title: $title}) {
           pullRequest {
@@ -279,7 +279,7 @@ async function createPullRequest({
       body: await buildBody({ version, lastReleaseVersion }),
       title: `v${version}`,
     },
-  )) as { createPullRequest: { pullRequest: { id: string; labels: { nodes: [] } } } }
+  )
 
   // add patch and pending label
   await octokit.graphql(

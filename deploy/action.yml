@@ -48,12 +48,12 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - if: ${{ input.tag == '' }}
+    - if: ${{ inputs.tag == '' }}
       uses: actions/checkout@v4
-    - if: ${{ input.tag != '' }}
+    - if: ${{ inputs.tag != '' }}
       uses: actions/checkout@v4
       with:
-        ref: ${{ input.tag }}
+        ref: ${{ inputs.tag }}
     - name: Setup Node
       uses: actions/setup-node@v4
       with:

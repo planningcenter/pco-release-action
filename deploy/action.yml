@@ -41,17 +41,23 @@ inputs:
     description: "repos to exclude without checking. Comma separated list"
     required: false
     default: ""
+  tag:
+    description: "The tag to use for the release"
+    required: false
+    default: ""
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v4
+    - if: ${{ input.tag == '' }}
+      uses: actions/checkout@v4
+    - if: ${{ input.tag != '' }}
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ input.tag }}
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: "20"
-    - shell: bash
-      run: |
-        echo "branch name: $(git branch --show-current)"
     - name: Find new version
       id: find-version
       shell: bash

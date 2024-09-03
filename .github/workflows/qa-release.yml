@@ -79,20 +79,20 @@ jobs:
       build-directory: ${{ inputs.build-directory }}
       ref: ${{ needs.create-qa-release.outputs.release-tag }}
       prerelease: true
-  deploy-to-staging-for-consumers:
+  deploy-to-proto-for-consumers:
     needs: [create-qa-release, publish-to-npm]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     steps:
-      - name: Push to `staging` for Consumers
-        uses: planningcenter/pco-release-action/deploy@v1
+      - name: Push to protonova branch for Consumers
+        uses: planningcenter/pco-release-action/deploy@km/qa-deploy-combined
         with:
           github-token: ${{ secrets.PICOBOT_JS_DEPLOYMENT }}
           ref: ${{ needs.create-qa-release.outputs.release-tag }}
           change-method: "merge"
-          branch-name: "staging"
+          branch-name: "proto/${{ github.repository }}-${{ github.event.issue.number }}"
           only: ${{ inputs.only }}
           exclude: ${{ inputs.exclude }}
           include: ${{ inputs.include }}

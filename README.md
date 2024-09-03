@@ -193,6 +193,48 @@ jobs:
     secrets: inherit
 ```
 
+### QA Release
+
+This will be available to create a QA release from a PR for testing a specific branch, publish it, and send it to a protonova environment for all consumers.
+
+#### Configuration variables
+
+You can customize the commands the workflow runs for installing dependencies, building, and testing the package.
+If no options are provided, the defaults will be used.
+
+| Input                | Description                                                                                                                                        | Req'd | Default                      |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------------- |
+| `build-command`      | The command to run to build the package                                                                                                            | No    | `yarn build`                 |
+| `build-directory`    | The directory containing the build output                                                                                                          | No    | `dist`                       |
+| `cache`              | Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching.                   | No    | `yarn`                       |
+| `install-command`    | The command to run to install the package's dependencies                                                                                           | No    | `yarn install --check-files` |
+| `prepublish-command` | The command to publish a prerelease version of the package to NPM                                                                                  | No    | `npm publish --tag next`     |
+| `test-command`       | The command to run to test the package                                                                                                             | No    | `yarn test`                  |
+| `only`               | A comma separated list of repos that will only be updated                                                                                          | No    | ''                           |
+| `include`            | A comma separated list of repos to include without checking for the dependency.                                                                    | No    | ''                           |
+| `exclude`            | A comma separated list of repos to exclude without checking for the dependency.                                                                    | No    | ''                           |
+| `upgrade-commands`   | "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory." | No    | `"{}"`                       |
+
+#### Usage
+
+Create a workflow within your own JavaScript library. As an example, in `.github/workflows/qa.yml`...
+
+```yml
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  create-qa-release-and-deploy:
+    if: (github.event_name == 'workflow_dispatch') || (github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release qa'))
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    uses: planningcenter/pco-release-action/.github/workflows/qa-release.yml@v1
+    secrets: inherit
+```
+
 ## Working on this Project
 
 - Build before pushing changes with `yarn build`

@@ -47,10 +47,10 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "18.x"
+          node-version: "20"
           cache: ${{ inputs.cache }}
       - run: ${{ inputs.install-command }}
       - run: ${{ inputs.build-command }}
@@ -65,10 +65,10 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "18.x"
+          node-version: "20"
           registry-url: https://registry.npmjs.org
           always-auth: true
           cache: ${{ inputs.cache }}
@@ -93,10 +93,10 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "18.x"
+          node-version: "20"
           registry-url: https://npm.pkg.github.com/
           scope: "@planningcenter"
           cache: ${{ inputs.cache }}

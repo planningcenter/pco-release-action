@@ -92,7 +92,7 @@ jobs:
           github-token: ${{ secrets.PICOBOT_JS_DEPLOYMENT }}
           ref: ${{ needs.create-qa-release.outputs.release-tag }}
           change-method: "merge"
-          branch-name: "staging"
+          branch-name: "proto/${{ github.repository }}-${{ github.event.issue.number }}"
           only: ${{ inputs.only }}
           exclude: ${{ inputs.exclude }}
           include: ${{ inputs.include }}

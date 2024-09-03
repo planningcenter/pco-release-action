@@ -1,0 +1,94 @@
+name: PCO-Release - Release Automation
+on:
+  workflow_call:
+    inputs:
+      install-command:
+        description: "The script command to use to install the package's dependencies"
+        required: false
+        type: string
+        default: "yarn install --check-files"
+      build-command:
+        description: "The script command to use to build the package"
+        required: false
+        type: string
+        default: "yarn build"
+      test-command:
+        description: "The script command to use to test the package"
+        required: false
+        type: string
+        default: "yarn test"
+      publish-command:
+        description: "The command to run to publish a release version of the package to NPM"
+        required: false
+        type: string
+        default: "npm publish --tag next"
+      cache:
+        description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
+        required: false
+        type: string
+        default: "yarn"
+      build-directory:
+        description: "The build output directory"
+        required: false
+        type: string
+        default: "dist"
+      only:
+        description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
+        required: false
+        type: string
+        default: ""
+      include:
+        description: "repos to include without checking. Comma separated list"
+        required: false
+        type: string
+        default: ""
+      exclude:
+        description: "repos to exclude without checking. Comma separated list"
+        required: false
+        type: string
+        default: ""
+      upgrade-commands:
+        description: "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory."
+        required: false
+        type: string
+        default: "{}"
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Create Release
+        uses: planningcenter/pco-release-action/create-release-on-merge@v1
+    outputs:
+      release-tag: v${{ env.new_version }}
+  publish-to-npm:
+    needs: create-release
+    uses: planningcenter/pco-release-action/.github/workflows/publish.yml@v1
+    with:
+      install-command: ${{ inputs.install-command }}
+      build-command: ${{ inputs.build-command }}
+      test-command: ${{ inputs.test-command }}
+      publish-command: ${{ inputs.publish-command }}
+      cache: ${{ inputs.cache }}
+      build-directory: ${{ inputs.build-directory }}
+      ref: ${{ needs.create-release.outputs.release-tag }}
+      prerelease: true
+  deploy-to-consumers:
+    needs: [create-release, publish-to-npm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Push to Consumers
+        uses: planningcenter/pco-release-action/deploy@v1
+        with:
+          github-token: ${{ secrets.PICOBOT_JS_DEPLOYMENT }}
+          ref: ${{ needs.create-release.outputs.release-tag }}
+          change-method: "pr"
+          only: ${{ inputs.only }}
+          exclude: ${{ inputs.exclude }}
+          include: ${{ inputs.include }}
+          upgrade-commands: ${{ inputs.upgrade-commands }}

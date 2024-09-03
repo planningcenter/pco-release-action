@@ -151,6 +151,50 @@ See the [`deploy` action readme](./deploy/README.md).
 
 ## Available workflows
 
+### Release
+
+This will be available to create a new release and deploy it to all consumers via PR.
+
+#### Configuration variables
+
+You can customize the commands the workflow runs for installing dependencies, building, and testing the package.
+If no options are provided, the defaults will be used.
+
+| Input              | Description                                                                                                                                        | Req'd | Default                      |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------------- |
+| `build-command`    | The command to run to build the package                                                                                                            | No    | `yarn build`                 |
+| `build-directory`  | The directory containing the build output                                                                                                          | No    | `dist`                       |
+| `cache`            | Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching.                   | No    | `yarn`                       |
+| `install-command`  | The command to run to install the package's dependencies                                                                                           | No    | `yarn install --check-files` |
+| `publish-command`  | The command to publish a release version of the package to NPM                                                                                     | No    | `npm publish`                |
+| `test-command`     | The command to run to test the package                                                                                                             | No    | `yarn test`                  |
+| `only`             | A comma separated list of repos that will only be updated                                                                                          | No    | ''                           |
+| `include`          | A comma separated list of repos to include without checking for the dependency.                                                                    | No    | ''                           |
+| `exclude`          | A comma separated list of repos to exclude without checking for the dependency.                                                                    | No    | ''                           |
+| `upgrade-commands` | "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory." | No    | `"{}"`                       |
+
+#### Usage
+
+Create a workflow within your own JavaScript library. As an example, in `.github/workflows/rc.yml`...
+
+```yml
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  create-release:
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    uses: planningcenter/pco-release-action/create-release-on-merge@v1
+    secrets: inherit
+```
+
 ### release candidate (rc)
 
 This will be available to create a release candidate from a release PR, publish it, and send it to staging for all consumers.

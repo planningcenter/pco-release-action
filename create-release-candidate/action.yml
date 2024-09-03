@@ -20,7 +20,7 @@ runs:
   steps:
     - name: Get PR head ref
       id: get-pr-ref
-      uses: actions/github-script@v5
+      uses: actions/github-script@v7
       with:
         script: |
           const issueUrl = context.payload.issue.pull_request.url;

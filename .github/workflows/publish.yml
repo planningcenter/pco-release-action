@@ -1,0 +1,134 @@
+name: Publish package on GitHub release
+
+permissions:
+  contents: read
+  packages: write
+
+on:
+  workflow_call:
+    inputs:
+      install-command:
+        description: "The script command to use to install the package's dependencies"
+        required: false
+        type: string
+        default: "yarn install --check-files"
+      build-command:
+        description: "The script command to use to build the package"
+        required: false
+        type: string
+        default: "yarn build"
+      test-command:
+        description: "The script command to use to test the package"
+        required: false
+        type: string
+        default: "yarn test"
+      publish-command:
+        description: "The command to run to publish the package to NPM"
+        required: false
+        type: string
+        default: "npm publish"
+      prepublish-command:
+        description: "The command to run to publish a prerelease version of the package to NPM"
+        required: false
+        type: string
+        default: "npm publish --tag next"
+      cache:
+        description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
+        required: false
+        type: string
+        default: "yarn"
+      build-directory:
+        description: "The build output directory"
+        required: false
+        type: string
+        default: "dist"
+      prerelease:
+        description: "Whether the release is a prerelease"
+        required: false
+        type: boolean
+        default: false
+      ref:
+        description: "The ref to publish"
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: ${{ inputs.cache }}
+      - run: ${{ inputs.install-command }}
+      - run: ${{ inputs.build-command }}
+      - run: ${{ inputs.test-command }}
+      - name: Cache build directory
+        uses: actions/cache/save@v3
+        with:
+          path: ${{ inputs.build-directory }}
+          key: ${{inputs.build-directory }}-${{ github.sha }}
+
+  publish-to-npm:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: https://registry.npmjs.org
+          always-auth: true
+          cache: ${{ inputs.cache }}
+      - name: Restore build directory
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ inputs.build-directory }}
+          key: ${{inputs.build-directory }}-${{ github.sha }}
+      - run: ${{ inputs.install-command }}
+      - name: Publish release to NPM
+        if: ${{ !inputs.prerelease }}
+        run: ${{ inputs.publish-command }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
+      - name: Publish prerelease to NPM
+        if: ${{ inputs.prerelease }}
+        run: ${{ inputs.prepublish-command }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
+
+  publish-to-github-package-registry:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: https://npm.pkg.github.com/
+          scope: "@planningcenter"
+          cache: ${{ inputs.cache }}
+      - name: Restore build directory
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ inputs.build-directory }}
+          key: ${{inputs.build-directory }}-${{ github.sha }}
+      - run: ${{ inputs.install-command }}
+      - name: Publish release to GPR
+        if: ${{ !inputs.prerelease }}
+        run: ${{ inputs.publish-command }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish prerelease to GPR
+        if: ${{ inputs.prerelease }}
+        run: ${{ inputs.prepublish-command }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

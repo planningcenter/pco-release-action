@@ -42,6 +42,11 @@ on:
         required: false
         type: string
         default: "dist"
+      prerelease:
+        description: "Whether the release is a prerelease"
+        required: false
+        type: boolean
+        default: false
       ref:
         description: "The ref to publish"
         required: false
@@ -88,12 +93,12 @@ jobs:
           key: ${{inputs.build-directory }}-${{ github.sha }}
       - run: ${{ inputs.install-command }}
       - name: Publish release to NPM
-        if: "!github.event.release.prerelease"
+        if: ${{ !inputs.prerelease }}
         run: ${{ inputs.publish-command }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
       - name: Publish prerelease to NPM
-        if: "github.event.release.prerelease"
+        if: ${{ inputs.prerelease }}
         run: ${{ inputs.prepublish-command }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
@@ -118,12 +123,12 @@ jobs:
           key: ${{inputs.build-directory }}-${{ github.sha }}
       - run: ${{ inputs.install-command }}
       - name: Publish release to GPR
-        if: "!github.event.release.prerelease"
+        if: ${{ !inputs.prerelease }}
         run: ${{ inputs.publish-command }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish prerelease to GPR
-        if: "github.event.release.prerelease"
+        if: ${{ inputs.prerelease }}
         run: ${{ inputs.prepublish-command }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

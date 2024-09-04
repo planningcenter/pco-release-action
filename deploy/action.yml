@@ -42,6 +42,12 @@ inputs:
     description: "The ref to use for the release"
     required: false
     default: ""
+  app-id:
+    description: "The app id for the github app"
+    required: true
+  private-key:
+    description: "The private key for the github app"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -49,8 +55,8 @@ runs:
       id: generate-token
       uses: actions/create-github-app-token@v1
       with:
-        app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
-        private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.private-key }}
     - uses: actions/checkout@v4
       with:
         ref: ${{ inputs.ref }}

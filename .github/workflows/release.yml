@@ -86,6 +86,8 @@ jobs:
       - name: Push to Consumers
         uses: planningcenter/pco-release-action/deploy@v1
         with:
+          app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+          private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
           ref: ${{ needs.create-release.outputs.release-tag }}
           change-method: "pr"
           only: ${{ inputs.only }}

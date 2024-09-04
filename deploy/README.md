@@ -30,6 +30,8 @@ jobs:
     steps:
       - uses: planningcenter/pco-release-action/deploy@v1
         with:
+          app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+          private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
           automerge: true
           upgrade-commands: '{"tapestry-react":"yarn tr upgrade"}' # this is assuming that you're upgrading
 ```

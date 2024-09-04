@@ -62,7 +62,7 @@ jobs:
       - name: Create Release
         uses: planningcenter/pco-release-action/create-release-on-merge@v1
     outputs:
-      release-tag: v${{ env.new_version }}
+      release-tag: v${{ env.version }}
   publish-to-npm:
     needs: create-release
     uses: planningcenter/pco-release-action/.github/workflows/publish.yml@v1

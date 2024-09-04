@@ -1,9 +1,6 @@
 name: "PCO Release Deploy"
 description: "Deploys updates of a new release to all planningcenter repos that have a package as its dependency"
 inputs:
-  github-token:
-    description: "GitHub token for authentication"
-    required: true
   owner:
     description: "Owner of the repositories"
     required: false
@@ -48,6 +45,12 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Generate a token
+      id: generate-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+        private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
     - uses: actions/checkout@v4
       with:
         ref: ${{ inputs.ref }}
@@ -87,7 +90,7 @@ runs:
       shell: bash
       run: bundle exec ruby ${{ github.action_path }}/run.rb
       env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
+        GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
         PACKAGE_NAME: ${{ steps.find-package-name.outputs.package-name }}
         PACKAGE_VERSION: ${{ steps.find-version.outputs.version }}
         OWNER: ${{ inputs.owner }}

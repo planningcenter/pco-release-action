@@ -30,7 +30,6 @@ jobs:
     steps:
       - uses: planningcenter/pco-release-action/deploy@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           automerge: true
           upgrade-commands: '{"tapestry-react":"yarn tr upgrade"}' # this is assuming that you're upgrading
 ```

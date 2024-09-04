@@ -86,7 +86,6 @@ jobs:
       - name: Push to Consumers
         uses: planningcenter/pco-release-action/deploy@v1
         with:
-          github-token: ${{ secrets.PICOBOT_JS_DEPLOYMENT }}
           ref: ${{ needs.create-release.outputs.release-tag }}
           change-method: "pr"
           only: ${{ inputs.only }}

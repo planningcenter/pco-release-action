@@ -90,7 +90,8 @@ jobs:
       - name: Push to protonova branch for Consumers
         uses: planningcenter/pco-release-action/deploy@v1
         with:
-          github-token: ${{ secrets.PICOBOT_JS_DEPLOYMENT }}
+          app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+          private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
           ref: ${{ needs.create-qa-release.outputs.release-tag }}
           change-method: "merge"
           branch-name: "proto/${{ github.repository }}-${{ github.event.issue.number }}"

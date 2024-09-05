@@ -99,3 +99,4 @@ jobs:
           exclude: ${{ inputs.exclude }}
           include: ${{ inputs.include }}
           upgrade-commands: ${{ inputs.upgrade-commands }}
+          allow-major: true

@@ -8,6 +8,7 @@ require_relative "deployer/repo"
 require_relative "deployer/repo/base_updater"
 require_relative "deployer/repo/merge_updater"
 require_relative "deployer/repo/pull_request_updater"
+require_relative "deployer/repo/version_compare"
 require_relative "deployer/repos"
 
 class Deployer

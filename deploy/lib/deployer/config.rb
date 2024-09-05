@@ -11,7 +11,8 @@ class Deployer
       only: [],
       upgrade_commands: {},
       include: [],
-      exclude: []
+      exclude: [],
+      allow_major: false
     )
       @github_token = github_token
       @owner = owner
@@ -24,6 +25,7 @@ class Deployer
       @exclude = exclude
       @branch_name = branch_name
       @change_method = change_method
+      @allow_major = allow_major
     end
 
     attr_reader :github_token,
@@ -36,7 +38,8 @@ class Deployer
                 :upgrade_commands,
                 :include,
                 :exclude,
-                :change_method
+                :change_method,
+                :allow_major
 
     def client
       @client ||=
@@ -47,6 +50,10 @@ class Deployer
 
     def log(message)
       puts "[PCO-Release] #{message}"
+    end
+
+    def disable_for_major?
+      !allow_major
     end
   end
 end

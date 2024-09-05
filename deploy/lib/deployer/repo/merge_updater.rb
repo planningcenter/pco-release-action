@@ -8,13 +8,9 @@ class Deployer
       private
 
       def make_changes
-        clone_repo
-        Dir.chdir(name) do
-          create_branch
-          run_upgrade_command
-          commit_and_push_changes
-        end
-        cleanup
+        create_branch
+        run_upgrade_command
+        commit_and_push_changes
       end
 
       def branch_name

@@ -55,13 +55,17 @@ class Deployer
 
       def commit_and_push_changes
         command_line.execute(
-          "git commit -am 'bump #{package_name} to #{version}'",
+          "git commit -am '#{update_message}'",
           error_class: CommitChangesFailure
         )
         command_line.execute(
           "git push origin #{branch_name} -f",
           error_class: PushBranchFailure
         )
+      end
+
+      def update_message
+        "bump #{package_name} to #{version}"
       end
 
       def cleanup
@@ -94,6 +98,12 @@ class Deployer
 
       def command_line
         @command_line ||= CommandLine.new(config)
+      end
+
+      def maybe_update_changelog
+        return unless Changelog.new(message: update_message).update
+
+        log "Updated CHANGELOG.md"
       end
     end
   end

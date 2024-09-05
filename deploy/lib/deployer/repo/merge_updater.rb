@@ -12,6 +12,7 @@ class Deployer
         Dir.chdir(name) do
           create_branch
           run_upgrade_command
+          maybe_update_changelog
           commit_and_push_changes
         end
         cleanup

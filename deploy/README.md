@@ -35,3 +35,16 @@ jobs:
           automerge: true
           upgrade-commands: '{"tapestry-react":"yarn tr upgrade"}' # this is assuming that you're upgrading
 ```
+
+## Config Files in Consumers
+
+Some consumers of the library will have specific commands that they need to use to upgrade to the newest version. Instead of making each library know that, you can add a config file to the consumer repo called `.pco-release.config.yml`.
+
+```yml
+# `./.pco-release.config.yml`
+upgrade_command: "yarn tr upgrade"
+```
+
+In this case, whenever upgrading, it will use the new upgrade command.
+
+This file is not necessary, but allows for customization.

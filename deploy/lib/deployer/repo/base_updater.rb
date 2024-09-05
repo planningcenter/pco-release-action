@@ -1,3 +1,5 @@
+require "yaml"
+
 class Deployer
   class Repo
     class BaseUpdater
@@ -37,6 +39,12 @@ class Deployer
         )
       end
 
+      def config_file
+        return {} unless File.exist?(".pco-release.config.yml")
+
+        @config_file ||= YAML.load_file(".pco-release.config.yml")
+      end
+
       def create_branch
         log "Creating branch #{branch_name}"
         command_line.execute(
@@ -48,7 +56,7 @@ class Deployer
       def run_upgrade_command
         log "Running #{upgrade_command}"
         command_line.execute(
-          "#{upgrade_command} #{package_name}@#{version}",
+          upgrade_command,
           error_class: UpgradeCommandFailure
         )
       end
@@ -69,7 +77,26 @@ class Deployer
       end
 
       def upgrade_command
-        upgrade_commands[name].nil? ? "yarn upgrade" : upgrade_commands[name]
+        unless config_file["upgrade_command"].nil?
+          return(build_upgrade_command_from_config_file)
+        end
+
+        if upgrade_commands[name].nil?
+          "yarn upgrade #{package_name}@#{version}"
+        else
+          "#{upgrade_commands[name]} #{package_name}@#{version}"
+        end
+      end
+
+      def build_upgrade_command_from_config_file
+        replacements = {
+          "{{version}}" => version,
+          "{{package_name}}" => package_name
+        }
+
+        config_file["upgrade_command"].tap do |command|
+          replacements.each { |key, value| command.gsub!(key, value) }
+        end
       end
 
       def log(message)

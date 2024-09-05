@@ -9,7 +9,9 @@ class Deployer
       end
 
       def run
-        make_changes
+        clone_repo
+        Dir.chdir(name) { make_changes if updatable? }
+        cleanup
       rescue StandardError => e
         cleanup
         raise e
@@ -70,6 +72,10 @@ class Deployer
           "git push origin #{branch_name} -f",
           error_class: PushBranchFailure
         )
+      end
+
+      def updatable?
+        !config.disable_for_major? || !VersionCompare.new(config).major_upgrade?
       end
 
       def cleanup

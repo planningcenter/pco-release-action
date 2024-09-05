@@ -48,6 +48,10 @@ inputs:
   private-key:
     description: "The private key for the github app"
     required: true
+  allow-major:
+    description: "Allow major version updates"
+    required: false
+    default: false
 runs:
   using: "composite"
   steps:
@@ -107,4 +111,5 @@ runs:
         CHANGE_METHOD: ${{ inputs.change-method }}
         INCLUDE: ${{ inputs.include }}
         EXCLUDE: ${{ inputs.exclude }}
+        ALLOW_MAJOR: ${{ inputs.allow-major }}
       working-directory: ${{ github.action_path}}

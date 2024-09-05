@@ -12,6 +12,7 @@ config =
     branch_name: ENV["BRANCH_NAME"],
     change_method: ENV["CHANGE_METHOD"],
     include: ENV["INCLUDE"].split(","),
-    exclude: ENV["EXCLUDE"].split(",")
+    exclude: ENV["EXCLUDE"].split(","),
+    update_changelog: ENV["UPDATE_CHANGELOG"] == "true"
   )
 Deployer.new(config).run

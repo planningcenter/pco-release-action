@@ -101,6 +101,7 @@ class Deployer
       end
 
       def maybe_update_changelog
+        return unless config.update_changelog
         return unless Changelog.new(message: update_message).update
 
         log "Updated CHANGELOG.md"

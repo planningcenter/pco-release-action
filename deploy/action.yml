@@ -42,6 +42,10 @@ inputs:
     description: "The ref to use for the release"
     required: false
     default: ""
+  update-changelog:
+    description: "Attempt to update the changelog with the new version"
+    required: false
+    default: "true"
   app-id:
     description: "The app id for the github app"
     required: true
@@ -107,4 +111,5 @@ runs:
         CHANGE_METHOD: ${{ inputs.change-method }}
         INCLUDE: ${{ inputs.include }}
         EXCLUDE: ${{ inputs.exclude }}
+        UPDATE_CHANGELOG: ${{ inputs.update-changelog }}
       working-directory: ${{ github.action_path}}

@@ -11,7 +11,8 @@ class Deployer
       only: [],
       upgrade_commands: {},
       include: [],
-      exclude: []
+      exclude: [],
+      update_changelog: false
     )
       @github_token = github_token
       @owner = owner
@@ -24,6 +25,7 @@ class Deployer
       @exclude = exclude
       @branch_name = branch_name
       @change_method = change_method
+      @update_changelog = update_changelog
     end
 
     attr_reader :github_token,
@@ -36,7 +38,8 @@ class Deployer
                 :upgrade_commands,
                 :include,
                 :exclude,
-                :change_method
+                :change_method,
+                :update_changelog
 
     def client
       @client ||=

@@ -10,7 +10,13 @@ class Deployer
 
       def run
         clone_repo
-        Dir.chdir(name) { make_changes if updatable? }
+        Dir.chdir(name) do
+          if updatable?
+            make_changes
+          else
+            log "Skipping major upgrade for #{name}"
+          end
+        end
         cleanup
       rescue StandardError => e
         cleanup

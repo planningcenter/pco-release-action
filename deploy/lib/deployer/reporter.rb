@@ -37,7 +37,7 @@ class Deployer
     private
 
     def output_messages
-      ["json=\"#{to_json}\""]
+      ["results_json=\"#{to_json}\""]
     end
 
     def failed_repos

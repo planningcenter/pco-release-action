@@ -24,14 +24,9 @@ class Deployer
     repos.each do |repo|
       log_repo_start(repo)
       repo.update_package
-      handle_success(repo)
-    rescue BaseError, StandardError => e
-      failed_repos.push(repo)
-      log failure_message(error: e, repo: repo)
+      log_result(repo)
     end
-    return unless failed_repos.any?
-
-    raise "[PCO-Release]: Failed in the following repos:\n- #{failed_repos.join("\n- ")}"
+    Reporter.new(repos)
   end
 
   def repos
@@ -47,15 +42,6 @@ class Deployer
     return unless failed_repos.any?
 
     raise "[PCO-Release]: Failed in the following repos:\n- #{failed_repos.map(&:name).join("\n- ")}"
-  end
-
-  def handle_success(repo)
-    log repo.success_message
-    successful_repos.push(repo)
-  end
-
-  def failure_message(error:, repo:)
-    "Failed to update #{package_name} in #{repo.name}: #{error.class} #{error.message}"
   end
 
   def package_name
@@ -76,5 +62,13 @@ class Deployer
 
   def log_repo_start(repo)
     log "updating #{package_name} in #{repo.name}"
+  end
+
+  def log_result(repo)
+    if repo.success?
+      log repo.success_message
+    else
+      log "Failed to update #{package_name} in #{repo.name}: #{repo.error_message}"
+    end
   end
 end

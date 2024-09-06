@@ -1,3 +1,5 @@
+require "shellwords"
+
 class Deployer
   class Reporter
     def initialize(repos)
@@ -21,7 +23,7 @@ class Deployer
 
     def output_to_github
       output_messages.each do |message|
-        system("echo \"#{message}\" >> $GITHUB_OUTPUT")
+        system("echo #{Shellwords.escape(message)} >> $GITHUB_OUTPUT")
       end
     end
 
@@ -34,7 +36,7 @@ class Deployer
     private
 
     def output_messages
-      ["json=\\\"#{to_json}\\\""]
+      ["json=\"#{to_json}\""]
     end
 
     def failed_repos

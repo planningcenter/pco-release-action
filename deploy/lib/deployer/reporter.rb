@@ -21,7 +21,7 @@ class Deployer
 
     def output_to_github
       output_messages.each do |message|
-        system("echo '#{message}' >> $GITHUB_OUTPUT")
+        system("echo \"#{message}\" >> $GITHUB_OUTPUT")
       end
     end
 

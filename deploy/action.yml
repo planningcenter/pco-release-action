@@ -94,7 +94,7 @@ runs:
       run: |
         git config --global user.email "pco-release-bot[bot]@users.noreply.github.com"
         git config --global user.name "pco-release-bot[bot]"
-    - uses: ruby/setup-ruby@km/next-steps-test
+    - uses: ruby/setup-ruby@v1
       with:
         ruby-version: "3.3"
         bundler-cache: true

@@ -57,7 +57,6 @@ outputs:
     description: "The json output of the upgrade prs."
 runs:
   using: "composite"
-  outputs: ${{ steps.setup-upgrade-prs.outputs }}
   steps:
     - name: Generate a token
       id: generate-token

@@ -17,6 +17,15 @@ class Deployer
         raise e
       end
 
+      def pr_number
+      end
+
+      def pr_url
+        return if pr_number.nil?
+
+        "https://github.com/#{owner}/#{name}/pull/#{pr_number}"
+      end
+
       protected
 
       attr_reader :name, :config

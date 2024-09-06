@@ -16,12 +16,12 @@ class Deployer
           successful_repos.map do |repo|
             { name: repo.name, pr_number: repo.pr_number, pr_url: repo.pr_url }
           end
-      }
+      }.to_json
     end
 
     def output_to_github
       output_messages.each do |message|
-        system("echo \"#{message}\" >> $GITHUB_OUTPUT")
+        system("echo '#{message}' >> $GITHUB_OUTPUT")
       end
     end
 

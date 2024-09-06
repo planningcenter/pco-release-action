@@ -10,13 +10,7 @@ class Deployer
 
       def run
         clone_repo
-        Dir.chdir(name) do
-          if updatable?
-            make_changes
-          else
-            log "Skipping major upgrade for #{name}"
-          end
-        end
+        Dir.chdir(name) { make_changes_if_updatable }
         cleanup
       rescue StandardError => e
         cleanup
@@ -37,6 +31,14 @@ class Deployer
 
       def branch_name
         raise NotImplementedError
+      end
+
+      def make_changes_if_updatable
+        if updatable?
+          make_changes
+        else
+          log "Skipping major upgrade for #{name}"
+        end
       end
 
       def clone_repo

@@ -17,6 +17,9 @@ Metrics/ParameterLists:
 Style/Documentation:
   Enabled: false
 
+Style/EmptyMethod:
+  Enabled: false
+
 Style/IfUnlessModifier:
   Enabled: false
 

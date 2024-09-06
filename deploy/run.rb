@@ -18,4 +18,4 @@ config =
 reporter = Deployer.new(config).run
 
 reporter.output_to_github
-reporter.fail_for_failed_repos!
+# reporter.fail_for_failed_repos!

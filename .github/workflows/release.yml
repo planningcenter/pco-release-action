@@ -133,3 +133,7 @@ jobs:
               repo: context.repo.repo,
               body: body
             });
+
+            if (results.failed_repos.length > 0) {
+              throw new Error("Some PRs failed to create");
+            }

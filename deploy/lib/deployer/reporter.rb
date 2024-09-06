@@ -25,7 +25,9 @@ class Deployer
       output_messages.each do |message|
         system("echo #{Shellwords.escape(message)} >> $GITHUB_OUTPUT")
       end
-      system("echo \"::set-output json={hi:\"bye\"}")
+      system(
+        "echo \"::set-output json=#{Shellwords.escape({ hi: "bye" }.to_json)}"
+      )
     end
 
     def fail_for_failed_repos!

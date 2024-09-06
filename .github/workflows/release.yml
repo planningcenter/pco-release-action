@@ -102,6 +102,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            console.log('${{ steps.push-to-consumers.outputs }}');
             const results = JSON.parse('${{ steps.push-to-consumers.outputs.json }}');
             const body = `## Release Automation Results
 

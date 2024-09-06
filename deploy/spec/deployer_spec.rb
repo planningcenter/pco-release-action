@@ -84,7 +84,8 @@ describe Deployer do
           github_token: "",
           owner: "planningcenter",
           package_name: "@planningcenter/tapestry-react",
-          version: "1.0.1"
+          version: "1.0.1",
+          allow_major: true
         )
       allow(config).to receive(:log)
       described_class.new(config).run
@@ -111,7 +112,8 @@ describe Deployer do
             package_name: "@planningcenter/tapestry-react",
             version: "1.0.1",
             change_method: "merge",
-            branch_name: "staging" # Unique branch name
+            branch_name: "staging", # Unique branch name
+            allow_major: true
           )
         described_class.new(config).run
       end

@@ -81,7 +81,11 @@ class Deployer
       end
 
       def updatable?
-        !config.disable_for_major? || !VersionCompare.new(config).major_upgrade?
+        !config.disable_for_major? ||
+          !VersionCompare.new(
+            package_name: package_name,
+            version: version
+          ).major_upgrade?
       end
 
       def cleanup

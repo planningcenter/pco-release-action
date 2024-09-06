@@ -29,9 +29,7 @@ class Deployer
       failed_repos.push(repo)
       log failure_message(error: e, repo: repo)
     end
-    return unless failed_repos.any?
-
-    raise "[PCO-Release]: Failed in the following repos:\n- #{failed_repos.join("\n- ")}"
+    Reporter.new(repos)
   end
 
   def repos

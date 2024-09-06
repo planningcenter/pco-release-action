@@ -23,9 +23,7 @@ class Deployer
 
     def output_to_github
       output_messages.each do |message|
-        system(
-          "echo #{Shellwords.escape(message)} >> #{Shellwords.escape("$GITHUB_OUTPUT")}"
-        )
+        # I have tried for hours to get this to go to the output, but it never works.  Using env instead.
         system("echo #{Shellwords.escape(message)} >> $GITHUB_ENV")
       end
     end

@@ -110,7 +110,7 @@ jobs:
 
             ${results.failed_repos.length > 0 ? "### PRs failed" : ""}
 
-            ${results.failed_repos.map(repo => "- " + repo.name + ": " + repo.message).join("\n")}`;
+            ${results.failed_repos.map(repo => "- " + repo.name + ": " + repo.message).join("\n")}
 
             ### Next steps
 

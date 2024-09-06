@@ -89,6 +89,7 @@ jobs:
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
+          github-token: ${{ secrets.TESTER_MCTESTERSON }}
           ref: ${{ needs.create-release.outputs.release-tag }}
           change-method: "pr"
           only: ${{ inputs.only }}

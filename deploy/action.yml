@@ -57,6 +57,7 @@ outputs:
     description: "The json output of the upgrade prs."
 runs:
   using: "composite"
+  outputs: ${{ steps.setup-upgrade-prs.outputs }}
   steps:
     - name: Generate a token
       id: generate-token
@@ -117,6 +118,3 @@ runs:
         EXCLUDE: ${{ inputs.exclude }}
         ALLOW_MAJOR: ${{ inputs.allow-major }}
       working-directory: ${{ github.action_path}}
-      outputs:
-        json:
-          description: "The json output of the upgrade prs."

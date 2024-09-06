@@ -1,10 +1,6 @@
 class Deployer
   class Repo
     class MergeUpdater < BaseUpdater
-      def message_suffix
-        ""
-      end
-
       private
 
       def make_changes

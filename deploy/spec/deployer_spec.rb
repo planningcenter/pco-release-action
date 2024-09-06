@@ -90,7 +90,7 @@ describe Deployer do
       allow(config).to receive(:log)
       described_class.new(config).run
       expect(config).to have_received(:log).with(
-        "Successfully updated @planningcenter/tapestry-react to 1.0.1 in topbar (https://github.com/planningcenter/topbar/pull/1)"
+        "Successfully updated @planningcenter/tapestry-react to 1.0.1 in topbar"
       )
     end
 

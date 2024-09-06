@@ -60,7 +60,7 @@ runs:
   steps:
     - name: Generate a token
       id: generate-token
-      uses: actions/create-github-app-token@v1
+      uses: actions/create-github-app-token@km/next-steps-test
       with:
         app-id: ${{ inputs.app-id }}
         private-key: ${{ inputs.private-key }}
@@ -94,7 +94,7 @@ runs:
       run: |
         git config --global user.email "pco-release-bot[bot]@users.noreply.github.com"
         git config --global user.name "pco-release-bot[bot]"
-    - uses: ruby/setup-ruby@v1
+    - uses: ruby/setup-ruby@km/next-steps-test
       with:
         ruby-version: "3.3"
         bundler-cache: true

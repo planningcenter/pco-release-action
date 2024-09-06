@@ -10,13 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## v1.0.7 - 2024-04-17
+## km/next-steps-test.0.7 - 2024-04-17
 
-## v1.0.7 - 2024-04-17
+## km/next-steps-test.0.7 - 2024-04-17
 
-## v1.0.7 - 2024-04-17
+## km/next-steps-test.0.7 - 2024-04-17
 
-## v1.0.7 - 2024-04-17
+## km/next-steps-test.0.7 - 2024-04-17
 
 ## 0.0.1 - 2024-04-16
 
@@ -228,7 +228,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Upgrade `@planningcenter/react-beautiful-dnd` to `v13.4.0` to address mobile drag and drop issues
+- Upgrade `@planningcenter/react-beautiful-dnd` to `km/next-steps-test3.4.0` to address mobile drag and drop issues
 - Updates `Button` to accept a `disabled` style object from the theme definition
 - Updates `Button` to support themable `focus` and `focusVisible` styles
 - Updates to `TimeField` component
@@ -314,7 +314,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update documentation to update dark/light mode with React.Context hook
 - Add custom install, build, and test Github workflow commands
 - Add type of `BoxProps` into type defintion for `ThemeProvider`
-- Update dependency `@planningcenter/icons` version to `v14.12.0`
+- Update dependency `@planningcenter/icons` version to `km/next-steps-test4.12.0`
 - Update lodash imports to decrease dependency size
 
 ### Fixed
@@ -495,11 +495,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `ActionsDropdown` duplicates style updates
-- fix `NumberField` deleting with a pad prop; this was a little messed up with the transfer from UI-Kit v16.0.1 to tapestry-react v1.0.0
+- fix `NumberField` deleting with a pad prop; this was a little messed up with the transfer from UI-Kit km/next-steps-test6.0.1 to tapestry-react km/next-steps-test.0.0
 
 ## [1.0.0] - 2022-03-03
 
-- Essentially a rename of [UI-Kit v16.0.1]
+- Essentially a rename of [UI-Kit km/next-steps-test6.0.1]
 
 [4.2.0]: https://github.com/planningcenter/tapestry-react/releases/tag/v4.2.0
 [4.1.0]: https://github.com/planningcenter/tapestry-react/releases/tag/v4.1.0
@@ -527,9 +527,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [2.1.1]: https://github.com/planningcenter/tapestry-react/releases/tag/v2.1.1
 [2.1.0]: https://github.com/planningcenter/tapestry-react/releases/tag/v2.1.0
 [2.0.0]: https://github.com/planningcenter/tapestry-react/releases/tag/v2.0.0
-[1.4.0]: https://github.com/planningcenter/tapestry-react/releases/tag/v1.4.0
-[1.3.0]: https://github.com/planningcenter/tapestry-react/releases/tag/v1.3.0
-[1.2.0]: https://github.com/planningcenter/tapestry-react/releases/tag/v1.2.0
-[1.1.0]: https://github.com/planningcenter/tapestry-react/releases/tag/v1.1.0
-[1.0.0]: https://github.com/planningcenter/tapestry-react/releases/tag/v1.0.0
-[ui-kit v16.0.1]: https://github.com/planningcenter/ui-kit/releases/tag/v16.0.1
+[1.4.0]: https://github.com/planningcenter/tapestry-react/releases/tag/km/next-steps-test.4.0
+[1.3.0]: https://github.com/planningcenter/tapestry-react/releases/tag/km/next-steps-test.3.0
+[1.2.0]: https://github.com/planningcenter/tapestry-react/releases/tag/km/next-steps-test.2.0
+[1.1.0]: https://github.com/planningcenter/tapestry-react/releases/tag/km/next-steps-test.1.0
+[1.0.0]: https://github.com/planningcenter/tapestry-react/releases/tag/km/next-steps-test.0.0
+[ui-kit km/next-steps-test6.0.1]: https://github.com/planningcenter/ui-kit/releases/tag/km/next-steps-test6.0.1

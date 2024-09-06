@@ -23,7 +23,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: planningcenter/pco-release-action/create-release-candidate@v1
+      - uses: planningcenter/pco-release-action/create-release-candidate@km/next-steps-test
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ##############################

@@ -62,14 +62,14 @@ jobs:
     steps:
       - name: Create Release Candidate Pre-Release
         id: create-rc-release
-        uses: planningcenter/pco-release-action/create-release-candidate@v1
+        uses: planningcenter/pco-release-action/create-release-candidate@km/next-steps-test
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
       release-tag: v${{ env.new_version }}
   publish-to-npm:
     needs: create-rc-release
-    uses: planningcenter/pco-release-action/.github/workflows/publish.yml@v1
+    uses: planningcenter/pco-release-action/.github/workflows/publish.yml@km/next-steps-test
     secrets: inherit
     with:
       install-command: ${{ inputs.install-command }}
@@ -88,7 +88,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Push to `staging` for Consumers
-        uses: planningcenter/pco-release-action/deploy@v1
+        uses: planningcenter/pco-release-action/deploy@km/next-steps-test
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}

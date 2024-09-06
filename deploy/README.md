@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: read-all
     steps:
-      - uses: planningcenter/pco-release-action/deploy@v1
+      - uses: planningcenter/pco-release-action/deploy@km/next-steps-test
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}

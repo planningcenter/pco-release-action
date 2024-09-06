@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: "20"
           cache: "yarn"
-      - uses: planningcenter/pco-release-action/release-by-pr@v1
+      - uses: planningcenter/pco-release-action/release-by-pr@km/next-steps-test
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -60,7 +60,7 @@ jobs:
     if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: planningcenter/pco-release-action/sync-with-labels@v1
+      - uses: planningcenter/pco-release-action/sync-with-labels@km/next-steps-test
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
     steps:
-      - uses: planningcenter/pco-release-action/create-release-on-merge@v1
+      - uses: planningcenter/pco-release-action/create-release-on-merge@km/next-steps-test
 ```
 
 #### Require the CHANGELOG.md file to be updated in general PRs (to use human communication about changes)
@@ -134,7 +134,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
-      - uses: planningcenter/pco-release-action/dependabot-automation@v1
+      - uses: planningcenter/pco-release-action/dependabot-automation@km/next-steps-test
 ```
 
 #### Automate the creation of Release candidate releases
@@ -191,7 +191,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
-    uses: planningcenter/pco-release-action/create-release-on-merge@v1
+    uses: planningcenter/pco-release-action/create-release-on-merge@km/next-steps-test
     secrets: inherit
 ```
 
@@ -233,7 +233,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
-    uses: planningcenter/pco-release-action/.github/workflows/rc.yml@v1
+    uses: planningcenter/pco-release-action/.github/workflows/rc.yml@km/next-steps-test
     secrets: inherit
 ```
 
@@ -275,7 +275,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
-    uses: planningcenter/pco-release-action/.github/workflows/qa-release.yml@v1
+    uses: planningcenter/pco-release-action/.github/workflows/qa-release.yml@km/next-steps-test
     secrets: inherit
 ```
 

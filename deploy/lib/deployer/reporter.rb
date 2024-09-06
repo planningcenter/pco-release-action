@@ -26,7 +26,7 @@ class Deployer
         system("echo #{Shellwords.escape(message)} >> $GITHUB_OUTPUT")
       end
       system(
-        "echo \"::set-output json=#{Shellwords.escape({ hi: "bye" }.to_json)}"
+        "echo #{Shellwords.escape("::set-output json=#{{ hi: "bye" }.to_json}")}"
       )
     end
 

@@ -26,6 +26,7 @@ class Deployer
                 /\n#{package_name}@\d+\.\d+\.\d+:\n\s\sversion "(.+)"/m
               )
 
+            puts "match"
             puts match
             current_version_string =
               yarn_lock_file.match(

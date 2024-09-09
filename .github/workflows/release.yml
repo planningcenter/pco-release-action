@@ -75,7 +75,7 @@ jobs:
       cache: ${{ inputs.cache }}
       build-directory: ${{ inputs.build-directory }}
       ref: ${{ needs.create-release.outputs.release-tag }}
-      prerelease: true
+      prerelease: false
   deploy-to-consumers:
     needs: [create-release, publish-to-npm]
     runs-on: ubuntu-latest

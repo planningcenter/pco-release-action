@@ -21,7 +21,7 @@ on:
         description: "The command to run to publish a release version of the package to NPM"
         required: false
         type: string
-        default: "npm publish --tag next"
+        default: "npm publish"
       cache:
         description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
         required: false

@@ -20,15 +20,12 @@ class Deployer
         @current_version ||=
           begin
             yarn_lock_file = File.read("yarn.lock")
-
             current_version_string =
               yarn_lock_file.match(
-                /"#{package_name}@\d+\.\d+\.\d+":\n\s\sversion "(.+)"/m
+                /"#{package_name}@\d+\.\d+\.\d+":\n\s\sversion "([^"]+)"/m
               )[
                 1
               ]
-
-            puts current_version_string
             Gem::Version.new(current_version_string)
           end
       end

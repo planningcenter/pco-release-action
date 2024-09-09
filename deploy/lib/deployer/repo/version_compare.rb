@@ -19,8 +19,10 @@ class Deployer
       def current_version
         @current_version ||=
           begin
+            yarn_lock_file = File.read("yarn.lock")
+            puts "yarn_lock_file: #{yarn_lock_file}"
             current_version_string =
-              File.read("yarn.lock").match(
+              yarn_lock_file.match(
                 /\n#{package_name}@\d+\.\d+\.\d+:\n\s\sversion "(.+)"/
               )[
                 1

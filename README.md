@@ -279,6 +279,47 @@ jobs:
     secrets: inherit
 ```
 
+### Revert
+
+This will allow you to quickly revert all apps to an older version of the library.
+
+#### Configuration variables
+
+The main trigger to run this will be a workflow dispatch. The options are:
+
+| Input         | Description                                                                     | Req'd | Default |
+| ------------- | ------------------------------------------------------------------------------- | ----- | ------- |
+| `pr-number`   | PR number to comment the report to                                              | yes   |
+| `release-tag` | The release tag to revert to. Usually prefixed with v (ex. `v4.9.1`)            | yes   |         |
+| `only`        | A comma separated list of repos that will only be updated                       | No    | ''      |
+| `include`     | A comma separated list of repos to include without checking for the dependency. | No    | ''      |
+| `exclude`     | A comma separated list of repos to exclude without checking for the dependency. | No    | ''      |
+
+#### Usage
+
+Create a workflow within your own JavaScript library. As an example, in `.github/workflows/revert.yml`...
+
+```yml
+on:
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        required: true
+      release-tag:
+        required: true
+
+jobs:
+  create-qa-release-and-deploy:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: planningcenter/pco-release-action/.github/workflows/revert.yml@v1
+    secrets: inherit
+    with:
+      pr-number: ${{ inputs.pr-number }}
+      release-tag: ${{ inputs.release-tag }}
+```
+
 ## Working on this Project
 
 - Build before pushing changes with `yarn build`

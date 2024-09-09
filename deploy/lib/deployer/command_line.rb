@@ -6,6 +6,7 @@ class Deployer
 
     def execute(command, error_class:)
       stdout, stderr, status = Open3.capture3(command)
+      puts "command[#{command}]: #{status.success? ? "success" : "failure"}"
       raise error_class, stderr unless status.success?
 
       config.log stdout

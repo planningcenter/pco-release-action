@@ -68,7 +68,7 @@ class Deployer
     if repo.success?
       log repo.success_message
     else
-      log "Failed to update #{package_name} in #{repo.name}: #{error.class} #{error.message}"
+      log "Failed to update #{package_name} in #{repo.name}: #{repo.error_message}"
     end
   end
 end

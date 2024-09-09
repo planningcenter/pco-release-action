@@ -27,9 +27,8 @@ class Deployer
               )[
                 1
               ]
-            puts yarn_lock_file.match(
-                   /"#{package_name}@\d+\.\d+\.\d+":\n\s\sversion "(.+)"/m
-                 )
+
+            puts current_version_string
             Gem::Version.new(current_version_string)
           end
       end

@@ -27,6 +27,7 @@ class Deployer
               )[
                 1
               ]
+            puts current_version_string
             Gem::Version.new(current_version_string)
           end
       end

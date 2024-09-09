@@ -1,3 +1,6 @@
+AllCops:
+  NewCops: enable
+
 Metrics/BlockLength:
   Exclude:
     - "**/spec/**/*"
@@ -12,6 +15,9 @@ Metrics/ParameterLists:
   Max: 10
 
 Style/Documentation:
+  Enabled: false
+
+Style/EmptyMethod:
   Enabled: false
 
 Style/IfUnlessModifier:

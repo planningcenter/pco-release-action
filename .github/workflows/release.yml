@@ -2,6 +2,10 @@ name: PCO-Release - Release Automation
 on:
   workflow_call:
     inputs:
+      pr-number:
+        description: "The PR number that triggered the release"
+        required: true
+        type: number
       install-command:
         description: "The script command to use to install the package's dependencies"
         required: false
@@ -75,15 +79,18 @@ jobs:
       cache: ${{ inputs.cache }}
       build-directory: ${{ inputs.build-directory }}
       ref: ${{ needs.create-release.outputs.release-tag }}
-      prerelease: true
+      prerelease: false
   deploy-to-consumers:
     needs: [create-release, publish-to-npm]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
+    env:
+      PR_NUMBER: ${{ inputs.pr-number }}
     steps:
       - name: Push to Consumers
+        id: push-to-consumers
         uses: planningcenter/pco-release-action/deploy@v1
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
@@ -95,3 +102,44 @@ jobs:
           include: ${{ inputs.include }}
           upgrade-commands: ${{ inputs.upgrade-commands }}
           allow-major: false
+      - name: Post results to original PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const results = JSON.parse(process.env.results_json);
+            const body = `## Release Automation Results
+
+            ${results.successful_repos.length > 0 ? "### PRs created" : ""}
+
+            ${results.successful_repos.map(repo => "- [" + repo.name + "](" + repo.pr_url + ")").join("\n")}
+
+            ${results.failed_repos.length > 0 ? "### PRs failed" : ""}
+
+            ${results.failed_repos.map(repo => "- " + repo.name + ": " + repo.message).join("\n")}
+
+            ### Next steps
+
+            Run the following command to approve all the PRs:
+
+            \`\`\`
+              ${results.successful_repos.map(repo => "gh pr review " + repo.pr_number + " -repo=planningcenter/" + repo.name + " -a").join("\n")}
+            \`\`\`
+
+            ### If you need to revert
+
+            - Go to the actions tab
+            - Click \`Revert\` on the left hand actions list
+            - Click to the \`Run workflow\` button on the right
+            - enter the last successful version and click \`Run workflow\`
+            `
+            github.rest.issues.createComment({
+              issue_number: process.env.PR_NUMBER,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+            if (results.failed_repos.length > 0) {
+              throw new Error("Some PRs failed to create");
+            }

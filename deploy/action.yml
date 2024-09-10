@@ -52,6 +52,9 @@ inputs:
     description: "Allow major version updates"
     required: false
     default: false
+outputs:
+  json:
+    description: "The json output of the upgrade prs."
 runs:
   using: "composite"
   steps:
@@ -98,6 +101,7 @@ runs:
         working-directory: ${{ github.action_path}}
     - name: Setup Upgrade PRs
       shell: bash
+      id: setup-upgrade-prs
       run: bundle exec ruby ${{ github.action_path }}/run.rb
       env:
         GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}

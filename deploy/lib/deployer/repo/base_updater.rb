@@ -10,17 +10,20 @@ class Deployer
 
       def run
         clone_repo
-        Dir.chdir(name) do
-          if updatable?
-            make_changes
-          else
-            log "Skipping major upgrade for #{name}"
-          end
-        end
+        Dir.chdir(name) { make_changes_if_updatable }
         cleanup
       rescue StandardError => e
         cleanup
         raise e
+      end
+
+      def pr_number
+      end
+
+      def pr_url
+        return if pr_number.nil?
+
+        "https://github.com/#{owner}/#{name}/pull/#{pr_number}"
       end
 
       protected
@@ -37,6 +40,14 @@ class Deployer
 
       def branch_name
         raise NotImplementedError
+      end
+
+      def make_changes_if_updatable
+        if updatable?
+          make_changes
+        else
+          log "Skipping major upgrade for #{name}"
+        end
       end
 
       def clone_repo

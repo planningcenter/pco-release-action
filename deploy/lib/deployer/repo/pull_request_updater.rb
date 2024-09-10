@@ -1,13 +1,11 @@
 class Deployer
   class Repo
     class PullRequestUpdater < BaseUpdater
-      def message_suffix
-        " (https://github.com/#{owner}/#{name}/pull/#{pr_number})"
-      end
+      attr_reader :pr_number
 
       private
 
-      attr_reader :pr_number
+      attr_writer :pr_number
 
       def make_changes
         create_branch
@@ -37,7 +35,7 @@ class Deployer
           )
         raise FailedToCreatePRError, response if response.number.nil?
 
-        @pr_number = response.number
+        self.pr_number = response.number
       end
 
       def automerge_pr

@@ -9,27 +9,24 @@ require_relative "deployer/repo/base_updater"
 require_relative "deployer/repo/merge_updater"
 require_relative "deployer/repo/pull_request_updater"
 require_relative "deployer/repo/version_compare"
+require_relative "deployer/reporter"
 require_relative "deployer/repos"
 
 class Deployer
   def initialize(config)
     @config = config
+    @failed_repos = []
+    @successful_repos = []
   end
 
   def run
-    log "Updating #{package_name} to #{version} in the following repositories: #{repos.map(&:name).join(", ")}"
-    failed_repos = []
+    log_deployer_start
     repos.each do |repo|
-      log "updating #{package_name} in #{repo.name}"
+      log_repo_start(repo)
       repo.update_package
-      log repo.success_message
-    rescue BaseError, StandardError => e
-      failed_repos.push(repo.name)
-      log failure_message(error: e, repo: repo)
+      log_result(repo)
     end
-    return unless failed_repos.any?
-
-    raise "[PCO-Release]: Failed in the following repos:\n- #{failed_repos.join("\n- ")}"
+    Reporter.new(repos)
   end
 
   def repos
@@ -39,9 +36,12 @@ class Deployer
   private
 
   attr_reader :config
+  attr_accessor :failed_repos, :successful_repos
 
-  def failure_message(error:, repo:)
-    "Failed to update #{package_name} in #{repo.name}: #{error.class} #{error.message}"
+  def report_results
+    return unless failed_repos.any?
+
+    raise "[PCO-Release]: Failed in the following repos:\n- #{failed_repos.map(&:name).join("\n- ")}"
   end
 
   def package_name
@@ -54,5 +54,21 @@ class Deployer
 
   def log(message)
     config.log(message)
+  end
+
+  def log_deployer_start
+    log "Updating #{package_name} to #{version} in the following repositories: #{repos.map(&:name).join(", ")}"
+  end
+
+  def log_repo_start(repo)
+    log "updating #{package_name} in #{repo.name}"
+  end
+
+  def log_result(repo)
+    if repo.success?
+      log repo.success_message
+    else
+      log "Failed to update #{package_name} in #{repo.name}: #{repo.error_message}"
+    end
   end
 end

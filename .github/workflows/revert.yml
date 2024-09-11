@@ -5,7 +5,7 @@ on:
       pr-number:
         description: "The PR number that triggered the release"
         required: true
-        type: number
+        type: string
       release-tag:
         description: "The release tag to revert to"
         required: true

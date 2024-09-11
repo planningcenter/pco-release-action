@@ -64,6 +64,7 @@ runs:
       with:
         app-id: ${{ inputs.app-id }}
         private-key: ${{ inputs.private-key }}
+        owner: ${{ github.repository_owner }}
     - uses: actions/checkout@v4
       with:
         ref: ${{ inputs.ref }}

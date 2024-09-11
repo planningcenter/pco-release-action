@@ -56,6 +56,11 @@ on:
         required: false
         type: string
         default: "{}"
+      package-json-path:
+        description: "The path to the package.json file to version."
+        required: false
+        type: string
+        default: "package.json"
 jobs:
   create-release:
     runs-on: ubuntu-latest
@@ -65,6 +70,8 @@ jobs:
     steps:
       - name: Create Release
         uses: planningcenter/pco-release-action/create-release-on-merge@v1
+        with:
+          package_json_path: ${{ inputs.package-json-path }}
     outputs:
       release-tag: v${{ env.version }}
   publish-to-npm:

@@ -123,7 +123,7 @@ jobs:
             Run the following command to approve all the PRs:
 
             \`\`\`
-              ${results.successful_repos.map(repo => "gh pr review " + repo.pr_number + " -repo=planningcenter/" + repo.name + " -a").join("\n")}
+              ${results.successful_repos.map(repo => "gh pr review " + repo.pr_number + " --repo=planningcenter/" + repo.name + " -a").join("\n")}
             \`\`\`
 
             ### If you need to revert

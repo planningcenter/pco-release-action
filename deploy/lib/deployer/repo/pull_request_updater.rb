@@ -1,3 +1,5 @@
+require_relative "base_updater"
+
 class Deployer
   class Repo
     class PullRequestUpdater < BaseUpdater
@@ -43,9 +45,11 @@ class Deployer
 
         log "Merging PR #{pr_number}"
         command_line.execute(
-          "gh pr merge #{pr_number} --auto --merge",
+          "gh pr merge #{pr_number} --auto --merge --repo #{config.owner}/#{name}",
           error_class: AutoMergeFailure
         )
+      rescue AutoMergeFailure => e
+        log "Failed to auto-merge PR: #{e.message}"
       end
 
       def pr_title

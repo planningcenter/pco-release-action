@@ -59,6 +59,8 @@ class Deployer
       case config.change_method
       when "merge"
         MergeUpdater
+      when "revert"
+        PullRequestUpdater
       else
         DependabotPullRequestUpdater
       end

@@ -42,7 +42,7 @@ jobs:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
           ref: ${{ inputs.release-tag }}
-          change-method: "pr"
+          change-method: "revert"
           only: ${{ inputs.only }}
           exclude: ${{ inputs.exclude }}
           include: ${{ inputs.include }}

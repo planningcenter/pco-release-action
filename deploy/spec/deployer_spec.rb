@@ -26,7 +26,7 @@ describe Deployer do
 
   def stub_clone_repo(suffix = "")
     allow(Open3).to receive(:capture3).with(
-      "git clone https://:x-oauth-basic@github.com/planningcenter/topbar.git#{suffix}"
+      "git clone https://oauth2:@github.com/planningcenter/topbar.git#{suffix}"
     ) do
       Dir.mkdir("topbar") unless Dir.exist?("topbar")
       ["", "", double(success?: true)]

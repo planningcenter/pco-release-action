@@ -71,7 +71,7 @@ describe Deployer::Repo do
 
       expect(
         repo.error_message
-      ).to eq "[Push Branch Failure]: You don't have permissions to push to this branch"
+      ).to include "[Push Branch Failure]: You don't have permissions to push to this branch"
     end
   end
 

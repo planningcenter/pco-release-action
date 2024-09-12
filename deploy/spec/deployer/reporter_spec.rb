@@ -24,14 +24,16 @@ describe Deployer::Reporter do
       report = described_class.new([failed_repo, successful_repo])
 
       expect(report.to_json).to eq(
-        failed_repos: [{ name: "test", message: "Missing permissions." }],
-        successful_repos: [
-          {
-            name: "test2",
-            pr_number: 127,
-            pr_url: "http://github.com/org/repo/pull/127"
-          }
-        ]
+        {
+          failed_repos: [{ name: "test", message: "Missing permissions." }],
+          successful_repos: [
+            {
+              name: "test2",
+              pr_number: 127,
+              pr_url: "http://github.com/org/repo/pull/127"
+            }
+          ]
+        }.to_json
       )
     end
   end
@@ -40,7 +42,9 @@ describe Deployer::Reporter do
     it "returns the code to set up the proper outputs" do
       report = described_class.new([failed_repo, successful_repo])
 
-      expect(report.send(:output_messages)).to eq(["json=#{report.to_json}"])
+      expect(report.send(:output_messages)).to eq(
+        ["results_json=#{report.to_json}"]
+      )
     end
   end
 end

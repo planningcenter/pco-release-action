@@ -1,4 +1,11 @@
 require_relative "base_updater"
+require "dependabot/source"
+require "dependabot/file_fetchers"
+require "dependabot/file_parsers"
+require "dependabot/file_updaters"
+require "dependabot/pull_request_creator"
+require "dependabot/update_checkers"
+require "dependabot/npm_and_yarn"
 
 class Deployer
   class Repo

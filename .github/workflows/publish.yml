@@ -73,35 +73,35 @@ jobs:
           path: ${{ inputs.build-directory }}
           key: ${{inputs.build-directory }}-${{ github.sha }}
 
-  publish-to-npm:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.ref }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          registry-url: https://registry.npmjs.org
-          always-auth: true
-          cache: ${{ inputs.cache }}
-      - name: Restore build directory
-        uses: actions/cache/restore@v3
-        with:
-          path: ${{ inputs.build-directory }}
-          key: ${{inputs.build-directory }}-${{ github.sha }}
-      - run: ${{ inputs.install-command }}
-      - name: Publish release to NPM
-        if: ${{ !inputs.prerelease }}
-        run: ${{ inputs.publish-command }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
-      - name: Publish prerelease to NPM
-        if: ${{ inputs.prerelease }}
-        run: ${{ inputs.prepublish-command }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
+  # publish-to-npm:
+  #   needs: build-and-test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         ref: ${{ inputs.ref }}
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "20"
+  #         registry-url: https://registry.npmjs.org
+  #         always-auth: true
+  #         cache: ${{ inputs.cache }}
+  #     - name: Restore build directory
+  #       uses: actions/cache/restore@v3
+  #       with:
+  #         path: ${{ inputs.build-directory }}
+  #         key: ${{inputs.build-directory }}-${{ github.sha }}
+  #     - run: ${{ inputs.install-command }}
+  #     - name: Publish release to NPM
+  #       if: ${{ !inputs.prerelease }}
+  #       run: ${{ inputs.publish-command }}
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
+  #     - name: Publish prerelease to NPM
+  #       if: ${{ inputs.prerelease }}
+  #       run: ${{ inputs.prepublish-command }}
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
 
   publish-to-github-package-registry:
     needs: build-and-test

@@ -1,8 +1,13 @@
 class Deployer
   class Repo
     class VersionCompare
-      def initialize(package_name:, version:)
+      def initialize(
+        package_name:,
+        version:,
+        current_version: default_current_version
+      )
         @version = Gem::Version.new(version)
+        @current_version = current_version
         @package_name = package_name
       end
 
@@ -14,10 +19,10 @@ class Deployer
 
       private
 
-      attr_reader :package_name, :version
+      attr_reader :package_name, :version, :current_version
 
-      def current_version
-        @current_version ||=
+      def default_current_version
+        @default_current_version ||=
           begin
             yarn_lock_file = File.read("yarn.lock")
             current_version_string =

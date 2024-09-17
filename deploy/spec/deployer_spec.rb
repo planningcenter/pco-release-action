@@ -70,14 +70,57 @@ describe Deployer do
 
   describe "#run" do
     it "updates the package in the specified repositories" do
+      allow(Open3).to receive(:capture3).with(
+        "npm install --silent"
+      ).and_return(["", "", double(success?: true)])
+
+      mock_file_parser = instance_double(Dependabot::NpmAndYarn::FileParser)
+      allow(Dependabot::NpmAndYarn::FileParser).to receive(:new).and_return(
+        mock_file_parser
+      )
+      allow(mock_file_parser).to receive(:parse).and_return(
+        [
+          instance_double(
+            Dependabot::Dependency,
+            top_level?: true,
+            name: "@planningcenter/tapestry-react"
+          )
+        ]
+      )
+      allow(Dependabot::NpmAndYarn::UpdateChecker).to receive(:new).and_return(
+        instance_double(
+          Dependabot::NpmAndYarn::UpdateChecker,
+          requirements_unlocked_or_can_be?: true,
+          can_update?: true,
+          updated_dependencies: [instance_double(Dependabot::Dependency)]
+        )
+      )
       stub_find_repos("topbar")
       stub_read_package_json("topbar")
-      stub_clone_repo(" --depth=1")
-      stub_checkout_branch
-      stub_upgrade
-      stub_commit_changes
-      stub_push_changes
-      stub_create_pr
+      files = [
+        instance_double(Dependabot::DependencyFile, name: "yarn.lock"),
+        instance_double(Dependabot::DependencyFile, name: "package.json")
+      ]
+      allow(Dependabot::NpmAndYarn::FileFetcher).to receive(:new).and_return(
+        instance_double(
+          Dependabot::NpmAndYarn::FileFetcher,
+          files: files,
+          commit: ""
+        )
+      )
+      allow(Dependabot::NpmAndYarn::FileUpdater).to receive(:new).and_return(
+        instance_double(
+          Dependabot::NpmAndYarn::FileUpdater,
+          updated_dependency_files: files
+        )
+      )
+      pull_request_creator = instance_double(Dependabot::PullRequestCreator)
+      allow(Dependabot::PullRequestCreator).to receive(:new).with(
+        hash_including(files: files)
+      ).and_return(pull_request_creator)
+      allow(pull_request_creator).to receive(:create).and_return(
+        double(number: 1, html_url: "url")
+      )
 
       config =
         Deployer::Config.new(
@@ -92,6 +135,7 @@ describe Deployer do
       expect(config).to have_received(:log).with(
         "Successfully updated @planningcenter/tapestry-react to 1.0.1 in topbar"
       )
+      expect(pull_request_creator).to have_received(:create)
     end
 
     context "when specifying a merge" do

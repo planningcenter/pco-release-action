@@ -121,6 +121,8 @@ jobs:
         with:
           path: ${{ inputs.build-directory }}
           key: ${{inputs.build-directory }}-${{ github.sha }}
+      - run: |
+          cat /home/runner/work/_temp/.npmrc
       - run: ${{ inputs.install-command }}
       - name: Publish release to GPR
         if: ${{ !inputs.prerelease }}

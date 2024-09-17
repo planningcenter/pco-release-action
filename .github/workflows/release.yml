@@ -109,6 +109,7 @@ jobs:
           include: ${{ inputs.include }}
           upgrade-commands: ${{ inputs.upgrade-commands }}
           allow-major: false
+          package-json-path: ${{ inputs.package-json-path }}
       - name: Post results to original PR
         uses: actions/github-script@v7
         with:

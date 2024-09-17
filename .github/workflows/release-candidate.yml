@@ -112,3 +112,4 @@ jobs:
           include: ${{ inputs.include }}
           upgrade-commands: ${{ inputs.upgrade-commands }}
           allow-major: true
+          package-json-path: ${{ inputs.package-json-path }}

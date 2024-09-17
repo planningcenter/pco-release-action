@@ -52,6 +52,10 @@ inputs:
     description: "Allow major version updates"
     required: false
     default: false
+  package-json-path:
+    description: "path to package.json"
+    required: false
+    default: "package.json"
 outputs:
   json:
     description: "The json output of the upgrade prs."
@@ -78,7 +82,7 @@ runs:
       run: |
         VERSION="${{ inputs.version }}"
         if [[ -z "$VERSION" ]]; then
-          VERSION=$(jq -r '.version' package.json)
+          VERSION=$(jq -r '.version' ${{ inputs.package-json-path}})
         fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
     - name: Find package_name
@@ -87,7 +91,7 @@ runs:
       run: |
         PACKAGE_NAME="${{ inputs.package-name }}"
         if [[ -z "$PACKAGE_NAME" ]]; then
-          PACKAGE_NAME=$(jq -r '.name' package.json)
+          PACKAGE_NAME=$(jq -r '.name' ${{ inputs.package-json-path }})
         fi
         echo "package-name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
     - name: Setup github user info

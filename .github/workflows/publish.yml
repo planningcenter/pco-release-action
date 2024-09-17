@@ -124,6 +124,8 @@ jobs:
       - run: |
           cat /home/runner/work/_temp/.npmrc
       - run: ${{ inputs.install-command }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish release to GPR
         if: ${{ !inputs.prerelease }}
         run: ${{ inputs.publish-command }}

@@ -122,6 +122,8 @@ jobs:
           path: ${{ inputs.build-directory }}
           key: ${{inputs.build-directory }}-${{ github.sha }}
       - run: ${{ inputs.install-command }}
+        env:
+          NPM_CONFIG_USERCONFIG: "" # let's continue to use the default registry for install
       - name: Publish release to GPR
         if: ${{ !inputs.prerelease }}
         run: ${{ inputs.publish-command }}

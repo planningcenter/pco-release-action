@@ -52,6 +52,16 @@ on:
         required: false
         type: string
         default: "{}"
+      package-json-path:
+        description: "path to package.json"
+        required: false
+        type: string
+        default: "package.json"
+      yarn-version-command:
+        description: "command to run to update version"
+        required: false
+        type: string
+        default: "yarn version"
 jobs:
   create-qa-release:
     if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release qa')
@@ -65,6 +75,8 @@ jobs:
         uses: planningcenter/pco-release-action/create-qa-release@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          package-json-path: ${{ inputs.package-json-path }}
+          yarn-version-command: ${{ inputs.yarn-version-command }}
     outputs:
       release-tag: v${{ env.new_version }}
   publish-to-npm:

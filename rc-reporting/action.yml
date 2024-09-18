@@ -28,7 +28,7 @@ runs:
 
           ${successfulRepoList}
 
-          ${results.failed_repos.length > 0 ? "### Failed to deploy in the following repos" : ""}
+          ${results.failed_repos.length > 0 ? "### Failed to deploy in the following repos:" : ""}
 
           ${failedRepoList}
 

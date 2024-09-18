@@ -33,7 +33,7 @@ class Deployer
         @fetcher ||=
           Dependabot::FileFetchers.for_package_manager(package_manager).new(
             source: source,
-            credentials: config.credentials
+            credentials: credentials
           )
       end
 
@@ -42,7 +42,7 @@ class Deployer
           Dependabot::FileParsers.for_package_manager(package_manager).new(
             dependency_files: fetcher.files,
             source: source,
-            credentials: config.credentials
+            credentials: credentials
           )
       end
 
@@ -68,7 +68,7 @@ class Deployer
           Dependabot::UpdateCheckers.for_package_manager(package_manager).new(
             dependency: dependency,
             dependency_files: fetcher.files,
-            credentials: config.credentials
+            credentials: credentials
           )
       end
 
@@ -130,7 +130,7 @@ class Deployer
           Dependabot::FileUpdaters.for_package_manager(package_manager).new(
             dependencies: updated_dependencies,
             dependency_files: fetcher.files,
-            credentials: config.credentials
+            credentials: credentials
           )
       end
 
@@ -144,7 +144,7 @@ class Deployer
           base_commit: fetcher.commit,
           dependencies: updated_dependencies,
           files: updated_files,
-          credentials: config.credentials,
+          credentials: credentials,
           assignees: nil,
           author_details: {
             name: "dependabot[bot]",
@@ -164,6 +164,23 @@ class Deployer
         )
       rescue AutoMergeFailure => e
         log "Failed to auto-merge PR: #{e.message}"
+      end
+
+      def credentials
+        [
+          {
+            "type" => "git_source",
+            "host" => "github.com",
+            "username" => "x-access-token",
+            "password" => config.github_token
+          },
+          {
+            "type" => "npm_registry",
+            "registry" => "npm.pkg.github.com",
+            "token" => config.github_token,
+            "replaces_base" => true
+          }
+        ].map { |creds| Dependabot::Credential.new(creds) }
       end
     end
   end

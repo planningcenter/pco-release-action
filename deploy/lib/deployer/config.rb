@@ -55,22 +55,5 @@ class Deployer
     def disable_for_major?
       !allow_major
     end
-
-    def credentials
-      [
-        {
-          "type" => "git_source",
-          "host" => "github.com",
-          "username" => "x-access-token",
-          "password" => github_token
-        },
-        {
-          "type" => "npm_registry",
-          "registry" => "npm.pkg.github.com",
-          "token" => github_token,
-          "replaces_base" => true
-        }
-      ]
-    end
   end
 end

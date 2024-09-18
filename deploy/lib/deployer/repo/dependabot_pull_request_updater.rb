@@ -31,10 +31,14 @@ class Deployer
 
       def fetcher
         @fetcher ||=
-          Dependabot::FileFetchers.for_package_manager(package_manager).new(
-            source: source,
-            credentials: credentials
-          )
+          begin
+            fetcher =
+              Dependabot::FileFetchers.for_package_manager(package_manager).new(
+                source: source,
+                credentials: credentials
+              )
+            sanitize_yarnrc_yml(fetcher)
+          end
       end
 
       def parser
@@ -181,6 +185,17 @@ class Deployer
             "replaces_base" => true
           }
         ].map { |creds| Dependabot::Credential.new(creds) }
+      end
+
+      def sanitize_yarnrc_yml(fetcher)
+        # publishing uses the yarnrc.yml file to set the yarnPath
+        # but this behavior is broken in dependabot:
+        # https://github.com/dependabot/dependabot-core/issues/10632
+        yarnrc_yml_file = fetcher.files.find { |f| f.name == ".yarnrc.yml" }
+        return if yarnrc_yml_file.nil?
+
+        yarnrc_yml_file.content =
+          yarnrc_yml_file.content.gsub("yarnPath:", "# yarnPath:")
       end
     end
   end

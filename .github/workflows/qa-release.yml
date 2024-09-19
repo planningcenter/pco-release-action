@@ -113,3 +113,10 @@ jobs:
           upgrade-commands: ${{ inputs.upgrade-commands }}
           allow-major: true
           package-json-path: ${{ inputs.package-json-path }}
+      - name: Post results to original PR
+        uses: planningcenter/pco-release-action/qa-reporting@v1
+        with:
+          pr-number: ${{ github.event.issue.number }}
+          results-json: ${{ env.results_json }}
+          actor: ${{ github.actor }}
+          proto-tag: "${{ github.repository }}-${{ github.event.issue.number }}"

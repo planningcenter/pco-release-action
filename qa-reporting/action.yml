@@ -1,0 +1,52 @@
+name: Post results to original PR
+inputs:
+  results-json:
+    description: "JSON string of results"
+    required: true
+  pr-number:
+    description: "The PR number that triggered the release"
+    required: true
+  actor:
+    description: "The actor that triggered the release"
+    required: true
+  proto-tag:
+    description: "The tag of the proto release"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/github-script@v7
+      env:
+        PR_NUMBER: ${{ inputs.pr-number }}
+        RESULTS_JSON: ${{ inputs.results-json }}
+        ACTOR: ${{ inputs.actor }}
+        PROTO_TAG: ${{ inputs.proto-tag }}
+      with:
+        script: |
+          const results = JSON.parse(process.env.RESULTS_JSON);
+          const successfulRepoList = results.successful_repos.map(repo => `- \`${repo.name}\``).join("\n")
+          const failedRepoList = results.failed_repos.map(repo => `- \`${repo.name}\`: ${repo.message}`).join("\n")
+          const body = `## QA release successfully created
+
+          You can access the proto release at: https://${process.env.PROTO_TAG}.login.planningcenter.ninja/
+
+          ${results.successful_repos.length > 0 ? "### Deployed Successfully to the following repos:" : ""}
+
+          ${successfulRepoList}
+
+          ${results.failed_repos.length > 0 ? "### Failed to deploy in the following repos:" : ""}
+
+          ${failedRepoList}
+
+          Triggered by: @${process.env.ACTOR}
+          `
+          github.rest.issues.createComment({
+            issue_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: body
+          });
+
+          if (results.failed_repos.length > 0) {
+            throw new Error("Failed to push to all apps.");
+          }

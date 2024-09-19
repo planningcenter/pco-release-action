@@ -106,7 +106,7 @@ jobs:
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
           ref: ${{ needs.create-qa-release.outputs.release-tag }}
           change-method: "merge"
-          branch-name: "proto/${{ github.repository }}-${{ github.event.issue.number }}"
+          branch-name: "proto/${{ github.event.repository.name }}-${{ github.event.issue.number }}"
           only: ${{ inputs.only }}
           exclude: ${{ inputs.exclude }}
           include: ${{ inputs.include }}
@@ -119,4 +119,4 @@ jobs:
           pr-number: ${{ github.event.issue.number }}
           results-json: ${{ env.results_json }}
           actor: ${{ github.actor }}
-          proto-tag: "${{ github.repository }}-${{ github.event.issue.number }}"
+          proto-tag: "${{ github.event.repository.name }}-${{ github.event.issue.number }}"

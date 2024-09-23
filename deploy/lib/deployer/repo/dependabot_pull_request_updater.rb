@@ -38,6 +38,7 @@ class Deployer
                 credentials: credentials
               )
             sanitize_yarnrc_yml(fetcher)
+            fetcher
           end
       end
 

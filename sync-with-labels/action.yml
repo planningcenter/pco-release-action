@@ -13,6 +13,11 @@ inputs:
     description: "The command to run to bump the version"
     required: false
     default: "yarn version"
+  cache:
+    description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
+    required: false
+    type: string
+    default: "yarn"
 
 runs:
   using: "composite"
@@ -23,7 +28,7 @@ runs:
       if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
       with:
         node-version: "20"
-        cache: "yarn"
+        cache: ${{ inputs.cache}}
     - uses: planningcenter/pco-release-action/release-by-pr@v1
       if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
       with:

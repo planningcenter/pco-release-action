@@ -25,12 +25,13 @@ class Deployer
         @default_current_version ||=
           begin
             yarn_lock_file = File.read("yarn.lock")
-            current_version_string =
+            match =
               yarn_lock_file.match(
-                /"#{package_name}@[^"]+":\n\s\sversion "([^"]+)"/m
-              )[
-                1
-              ]
+                /"#{Regexp.escape(package_name)}@[^"]+":?\n\s+version:?\s"?([^"\n]+)/m
+              )
+            raise "No lockfile entry found for #{package_name}" if match.nil?
+
+            current_version_string = match[1]
             Gem::Version.new(current_version_string)
           end
       end

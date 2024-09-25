@@ -42,11 +42,14 @@ inputs:
     description: "The ref to use for the release"
     required: false
     default: ""
-  app-id:
-    description: "The app id for the github app"
-    required: true
-  private-key:
-    description: "The private key for the github app"
+  # app-id:
+  #   description: "The app id for the github app"
+  #   required: true
+  # private-key:
+  #   description: "The private key for the github app"
+  #   required: true
+  token:
+    description: "The token for the github app"
     required: true
   allow-major:
     description: "Allow major version updates"
@@ -62,13 +65,13 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Generate a token
-      id: generate-token
-      uses: actions/create-github-app-token@v1
-      with:
-        app-id: ${{ inputs.app-id }}
-        private-key: ${{ inputs.private-key }}
-        owner: ${{ github.repository_owner }}
+    # - name: Generate a token
+    #   id: generate-token
+    #   uses: actions/create-github-app-token@v1
+    #   with:
+    #     app-id: ${{ inputs.app-id }}
+    #     private-key: ${{ inputs.private-key }}
+    #     owner: ${{ github.repository_owner }}
     - uses: actions/checkout@v4
       with:
         ref: ${{ inputs.ref }}
@@ -112,7 +115,7 @@ runs:
       id: setup-upgrade-prs
       run: bundle exec ruby ${{ github.action_path }}/run.rb
       env:
-        GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+        GITHUB_TOKEN: ${{ inputs.token }}
         PACKAGE_NAME: ${{ steps.find-package-name.outputs.package-name }}
         PACKAGE_VERSION: ${{ steps.find-version.outputs.version }}
         OWNER: ${{ inputs.owner }}

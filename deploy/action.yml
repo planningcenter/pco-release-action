@@ -78,7 +78,7 @@ runs:
         node-version: "18"
     - name: Enable Corepack
       shell: bash
-      run: corepack enable
+      run: export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && corepack enable
     - name: Find new version
       id: find-version
       shell: bash

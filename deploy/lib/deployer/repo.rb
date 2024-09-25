@@ -11,7 +11,7 @@ class Deployer
 
       self.success = true
     rescue StandardError => e
-      self.error_message = e.message
+      self.error_message = "#{e.message}: #{e.backtrace.last(8).join("\n")}"
       self.success = false
     end
 

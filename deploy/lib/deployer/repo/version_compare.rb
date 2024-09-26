@@ -30,7 +30,7 @@ class Deployer
       def find_current_version
         match =
           yarn_lock_file.match(
-            /"#{package_name}@[^"]+":\n\s\sversion "([^"]+)"/m
+            /"#{Regexp.escape(package_name)}@[^"]+":?\n\s+version:?\s"?([^"\n]+)/m
           )
         package_not_found if match.nil?
 

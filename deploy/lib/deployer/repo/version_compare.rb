@@ -28,19 +28,25 @@ class Deployer
       end
 
       def find_current_version
-        current_version_string =
+        match =
           yarn_lock_file.match(
             /"#{package_name}@[^"]+":\n\s\sversion "([^"]+)"/m
-          )[
-            1
-          ]
+          )
+        package_not_found if match.nil?
+
+        current_version_string = match[1]
         Gem::Version.new(current_version_string)
       end
 
       def yarn_lock_file
         @yarn_lock_file ||= File.read(yarn_lock_file_path)
       rescue Errno::ENOENT
-        raise Deployer::VersionCompareFailure, "No yarn.lock file found"
+        raise VersionCompareFailure, "No yarn.lock file found"
+      end
+
+      def package_not_found
+        raise VersionCompareFailure,
+              "Could not find #{package_name} in yarn.lock"
       end
     end
   end

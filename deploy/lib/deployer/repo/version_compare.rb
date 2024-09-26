@@ -4,9 +4,11 @@ class Deployer
       def initialize(
         package_name:,
         version:,
-        current_version: default_current_version
+        current_version: nil,
+        yarn_lock_file_path: "yarn.lock"
       )
         @version = Gem::Version.new(version)
+        @yarn_lock_file_path = yarn_lock_file_path
         @current_version = current_version
         @package_name = package_name
       end
@@ -19,20 +21,21 @@ class Deployer
 
       private
 
-      attr_reader :package_name, :version, :current_version
+      attr_reader :package_name, :version, :yarn_lock_file_path
 
-      def default_current_version
-        @default_current_version ||=
-          begin
-            yarn_lock_file = File.read("yarn.lock")
-            current_version_string =
-              yarn_lock_file.match(
-                /"#{package_name}@[^"]+":\n\s\sversion "([^"]+)"/m
-              )[
-                1
-              ]
-            Gem::Version.new(current_version_string)
-          end
+      def current_version
+        @current_version ||= find_current_version
+      end
+
+      def find_current_version
+        yarn_lock_file = File.read(yarn_lock_file_path)
+        current_version_string =
+          yarn_lock_file.match(
+            /"#{package_name}@[^"]+":\n\s\sversion "([^"]+)"/m
+          )[
+            1
+          ]
+        Gem::Version.new(current_version_string)
       end
     end
   end

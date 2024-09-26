@@ -1,14 +1,10 @@
 class Deployer
   class Repo
     class VersionCompare
-      def initialize(
-        package_name:,
-        version:,
-        current_version: default_current_version
-      )
+      def initialize(package_name:, version:, current_version: nil)
         @version = Gem::Version.new(version)
-        @current_version = current_version
         @package_name = package_name
+        @current_version = current_version || default_current_version
       end
 
       def major_upgrade?

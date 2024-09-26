@@ -10,5 +10,21 @@ describe Deployer::Repo::VersionCompare do
 
       expect(version_compare.major_upgrade?).to eq(false)
     end
+
+    context "when there is no lock file" do
+      it "raises error" do
+        version_compare =
+          described_class.new(
+            package_name: "@planningcenter/tapestry-react",
+            version: "4.6.0",
+            yarn_lock_file_path: "spec/fixtures/missing.lock"
+          )
+
+        expect { version_compare.major_upgrade? }.to raise_error(
+          Deployer::VersionCompareFailure,
+          "[Deployer::VersionCompareFailure]: No yarn.lock file found"
+        )
+      end
+    end
   end
 end

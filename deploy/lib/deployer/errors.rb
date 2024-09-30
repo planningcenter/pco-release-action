@@ -46,4 +46,16 @@ class Deployer
 
   class VersionCompareFailure < BaseError
   end
+
+  class RequirementsNotMet < BaseError
+    def initialize(version)
+      super(build_message(version))
+    end
+
+    def build_message(version)
+      "Upgrade does not satisfy requirements. The latest upgradable verison is #{version}. " \
+        "Verify that the requirement allows for an upgrade to this version and check that all " \
+        "peer dependencies are satisfied."
+    end
+  end
 end

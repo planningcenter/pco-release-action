@@ -43,4 +43,7 @@ class Deployer
 
   class AutoMergeFailure < BaseError
   end
+
+  class VersionCompareFailure < BaseError
+  end
 end

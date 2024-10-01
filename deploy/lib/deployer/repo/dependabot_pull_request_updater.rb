@@ -5,6 +5,7 @@ class Deployer
     class DependabotPullRequestUpdater < PullRequestUpdater
       def run
         setup_runner
+        verify_upgrade_satisfies
         create_pr
         automerge_pr if config.automerge
       end
@@ -197,6 +198,18 @@ class Deployer
 
         yarnrc_yml_file.content =
           yarnrc_yml_file.content.gsub("yarnPath:", "# yarnPath:")
+      end
+
+      def verify_upgrade_satisfies
+        if Gem::Version.new(resolvable_version) >= Gem::Version.new(version)
+          return
+        end
+
+        raise RequirementsNotMet, resolvable_version
+      end
+
+      def resolvable_version
+        checker.latest_resolvable_version
       end
     end
   end

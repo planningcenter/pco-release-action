@@ -9,12 +9,15 @@ inputs:
   actor:
     description: "The actor that triggered the release"
     required: true
-  proto-tag:
-    description: "The tag of the proto release"
-    required: true
   version-tag:
     description: "The tag of the version release"
     required: true
+  release-type:
+    description: "The type of release"
+    required: true
+  proto-tag:
+    description: "The tag of the proto release (if it exists)"
+    required: false
 runs:
   using: "composite"
   steps:
@@ -23,18 +26,17 @@ runs:
         PR_NUMBER: ${{ inputs.pr-number }}
         RESULTS_JSON: ${{ inputs.results-json }}
         ACTOR: ${{ inputs.actor }}
-        PROTO_TAG: ${{ inputs.proto-tag }}
         VERSION_TAG: ${{ inputs.version-tag }}
+        RELEASE_TYPE: ${{ inputs.release-type }}
       with:
         script: |
-          let body = ""
-          let failed = false
-          if (process.env.RESULTS_JSON) {
+          function getBody() {
+            if (!process.env.RESULTS_JSON) return ""
             const results = JSON.parse(process.env.RESULTS_JSON);
             const successfulRepoList = results.successful_repos.map(repo => `- \`${repo.name}\``).join("\n")
             const failedRepoList = results.failed_repos.map(repo => `- \`${repo.name}\`: ${repo.message}`).join("\n")
-            body = `
-            You can access the proto release at: https://${process.env.PROTO_TAG}.login.planningcenter.ninja/
+            return `
+            ${process.env.PROTO_TAG ? "You can access the proto release at: https://${process.env.PROTO_TAG}.login.planningcenter.ninja/" : ""}
 
             ${results.successful_repos.length > 0 ? "### Deployed Successfully to the following repos:" : ""}
 
@@ -45,10 +47,20 @@ runs:
             ${failedRepoList}
 
             `
-            failed = results.failed_repos.length > 0
           }
 
-          const header = `## QA release ${process.env.VERSION_TAG} successfully created`
+          function getFailed() {
+            if (!process.env.RESULTS_JSON) return false
+            const results = JSON.parse(process.env.RESULTS_JSON);
+            return results.failed_repos.length > 0
+          }
+
+          function getHeader() {
+            return `## ${process.env.RELEASE_TYPE} release ${process.env.VERSION_TAG} successfully created`
+          }
+
+          const header = getHeader()
+          const body = getBody()
           const footer = `Triggered by: @${process.env.ACTOR}`
 
           github.rest.issues.createComment({
@@ -60,6 +72,6 @@ runs:
             ${footer}`
           });
 
-          if (failed) {
+          if (getFailed()) {
             throw new Error("Failed to push to all apps.");
           }

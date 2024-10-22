@@ -115,9 +115,10 @@ jobs:
           allow-major: true
           package-json-path: ${{ inputs.package-json-path }}
       - name: Post results to original PR
-        uses: planningcenter/pco-release-action/rc-reporting@v1
+        uses: planningcenter/pco-release-action/reporting@v1
         with:
           pr-number: ${{ github.event.issue.number }}
           results-json: ${{ env.results_json }}
           version-tag: ${{ needs.create-rc-release.outputs.release-tag }}
           actor: ${{ github.actor }}
+          release-type: "RC"

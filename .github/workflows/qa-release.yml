@@ -72,7 +72,7 @@ jobs:
     steps:
       - name: Create QA Pre-Release
         id: create-qa-release
-        uses: planningcenter/pco-release-action/create-qa-release@v1
+        uses: planningcenter/pco-release-action/create-qa-release@km/no-deploy
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           package-json-path: ${{ inputs.package-json-path }}
@@ -115,7 +115,7 @@ jobs:
           allow-major: true
           package-json-path: ${{ inputs.package-json-path }}
       - name: Post results to original PR
-        uses: planningcenter/pco-release-action/reporting@v1
+        uses: planningcenter/pco-release-action/reporting@km/no-deploy
         with:
           pr-number: ${{ github.event.issue.number }}
           results-json: ${{ env.results_json }}

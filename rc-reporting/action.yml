@@ -9,6 +9,9 @@ inputs:
   actor:
     description: "The actor that triggered the release"
     required: true
+  version-tag:
+    description: "The tag of the version release"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -17,30 +20,40 @@ runs:
         PR_NUMBER: ${{ inputs.pr-number }}
         RESULTS_JSON: ${{ inputs.results-json }}
         ACTOR: ${{ inputs.actor }}
+        VERSION_TAG: ${{ inputs.version-tag }}
       with:
         script: |
-          const results = JSON.parse(process.env.RESULTS_JSON);
-          const successfulRepoList = results.successful_repos.map(repo => `- \`${repo.name}\``).join("\n")
-          const failedRepoList = results.failed_repos.map(repo => `- \`${repo.name}\`: ${repo.message}`).join("\n")
-          const body = `## RC successfully created
+          let body = ""
+          let failed = false
+          if (process.env.RESULTS_JSON) {
+            const results = JSON.parse(process.env.RESULTS_JSON);
+            const successfulRepoList = results.successful_repos.map(repo => `- \`${repo.name}\``).join("\n")
+            const failedRepoList = results.failed_repos.map(repo => `- \`${repo.name}\`: ${repo.message}`).join("\n")
+            body = `
+            ${results.successful_repos.length > 0 ? "### Deployed Successfully to the following repos:" : ""}
 
-          ${results.successful_repos.length > 0 ? "### Deployed Successfully to the following repos:" : ""}
+            ${successfulRepoList}
 
-          ${successfulRepoList}
+            ${results.failed_repos.length > 0 ? "### Failed to deploy in the following repos:" : ""}
 
-          ${results.failed_repos.length > 0 ? "### Failed to deploy in the following repos:" : ""}
+            ${failedRepoList}
 
-          ${failedRepoList}
+            `
+            failed = results.failed_repos.length > 0
+          }
 
-          Triggered by: @${process.env.ACTOR}
-          `
+          const header = `## RC release ${process.env.VERSION_TAG} successfully created`
+          const footer = `Triggered by: @${process.env.ACTOR}`
+
           github.rest.issues.createComment({
             issue_number: process.env.PR_NUMBER,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: body
+            body: `${header}
+            ${body}
+            ${footer}`
           });
 
-          if (results.failed_repos.length > 0) {
+          if (failed) {
             throw new Error("Failed to push to all apps.");
           }

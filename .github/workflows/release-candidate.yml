@@ -118,4 +118,5 @@ jobs:
         with:
           pr-number: ${{ github.event.issue.number }}
           results-json: ${{ env.results_json }}
+          version-tag: ${{ needs.create-rc-release.outputs.release-tag }}
           actor: ${{ github.actor }}

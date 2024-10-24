@@ -101,6 +101,7 @@ jobs:
     steps:
       - name: Push to protonova branch for Consumers
         uses: planningcenter/pco-release-action/deploy@v1
+        if: ${{ !contains(github.event.comment.body, '--no-deploy') }}
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
@@ -114,9 +115,11 @@ jobs:
           allow-major: true
           package-json-path: ${{ inputs.package-json-path }}
       - name: Post results to original PR
-        uses: planningcenter/pco-release-action/qa-reporting@v1
+        uses: planningcenter/pco-release-action/reporting@v1
         with:
           pr-number: ${{ github.event.issue.number }}
           results-json: ${{ env.results_json }}
+          version-tag: ${{ needs.create-qa-release.outputs.release-tag }}
           actor: ${{ github.actor }}
           proto-tag: "${{ github.event.repository.name }}-${{ github.event.issue.number }}"
+          release-type: "QA"

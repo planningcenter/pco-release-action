@@ -87,7 +87,7 @@ runs:
       run: |
         touch release_notes.md
         MODIFIED_COMMENT="${{ github.event.comment.body }}"
-        MODIFIED_COMMENT="${MODIFIED_COMMENT//@pco-release qa/}"
+        MODIFIED_COMMENT=$(echo "$MODIFIED_COMMENT" | sed -E 's/@pco-release[[:space:]]qa([[:space:]]--[^[:space:]]*)*[[:space:]]*//g')
         echo "QA build for #${{ github.event.issue.number }}
 
         $MODIFIED_COMMENT" > release_notes.md

@@ -84,7 +84,7 @@ runs:
       run: |
         touch release_notes.md
         MODIFIED_COMMENT="${{ github.event.comment.body }}"
-        MODIFIED_COMMENT="${MODIFIED_COMMENT//@pco-release rc/}"
+        MODIFIED_COMMENT=$(echo "$MODIFIED_COMMENT" | sed -E 's/@pco-release[[:space:]]rc([[:space:]]--[^[:space:]]*)*[[:space:]]*//g')
         echo "$MODIFIED_COMMENT" > release_notes.md
     - name: Create Release
       uses: ncipollo/release-action@v1

@@ -1,0 +1,124 @@
+name: PCO-Release - Release Candidate Automation
+on:
+  workflow_call:
+    inputs:
+      install-command:
+        description: "The script command to use to install the package's dependencies"
+        required: false
+        type: string
+        default: "yarn install --check-files"
+      build-command:
+        description: "The script command to use to build the package"
+        required: false
+        type: string
+        default: "yarn build"
+      test-command:
+        description: "The script command to use to test the package"
+        required: false
+        type: string
+        default: "yarn test"
+      prepublish-command:
+        description: "The command to run to publish a prerelease version of the package to NPM"
+        required: false
+        type: string
+        default: "npm publish --tag next"
+      cache:
+        description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
+        required: false
+        type: string
+        default: "yarn"
+      build-directory:
+        description: "The build output directory"
+        required: false
+        type: string
+        default: "dist"
+      only:
+        description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
+        required: false
+        type: string
+        default: ""
+      include:
+        description: "repos to include without checking. Comma separated list"
+        required: false
+        type: string
+        default: ""
+      exclude:
+        description: "repos to exclude without checking. Comma separated list"
+        required: false
+        type: string
+        default: ""
+      upgrade-commands:
+        description: "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory."
+        required: false
+        type: string
+        default: "{}"
+      package-json-path:
+        description: "path to package.json"
+        required: false
+        type: string
+        default: "package.json"
+      yarn-version-command:
+        description: "command to run to update version"
+        required: false
+        type: string
+        default: "yarn version"
+jobs:
+  create-rc-release:
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release rc')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Create Release Candidate Pre-Release
+        id: create-rc-release
+        uses: planningcenter/pco-release-action/create-release-candidate@km/lerna
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          package-json-path: ${{ inputs.package-json-path }}
+          yarn-version-command: ${{ inputs.yarn-version-command }}
+    outputs:
+      release-tag: v${{ env.new_version }}
+  publish-to-npm:
+    needs: create-rc-release
+    uses: planningcenter/pco-release-action/.github/workflows/publish.yml@km/lerna
+    secrets: inherit
+    with:
+      install-command: ${{ inputs.install-command }}
+      build-command: ${{ inputs.build-command }}
+      test-command: ${{ inputs.test-command }}
+      prepublish-command: ${{ inputs.prepublish-command }}
+      cache: ${{ inputs.cache }}
+      build-directory: ${{ inputs.build-directory }}
+      ref: ${{ needs.create-rc-release.outputs.release-tag }}
+      prerelease: true
+  deploy-to-staging-for-consumers:
+    needs: [create-rc-release, publish-to-npm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Push to `staging` for Consumers
+        uses: planningcenter/pco-release-action/deploy@km/lerna
+        if: ${{ !contains(github.event.comment.body, '--no-deploy') }}
+        with:
+          app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+          private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
+          ref: ${{ needs.create-rc-release.outputs.release-tag }}
+          change-method: "merge"
+          branch-name: "staging"
+          only: ${{ inputs.only }}
+          exclude: ${{ inputs.exclude }}
+          include: ${{ inputs.include }}
+          upgrade-commands: ${{ inputs.upgrade-commands }}
+          allow-major: true
+          package-json-path: ${{ inputs.package-json-path }}
+      - name: Post results to original PR
+        uses: planningcenter/pco-release-action/reporting@km/lerna
+        with:
+          pr-number: ${{ github.event.issue.number }}
+          results-json: ${{ env.results_json }}
+          version-tag: ${{ needs.create-rc-release.outputs.release-tag }}
+          actor: ${{ github.actor }}
+          release-type: "RC"

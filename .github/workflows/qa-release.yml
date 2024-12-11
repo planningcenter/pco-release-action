@@ -72,7 +72,7 @@ jobs:
     steps:
       - name: Create QA Pre-Release
         id: create-qa-release
-        uses: planningcenter/pco-release-action/create-qa-release@v1
+        uses: planningcenter/pco-release-action/create-qa-release@km/lerna
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           package-json-path: ${{ inputs.package-json-path }}
@@ -81,7 +81,7 @@ jobs:
       release-tag: v${{ env.new_version }}
   publish-to-npm:
     needs: create-qa-release
-    uses: planningcenter/pco-release-action/.github/workflows/publish.yml@v1
+    uses: planningcenter/pco-release-action/.github/workflows/publish.yml@km/lerna
     secrets: inherit
     with:
       install-command: ${{ inputs.install-command }}
@@ -100,7 +100,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Push to protonova branch for Consumers
-        uses: planningcenter/pco-release-action/deploy@v1
+        uses: planningcenter/pco-release-action/deploy@km/lerna
         if: ${{ !contains(github.event.comment.body, '--no-deploy') }}
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
@@ -115,7 +115,7 @@ jobs:
           allow-major: true
           package-json-path: ${{ inputs.package-json-path }}
       - name: Post results to original PR
-        uses: planningcenter/pco-release-action/reporting@v1
+        uses: planningcenter/pco-release-action/reporting@km/lerna
         with:
           pr-number: ${{ github.event.issue.number }}
           results-json: ${{ env.results_json }}

@@ -29,7 +29,7 @@ runs:
       with:
         node-version: "20"
         cache: ${{ inputs.cache }}
-    - uses: planningcenter/pco-release-action/release-by-pr@v1
+    - uses: planningcenter/pco-release-action/release-by-pr@km/lerna
       if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
       with:
         package_json_path: ${{ inputs.package_json_path }}

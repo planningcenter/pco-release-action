@@ -169,7 +169,6 @@ export const run = async (inputs: Inputs): Promise<void> => {
     .map((line) => line.substring(1))
     .join('\n')
 
-  console.log('Updated changelog:', updatedChangelog)
   await easyExec(`git reset origin/${MAIN_BRANCH} ./CHANGELOG.md`) // Reset the changelog because we don't want it littered with rc versions
   // Push the changes to the release branch
   await easyExec(`git commit --amend --no-edit -m "v${version}"`)
@@ -185,6 +184,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
       mainBranch: MAIN_BRANCH,
       version,
       lastReleaseVersion: `v${lastReleaseVersion}`,
+      changelog: updatedChangelog,
     })
   } else {
     await updatePullRequest({
@@ -195,6 +195,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
       labelMinorId,
       labelPatchId,
       lastReleaseVersion: `v${lastReleaseVersion}`,
+      changelog: updatedChangelog,
     })
     pullRequest = pullRequests[0]
   }
@@ -247,6 +248,7 @@ async function createPullRequest({
   mainBranch,
   version,
   lastReleaseVersion,
+  changelog,
 }: {
   labelPatchId: string
   labelPendingId: string
@@ -255,6 +257,7 @@ async function createPullRequest({
   mainBranch: string
   version: string
   lastReleaseVersion: string
+  changelog: string
 }) {
   // Create a pull request
   const {
@@ -271,7 +274,7 @@ async function createPullRequest({
       repoId,
       headRefName: `refs/heads/${releaseBranch}`,
       baseRefName: `refs/heads/${mainBranch}`,
-      body: await buildBody({ version, lastReleaseVersion }),
+      body: buildBody({ version, lastReleaseVersion, changelog }),
       title: `v${version}`,
     },
   )
@@ -288,20 +291,17 @@ async function createPullRequest({
   return pullRequest
 }
 
-async function buildBody({
-  version,
+function buildBody({
   lastReleaseVersion,
+  changelog,
 }: {
   version: string
   lastReleaseVersion: string
-}): Promise<string> {
-  const changelog = await readFileContent(`${GITHUB_WORKSPACE}/CHANGELOG.md`)
-  const currentChanges = changelog.split(new RegExp(`##\\s\\[?v?((?!${version})\\d*\\.\\d*\\.\\d*)`))[0]
-  const changesMatch = currentChanges.match(new RegExp(`##\\s\\[?v?${version}(\\]\\(.*\\))?\\s(.|\\n)*`, 'm'))
-  if (changesMatch === null) return `No changes found\n\n${FOOTER}`
+  changelog: string
+}): string {
+  if (changelog === '') return `No changes found\n\n${FOOTER}`
 
-  const changes = changesMatch[0]
-  return `${changes}\n\n[Full Changes](https://github.com/${owner}/${repo}/compare/${lastReleaseVersion}...main)\n\n${FOOTER}`
+  return `${changelog}\n\n[Full Changes](https://github.com/${owner}/${repo}/compare/${lastReleaseVersion}...main)\n\n${FOOTER}`
 }
 
 async function updatePullRequest({
@@ -312,6 +312,7 @@ async function updatePullRequest({
   labelMinorId,
   labelPatchId,
   lastReleaseVersion,
+  changelog,
 }: {
   pullRequest: PullRequest
   version: string
@@ -320,12 +321,13 @@ async function updatePullRequest({
   labelMinorId: string
   labelPatchId: string
   lastReleaseVersion: string
+  changelog: string
 }) {
   return await octokit.graphql(
     `mutation($prId: ID!, $body: String, $title: String, $labelIds: [ID!]) { updatePullRequest(input: { pullRequestId: $prId, body: $body, title: $title, labelIds:$labelIds}) { clientMutationId} }`,
     {
       prId: pullRequest.id,
-      body: await buildBody({ version, lastReleaseVersion }),
+      body: buildBody({ version, lastReleaseVersion, changelog }),
       title: `v${version}`,
       labelIds: [
         ...pullRequest.labels.nodes

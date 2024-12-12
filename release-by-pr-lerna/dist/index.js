@@ -58481,7 +58481,6 @@ const run = async (inputs) => {
         .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
         .map((line) => line.substring(1))
         .join('\n');
-    console.log('Updated changelog:', updatedChangelog);
     await (0,utils.easyExec)(`git reset origin/${MAIN_BRANCH} ./CHANGELOG.md`); // Reset the changelog because we don't want it littered with rc versions
     // Push the changes to the release branch
     await (0,utils.easyExec)(`git commit --amend --no-edit -m "v${version}"`);
@@ -58496,6 +58495,7 @@ const run = async (inputs) => {
             mainBranch: MAIN_BRANCH,
             version,
             lastReleaseVersion: `v${lastReleaseVersion}`,
+            changelog: updatedChangelog,
         });
     }
     else {
@@ -58507,6 +58507,7 @@ const run = async (inputs) => {
             labelMinorId,
             labelPatchId,
             lastReleaseVersion: `v${lastReleaseVersion}`,
+            changelog: updatedChangelog,
         });
         pullRequest = pullRequests[0];
     }
@@ -58538,7 +58539,7 @@ async function findOrCreateLabels(labels, { octokit, repoId }) {
     }
     return result;
 }
-async function createPullRequest({ labelPatchId, labelPendingId, repoId, releaseBranch, mainBranch, version, lastReleaseVersion, }) {
+async function createPullRequest({ labelPatchId, labelPendingId, repoId, releaseBranch, mainBranch, version, lastReleaseVersion, changelog, }) {
     // Create a pull request
     const { createPullRequest: { pullRequest }, } = await octokit.graphql(`mutation($repoId: ID!, $baseRefName: String!, $headRefName: String!, $body: String!, $title: String!) {
         createPullRequest(input: { repositoryId: $repoId, baseRefName: $baseRefName, headRefName: $headRefName, body: $body, title: $title}) {
@@ -58550,7 +58551,7 @@ async function createPullRequest({ labelPatchId, labelPendingId, repoId, release
         repoId,
         headRefName: `refs/heads/${releaseBranch}`,
         baseRefName: `refs/heads/${mainBranch}`,
-        body: await buildBody({ version, lastReleaseVersion }),
+        body: buildBody({ version, lastReleaseVersion, changelog }),
         title: `v${version}`,
     });
     // add patch and pending label
@@ -58558,19 +58559,15 @@ async function createPullRequest({ labelPatchId, labelPendingId, repoId, release
     await octokit.graphql(`mutation($prId: ID!, $labelId: ID!) { addLabelsToLabelable(input: {labelIds: [$labelId], labelableId: $prId}) { clientMutationId} }`, { prId: pullRequest.id, labelId: labelPendingId });
     return pullRequest;
 }
-async function buildBody({ version, lastReleaseVersion, }) {
-    const changelog = await (0,utils.readFileContent)(`${GITHUB_WORKSPACE}/CHANGELOG.md`);
-    const currentChanges = changelog.split(new RegExp(`##\\s\\[?v?((?!${version})\\d*\\.\\d*\\.\\d*)`))[0];
-    const changesMatch = currentChanges.match(new RegExp(`##\\s\\[?v?${version}(\\]\\(.*\\))?\\s(.|\\n)*`, 'm'));
-    if (changesMatch === null)
+function buildBody({ lastReleaseVersion, changelog, }) {
+    if (changelog === '')
         return `No changes found\n\n${FOOTER}`;
-    const changes = changesMatch[0];
-    return `${changes}\n\n[Full Changes](https://github.com/${owner}/${repo}/compare/${lastReleaseVersion}...main)\n\n${FOOTER}`;
+    return `${changelog}\n\n[Full Changes](https://github.com/${owner}/${repo}/compare/${lastReleaseVersion}...main)\n\n${FOOTER}`;
 }
-async function updatePullRequest({ pullRequest, version, releaseType, labelMajorId, labelMinorId, labelPatchId, lastReleaseVersion, }) {
+async function updatePullRequest({ pullRequest, version, releaseType, labelMajorId, labelMinorId, labelPatchId, lastReleaseVersion, changelog, }) {
     return await octokit.graphql(`mutation($prId: ID!, $body: String, $title: String, $labelIds: [ID!]) { updatePullRequest(input: { pullRequestId: $prId, body: $body, title: $title, labelIds:$labelIds}) { clientMutationId} }`, {
         prId: pullRequest.id,
-        body: await buildBody({ version, lastReleaseVersion }),
+        body: buildBody({ version, lastReleaseVersion, changelog }),
         title: `v${version}`,
         labelIds: [
             ...pullRequest.labels.nodes

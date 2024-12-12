@@ -58469,8 +58469,10 @@ const run = async (inputs) => {
         // `--summary-file=${GITHUB_WORKSPACE}/lerna-publish-summary.json`,
         '-y',
     ];
+    await (0,utils.easyExec)(`git diff origin/main`, { silent: false });
     const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
+    await (0,utils.easyExec)(`git diff origin/main`, { silent: false });
     await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
     console.log('output', updateVersionOutput);
     // let updatedPackages

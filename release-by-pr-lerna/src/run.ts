@@ -155,8 +155,11 @@ export const run = async (inputs: Inputs): Promise<void> => {
     // `--summary-file=${GITHUB_WORKSPACE}/lerna-publish-summary.json`,
     '-y',
   ]
+  await easyExec(`git diff origin/main`, { silent: false })
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
+
+  await easyExec(`git diff origin/main`, { silent: false })
 
   await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 

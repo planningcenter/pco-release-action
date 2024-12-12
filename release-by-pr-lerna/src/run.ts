@@ -163,23 +163,6 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
 
-  await easyExec(`${GITHUB_WORKSPACE}/node_modules/.bin/lerna exec -- bash -c '
-    # Get the current workspace name
-    workspace=$(basename "$PWD")
-
-    # Check if CHANGELOG.md exists in the current workspace
-    if [ -f CHANGELOG.md ]; then
-      # Print the workspace name
-      echo "+# $workspace"
-
-      # Run git diff for CHANGELOG.md
-      git diff CHANGELOG.md
-
-      # Print a separator for clarity
-      echo "----------------------------------------"
-    fi
-  '`)
-
   // const updatedChangelog = (await easyExec(`git diff origin/${MAIN_BRANCH} -- ./**/CHANGELOG.md`)).output
   const updatedChangelog = (
     await easyExec(`${GITHUB_WORKSPACE}/node_modules/.bin/lerna exec -- bash -c '

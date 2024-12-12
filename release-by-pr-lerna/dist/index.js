@@ -58455,7 +58455,7 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
-    await (0,utils.easyExec)(`git push -f`);
+    await (0,utils.easyExec)(`git push -f --set-upstream origin pco-release--internal-temp`);
     // const releaseTypeVersionBumpArg = inputs.releaseType ? `${inputs.releaseType}` : ''
     const updateVersionCommandFlags = [
         '--canary',

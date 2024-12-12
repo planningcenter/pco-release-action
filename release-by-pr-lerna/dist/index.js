@@ -58447,10 +58447,12 @@ const run = async (inputs) => {
           clientMutationId
         }
       }`, { repoId: id, oid: mainBranch.target.oid, name: `refs/heads/${RELEASE_BRANCH}` });
+        await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
+        await (0,utils.easyExec)(`git commit --allow-empty -m "New release branch"`);
     }
     const pullRequests = releaseBranch?.associatedPullRequests.nodes || [];
     let pullRequest;
-    await (0,utils.easyExec)(`git switch -c ${RELEASE_BRANCH}`);
+    await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
     await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --ff`); // Ensure the release branch is up to date with main
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
@@ -58469,10 +58471,10 @@ const run = async (inputs) => {
         // `--summary-file=${GITHUB_WORKSPACE}/lerna-publish-summary.json`,
         '-y',
     ];
-    await (0,utils.easyExec)(`git diff origin/main`, { silent: false });
+    // await easyExec(`git diff origin/main`, { silent: false })
     const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
-    await (0,utils.easyExec)(`git diff origin/main`, { silent: false });
+    // await easyExec(`git diff origin/main`, { silent: false })
     await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
     console.log('output', updateVersionOutput);
     // let updatedPackages

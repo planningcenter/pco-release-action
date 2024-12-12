@@ -1,7 +1,7 @@
 import { Octokit } from '@octokit/action'
 import { easyExec, readFileContent } from '../../shared/utils.js'
 
-type ReleaseType = 'patch' | 'minor' | 'major' | 'nochange'
+type ReleaseType = 'patch' | 'minor' | 'major' | undefined
 type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
 type Label = { id: string }
 type PullRequest<Label extends Record<string, any> = { id: string; name: string }> = {
@@ -88,7 +88,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Find the last release version from main branch
   await easyExec(`git fetch origin`)
   await easyExec(`git checkout ${MAIN_BRANCH}`)
-  const lastReleaseVersion = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0]
+  const lastReleaseVersion = (await easyExec(`jq -r .version ./package.json`)).output.split('\n')[0]
 
   // Fetch information needed about the repo
   const response: {
@@ -322,20 +322,17 @@ async function updatePullRequest({
       prId: pullRequest.id,
       body: await buildBody({ version, lastReleaseVersion }),
       title: `v${version}`,
-      labelIds:
-        releaseType === 'nochange'
-          ? pullRequest.labels.nodes.map((label) => label.id)
-          : [
-              ...pullRequest.labels.nodes
-                .filter(
-                  (label) =>
-                    label.name === 'pco-release-pending' ||
-                    !Object.values(LABEL_NAMES).includes(label.name) ||
-                    label.name === `pco-release-${releaseType}`,
-                )
-                .map((label) => label.id),
-              releaseType === 'major' ? labelMajorId : releaseType === 'minor' ? labelMinorId : labelPatchId,
-            ],
+      labelIds: [
+        ...pullRequest.labels.nodes
+          .filter(
+            (label) =>
+              label.name === 'pco-release-pending' ||
+              !Object.values(LABEL_NAMES).includes(label.name) ||
+              label.name === `pco-release-${releaseType}`,
+          )
+          .map((label) => label.id),
+        releaseType === 'major' ? labelMajorId : releaseType === 'minor' ? labelMinorId : labelPatchId,
+      ],
     },
   )
 }

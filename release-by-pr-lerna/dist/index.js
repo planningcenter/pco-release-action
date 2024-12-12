@@ -58426,7 +58426,7 @@ const run = async (inputs) => {
     // Find the last release version from main branch
     await (0,utils.easyExec)(`git fetch origin`);
     await (0,utils.easyExec)(`git checkout ${MAIN_BRANCH}`);
-    const lastReleaseVersion = (await (0,utils.easyExec)(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
+    const lastReleaseVersion = (await (0,utils.easyExec)(`jq -r .version ./package.json`)).output.split('\n')[0];
     // Fetch information needed about the repo
     const response = await octokit.graphql(FETCH_QUERY, {
         owner,
@@ -58448,33 +58448,19 @@ const run = async (inputs) => {
     }
     const pullRequests = releaseBranch?.associatedPullRequests.nodes || [];
     let pullRequest;
-    const versionBumpType = (inputs.releaseType === 'nochange' ? getReleaseType(pullRequests[0]) : inputs.releaseType);
-    // If there are no changes, exit
-    try {
-        await (0,utils.easyExec)(`git fetch origin --tags`);
-        const diff = await (0,utils.easyExec)(`git diff origin/${MAIN_BRANCH}..refs/tags/v${lastReleaseVersion}`);
-        if (diff.exitCode !== 0)
-            throw diff;
-        if (diff.output === '')
-            return;
-    }
-    catch (e) {
-        console.log(`Could not find a release for v${lastReleaseVersion}. This often happens when merging a new release.
-      If this happens unexpectedly, make sure there is a release labeled "v${lastReleaseVersion}" and try again.`, e);
-        return;
-    }
-    // Bump version, update changelog, and push to release branch
     await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
     await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
-    await (0,utils.easyExec)(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }));
-    const version = (await (0,utils.easyExec)(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
-    const date = new Date().toISOString().split('T')[0];
-    await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
-    await (0,utils.easyExec)(`git add .`);
-    await (0,utils.easyExec)(`git commit -m v${version}`);
-    await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --force`);
+    const specifiedReleaseType = getReleaseType(pullRequests[0]);
+    const releaseTypeVersionBumpArg = specifiedReleaseType ? ` pre${specifiedReleaseType}` : '';
+    const updatedPackages = JSON.parse((await (0,utils.easyExec)(`node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`)).output);
+    // If there are no changes, exit
+    if (updatedPackages.length === 0) {
+        console.log('No changes detected');
+        return;
+    }
+    const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part
     // Create or update pull request
     if (pullRequests.length === 0) {
         pullRequest = await createPullRequest({
@@ -58508,8 +58494,8 @@ const FOOTER = `## 🚀 PCO-Release
   Merging it will create a new release.
 
   ### Actions
-  - Add **\`pco-release-*\` label** (\`pco-release-patch\`, \`pco-release-minor\`, or \`pco-release-major\`) - Change the release type.
-  - Add comment **\`@pco-release rc\`** - Create a release candidate and deploy to staging in all products that use this package.  Write more in the comment to add details on the release.
+  - The version bump type is determined via [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). If the version bump is incorrect, you can manually update it by adding **\`pco-release-*\` label** (\`pco-release-patch\`, \`pco-release-minor\`, or \`pco-release-major\`) - Change the release type.
+  - Release candidates are automatically created when this PR is updated. To deploy the release candidate to staging, add a comment \`@pco-release staging\`.
   `;
 async function findOrCreateLabels(labels, { octokit, repoId }) {
     const result = {};
@@ -58567,16 +58553,14 @@ async function updatePullRequest({ pullRequest, version, releaseType, labelMajor
         prId: pullRequest.id,
         body: await buildBody({ version, lastReleaseVersion }),
         title: `v${version}`,
-        labelIds: releaseType === 'nochange'
-            ? pullRequest.labels.nodes.map((label) => label.id)
-            : [
-                ...pullRequest.labels.nodes
-                    .filter((label) => label.name === 'pco-release-pending' ||
-                    !Object.values(LABEL_NAMES).includes(label.name) ||
-                    label.name === `pco-release-${releaseType}`)
-                    .map((label) => label.id),
-                releaseType === 'major' ? labelMajorId : releaseType === 'minor' ? labelMinorId : labelPatchId,
-            ],
+        labelIds: [
+            ...pullRequest.labels.nodes
+                .filter((label) => label.name === 'pco-release-pending' ||
+                !Object.values(LABEL_NAMES).includes(label.name) ||
+                label.name === `pco-release-${releaseType}`)
+                .map((label) => label.id),
+            releaseType === 'major' ? labelMajorId : releaseType === 'minor' ? labelMinorId : labelPatchId,
+        ],
     });
 }
 async function requestReviewsFromAuthors({ prId, commits, }) {
@@ -58590,20 +58574,15 @@ async function requestReviewsFromAuthors({ prId, commits, }) {
         ],
     });
 }
-function normalizeVersionCommand({ versionCommand, versionBumpType, }) {
-    if (versionCommand.includes('#{versionBumpType}'))
-        return versionCommand.replace('#{versionBumpType}', versionBumpType);
-    return `${versionCommand} --${versionBumpType} --no-git-tag-version`;
-}
 
 ;// CONCATENATED MODULE: ./src/main.ts
 
 
 const main = async () => {
     await run({
-        releaseType: core.getInput('release_type', { required: true }),
+        releaseType: core.getInput('release_type', { required: false }),
         packageJsonPath: core.getInput('package_json_path', { required: true }),
-        versionCommand: core.getInput('version_command', { required: true }),
+        versionCommand: core.getInput('version_command', { required: false }),
     });
 };
 main().catch((e) => {

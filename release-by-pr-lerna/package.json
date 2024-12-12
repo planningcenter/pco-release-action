@@ -1,5 +1,5 @@
 {
-  "name": "release-by-pr",
+  "name": "release-by-pr-lerna",
   "private": true,
   "version": "1.0.0",
   "scripts": {

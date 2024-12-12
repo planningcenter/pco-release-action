@@ -5,6 +5,17 @@ inputs:
   GITHUB_TOKEN:
     description: token for access
     required: true
+  release_type:
+    required: false
+    deprecated: true
+  package_json_path:
+    description: 'The path to the package.json file to version.'
+    required: false
+    default: 'package.json'
+  version_command:
+    description: 'The command to run to bump the version'
+    required: false
+    deprecated: true
 
 runs:
   using: 'node20'

@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/action'
 import { easyExec, readFileContent } from '../../shared/utils.js'
+import fs from 'fs'
 
 type ReleaseType = 'patch' | 'minor' | 'major' | undefined
 type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
@@ -150,21 +151,15 @@ export const run = async (inputs: Inputs): Promise<void> => {
     '--createRelease=github',
     '--preid=rc',
     '--dist-tag=next',
-    '--json',
+    '--summary-file',
     '-y',
   ]
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna publish ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
 
-  // If there are no changes, exit
-  if (!updateVersionOutput || updateVersionOutput.trim().length === 0) {
-    console.log('No changes detected. Exiting...', { updateVersionOutput })
-    return
-  }
-
   let updatedPackages
   try {
-    updatedPackages = JSON.parse(updateVersionOutput) as {
+    updatedPackages = JSON.parse(fs.readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8')) as {
       name: string
       version: string
       private: boolean
@@ -172,8 +167,13 @@ export const run = async (inputs: Inputs): Promise<void> => {
       newVersion: string
     }[]
   } catch (error) {
-    console.error('Error parsing JSON', { updateVersionOutput })
+    console.error('Error parsing JSON')
     throw error
+  }
+
+  if (!updatedPackages || updatedPackages.length === 0) {
+    console.log('No changes detected. Exiting...', { updateVersionOutput })
+    return
   }
 
   const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part

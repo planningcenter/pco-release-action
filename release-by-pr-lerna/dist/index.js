@@ -58334,6 +58334,35 @@ module.exports = parseParams
 /******/ }
 /******/ 
 /************************************************************************/
+/******/ /* webpack/runtime/compat get default export */
+/******/ (() => {
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__nccwpck_require__.n = (module) => {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			() => (module['default']) :
+/******/ 			() => (module);
+/******/ 		__nccwpck_require__.d(getter, { a: getter });
+/******/ 		return getter;
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/define property getters */
+/******/ (() => {
+/******/ 	// define getter functions for harmony exports
+/******/ 	__nccwpck_require__.d = (exports, definition) => {
+/******/ 		for(var key in definition) {
+/******/ 			if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 			}
+/******/ 		}
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/hasOwnProperty shorthand */
+/******/ (() => {
+/******/ 	__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ })();
+/******/ 
 /******/ /* webpack/runtime/compat */
 /******/ 
 /******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
@@ -58349,7 +58378,11 @@ var core = __nccwpck_require__(5316);
 var dist_node = __nccwpck_require__(266);
 // EXTERNAL MODULE: ../shared/utils.ts
 var utils = __nccwpck_require__(709);
+// EXTERNAL MODULE: external "fs"
+var external_fs_ = __nccwpck_require__(7147);
+var external_fs_default = /*#__PURE__*/__nccwpck_require__.n(external_fs_);
 ;// CONCATENATED MODULE: ./src/run.ts
+
 
 
 const LABEL_NAMES = {
@@ -58465,23 +58498,22 @@ const run = async (inputs) => {
         '--createRelease=github',
         '--preid=rc',
         '--dist-tag=next',
-        '--json',
+        '--summary-file',
         '-y',
     ];
     const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna publish ${updateVersionCommandFlags.join(' ')}`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
-    // If there are no changes, exit
-    if (!updateVersionOutput || updateVersionOutput.trim().length === 0) {
-        console.log('No changes detected. Exiting...', { updateVersionOutput });
-        return;
-    }
     let updatedPackages;
     try {
-        updatedPackages = JSON.parse(updateVersionOutput);
+        updatedPackages = JSON.parse(external_fs_default().readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8'));
     }
     catch (error) {
-        console.error('Error parsing JSON', { updateVersionOutput });
+        console.error('Error parsing JSON');
         throw error;
+    }
+    if (!updatedPackages || updatedPackages.length === 0) {
+        console.log('No changes detected. Exiting...', { updateVersionOutput });
+        return;
     }
     const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part
     // Now that the version has been updated, commit the changes to the PR branch

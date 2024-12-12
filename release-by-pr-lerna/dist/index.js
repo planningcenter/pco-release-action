@@ -58487,7 +58487,9 @@ const run = async (inputs) => {
         echo "+# $workspace"
 
         # Run git diff for CHANGELOG.md
-        git diff CHANGELOG.md
+        diff_output=$(git diff CHANGELOG.md)
+
+        echo "$diff_output"
 
         # Print a separator for clarity
         echo "----------------------------------------"

@@ -58457,8 +58457,7 @@ const run = async (inputs) => {
     const specifiedReleaseType = getReleaseType(pullRequests[0]);
     const releaseTypeVersionBumpArg = specifiedReleaseType ? ` pre${specifiedReleaseType}` : '';
     const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`;
-    console.log(updateVersionCommand);
-    const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`, { silent: true })).output;
+    const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
     // If there are no changes, exit
     if (updateVersionOutput.trim().length === 0) {
         console.log('No changes detected. Exiting...');
@@ -58491,6 +58490,7 @@ const run = async (inputs) => {
         pullRequest = pullRequests[0];
     }
     // Request reviews from authors of commits
+    console.log(lastRelease);
     await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes });
 };
 const FOOTER = `## 🚀 PCO-Release

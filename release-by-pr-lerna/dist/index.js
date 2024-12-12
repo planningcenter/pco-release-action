@@ -58498,7 +58498,7 @@ const run = async (inputs) => {
         '--createRelease=github',
         '--preid=rc',
         '--dist-tag=next',
-        '--summary-file',
+        `--summary-file=${GITHUB_WORKSPACE}/lerna-publish-summary.json`,
         '-y',
     ];
     const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna publish ${updateVersionCommandFlags.join(' ')}`;

@@ -58467,6 +58467,7 @@ const run = async (inputs) => {
     let updatedPackages;
     try {
         updatedPackages = JSON.parse(updateVersionOutput);
+        updatedPackages = updatedPackages.sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1));
     }
     catch (error) {
         console.log('Error parsing JSON', error);

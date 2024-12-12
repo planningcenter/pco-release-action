@@ -148,10 +148,12 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
 
-  let updatedPackages: { newVersion: string; name: string }[] | undefined
+  type UpdatedPackage = { newVersion: string; name: string; private: boolean }
+  let updatedPackages: UpdatedPackage[] | undefined
 
   try {
-    updatedPackages = JSON.parse(updateVersionOutput) as { newVersion: string; name: string }[]
+    updatedPackages = JSON.parse(updateVersionOutput) as UpdatedPackage[]
+    updatedPackages = updatedPackages.sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1))
   } catch (error) {
     console.log('Error parsing JSON', error)
   }

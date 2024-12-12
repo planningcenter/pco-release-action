@@ -138,7 +138,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   let pullRequest: PullRequest
 
   await easyExec(`git checkout ${RELEASE_BRANCH}`)
-  await easyExec(`git rebase origin/${MAIN_BRANCH} --ff`) // Ensure the release branch is up to date with main
+  await easyExec(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`) // Ensure the release branch is up to date with main
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
 

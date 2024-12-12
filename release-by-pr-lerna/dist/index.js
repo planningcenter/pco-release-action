@@ -58453,7 +58453,7 @@ const run = async (inputs) => {
     const pullRequests = releaseBranch?.associatedPullRequests.nodes || [];
     let pullRequest;
     await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
-    await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --ff`); // Ensure the release branch is up to date with main
+    await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`); // Ensure the release branch is up to date with main
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
     // await easyExec(`git push -f --set-upstream origin pco-release--internal-temp`)

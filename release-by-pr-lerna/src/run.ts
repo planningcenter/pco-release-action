@@ -143,27 +143,20 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`
   console.log(updateVersionCommand)
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`, { silent: true })).output
-  console.log('updateVersionOutput', updateVersionOutput)
-  let updatedPackages
-  try {
-    updatedPackages = JSON.parse(updateVersionOutput) as {
-      name: string
-      version: string
-      private: boolean
-      location: string
-      newVersion: string
-    }[]
-  } catch (e) {
-    console.log(e)
-    console.log('updateVersionOutput', updateVersionOutput)
-    return
-  }
 
   // If there are no changes, exit
-  if (updatedPackages.length === 0) {
+  if (updateVersionOutput.trim().length === 0) {
     console.log('No changes detected. Exiting...')
     return
   }
+
+  const updatedPackages = JSON.parse(updateVersionOutput) as {
+    name: string
+    version: string
+    private: boolean
+    location: string
+    newVersion: string
+  }[]
 
   const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
 
@@ -232,12 +225,12 @@ async function findOrCreateLabels(
 }
 
 function getReleaseType(pullRequest: PullRequest | undefined) {
-  if (!pullRequest) return 'patch'
+  if (!pullRequest) return
 
   const releaseType = pullRequest.labels.nodes.find(
     (label) => label.name.startsWith('pco-release-') && label.name !== 'pco-release-pending',
   )
-  return releaseType ? releaseType.name.split('-')[2] : 'patch'
+  return releaseType ? releaseType.name.split('-')[2] : undefined
 }
 
 async function createPullRequest({

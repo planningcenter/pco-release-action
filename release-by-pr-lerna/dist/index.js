@@ -58415,6 +58415,7 @@ if (!GITHUB_REPOSITORY)
     throw new Error('GITHUB_REPOSITORY is not set');
 const [owner, repo] = GITHUB_REPOSITORY.split('/');
 const octokit = new dist_node.Octokit();
+const LERNA = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna`;
 const run = async (inputs) => {
     const MAIN_BRANCH = 'main';
     const RELEASE_BRANCH = 'pco-release--internal';
@@ -58462,7 +58463,7 @@ const run = async (inputs) => {
         '--json',
         '-y',
     ];
-    const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`;
+    const updateVersionCommand = `${LERNA} version ${updateVersionCommandFlags.join(' ')}`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
     let updatedPackages;
     try {
@@ -58477,17 +58478,17 @@ const run = async (inputs) => {
         return;
     }
     const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part
-    let updatedChangelog = '';
-    await Promise.all(updatedPackages.map(async (updatedPackage) => {
+    const updatedChangelog = (await Promise.all(updatedPackages.map(async (updatedPackage) => {
         const diff = (await (0,utils.easyExec)(`git diff origin/${MAIN_BRANCH} -- ${updatedPackage.location}/CHANGELOG.md`)).output
             .split('\n')
             .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
             .map((line) => line.substring(1))
             .join('\n');
         if (diff) {
-            updatedChangelog += `# ${updatedPackage.name}\n${diff}\n`;
+            return `# ${updatedPackage.name}\n${diff}\n`;
         }
-    }));
+        return '';
+    }))).join('\n');
     await (0,utils.easyExec)(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`); // Reset the changelogs because we don't want it littered with rc versions
     // Push the changes to the release branch
     await (0,utils.easyExec)(`git commit --amend --no-edit -m "v${version}"`);

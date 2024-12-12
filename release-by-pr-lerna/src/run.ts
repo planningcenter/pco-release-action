@@ -75,6 +75,7 @@ const { GITHUB_REPOSITORY, GITHUB_WORKSPACE } = process.env
 if (!GITHUB_REPOSITORY) throw new Error('GITHUB_REPOSITORY is not set')
 const [owner, repo] = GITHUB_REPOSITORY.split('/')
 const octokit = new Octokit()
+const LERNA = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna`
 
 export const run = async (inputs: Inputs): Promise<void> => {
   const MAIN_BRANCH = 'main'
@@ -145,7 +146,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
     '--json',
     '-y',
   ]
-  const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`
+  const updateVersionCommand = `${LERNA} version ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
 
   type UpdatedPackage = { newVersion: string; name: string; private: boolean; location: string }
@@ -165,20 +166,23 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
 
-  let updatedChangelog = ''
-
-  await Promise.all(
-    updatedPackages.map(async (updatedPackage) => {
-      const diff = (await easyExec(`git diff origin/${MAIN_BRANCH} -- ${updatedPackage.location}/CHANGELOG.md`)).output
-        .split('\n')
-        .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
-        .map((line) => line.substring(1))
-        .join('\n')
-      if (diff) {
-        updatedChangelog += `# ${updatedPackage.name}\n${diff}\n`
-      }
-    }),
-  )
+  const updatedChangelog = (
+    await Promise.all(
+      updatedPackages.map(async (updatedPackage) => {
+        const diff = (
+          await easyExec(`git diff origin/${MAIN_BRANCH} -- ${updatedPackage.location}/CHANGELOG.md`)
+        ).output
+          .split('\n')
+          .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+          .map((line) => line.substring(1))
+          .join('\n')
+        if (diff) {
+          return `# ${updatedPackage.name}\n${diff}\n`
+        }
+        return ''
+      }),
+    )
+  ).join('\n')
 
   await easyExec(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`) // Reset the changelogs because we don't want it littered with rc versions
   // Push the changes to the release branch

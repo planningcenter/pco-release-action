@@ -162,13 +162,19 @@ export const run = async (inputs: Inputs): Promise<void> => {
     return
   }
 
-  const updatedPackages = JSON.parse(updateVersionOutput) as {
-    name: string
-    version: string
-    private: boolean
-    location: string
-    newVersion: string
-  }[]
+  let updatedPackages
+  try {
+    updatedPackages = JSON.parse(updateVersionOutput) as {
+      name: string
+      version: string
+      private: boolean
+      location: string
+      newVersion: string
+    }[]
+  } catch (error) {
+    console.error('Error parsing JSON', { updateVersionOutput })
+    throw error
+  }
 
   const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
 

@@ -58475,7 +58475,14 @@ const run = async (inputs) => {
         console.log('No changes detected. Exiting...', { updateVersionOutput });
         return;
     }
-    const updatedPackages = JSON.parse(updateVersionOutput);
+    let updatedPackages;
+    try {
+        updatedPackages = JSON.parse(updateVersionOutput);
+    }
+    catch (error) {
+        console.error('Error parsing JSON', { updateVersionOutput });
+        throw error;
+    }
     const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part
     // Now that the version has been updated, commit the changes to the PR branch
     await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);

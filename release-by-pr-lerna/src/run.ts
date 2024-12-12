@@ -138,8 +138,10 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
-  const releaseTypeVersionBumpArg = inputs.releaseType ? ` pre${inputs.releaseType}` : ''
-  const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --no-git-reset --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag next --json -y`
+  // const releaseTypeVersionBumpArg = inputs.releaseType ? `${inputs.releaseType}` : ''
+
+  // TODO: I was editing this part way...finish that out
+  const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna publish --canary --no-git-reset --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag next --json -y`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
 
   // If there are no changes, exit

@@ -26068,7 +26068,7 @@ const easyExec = async function easyExec(commandWithArgs, commandOptions = { sil
                 error += data.toString();
             },
         },
-        silent: true,
+        silent: false,
         cwd: process.env.GITHUB_WORKSPACE,
     };
     const commandParts = commandWithArgs.match(/(?:[^\s'"]+|"[^"]*"|'[^']*')+/g);

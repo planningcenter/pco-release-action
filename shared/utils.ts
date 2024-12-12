@@ -17,7 +17,7 @@ export const easyExec = async function easyExec(
         error += data.toString()
       },
     },
-    silent: true,
+    silent: false,
     cwd: process.env.GITHUB_WORKSPACE,
   }
 

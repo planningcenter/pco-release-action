@@ -58471,8 +58471,8 @@ const run = async (inputs) => {
     const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna publish ${updateVersionCommandFlags.join(' ')}`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
     // If there are no changes, exit
-    if (updateVersionOutput.trim().length === 0) {
-        console.log('No changes detected. Exiting...');
+    if (!updateVersionOutput || updateVersionOutput.trim().length === 0) {
+        console.log('No changes detected. Exiting...', { updateVersionOutput });
         return;
     }
     const updatedPackages = JSON.parse(updateVersionOutput);

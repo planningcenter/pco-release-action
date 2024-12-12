@@ -157,8 +157,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
 
   // If there are no changes, exit
-  if (updateVersionOutput.trim().length === 0) {
-    console.log('No changes detected. Exiting...')
+  if (!updateVersionOutput || updateVersionOutput.trim().length === 0) {
+    console.log('No changes detected. Exiting...', { updateVersionOutput })
     return
   }
 

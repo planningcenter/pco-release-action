@@ -125,15 +125,15 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   // Create release branch if it doesn't exist
   if (!releaseBranch) {
-    await octokit.graphql(
-      `mutation($repoId: ID!, $oid: GitObjectID!, $name: String!) {
-        createRef(input: { repositoryId: $repoId, oid: $oid, name: $name }) {
-          clientMutationId
-        }
-      }`,
-      { repoId: id, oid: mainBranch.target.oid, name: `refs/heads/${RELEASE_BRANCH}` },
-    )
-    await easyExec(`git checkout ${RELEASE_BRANCH}`)
+    // await octokit.graphql(
+    //   `mutation($repoId: ID!, $oid: GitObjectID!, $name: String!) {
+    //     createRef(input: { repositoryId: $repoId, oid: $oid, name: $name }) {
+    //       clientMutationId
+    //     }
+    //   }`,
+    //   { repoId: id, oid: mainBranch.target.oid, name: `refs/heads/${RELEASE_BRANCH}` },
+    // )
+    await easyExec(`git checkout -b ${RELEASE_BRANCH}`)
     await easyExec(`git commit --allow-empty -m "New release branch"`)
   }
 
@@ -162,6 +162,11 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // await easyExec(`git diff origin/main`, { silent: false })
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
+
+  // if (!updatedPackages || updatedPackages.length === 0) {
+  //   console.log('No changes detected. Exiting...',)
+  //   return
+  // }
 
   // await easyExec(`git diff origin/main`, { silent: false })
 

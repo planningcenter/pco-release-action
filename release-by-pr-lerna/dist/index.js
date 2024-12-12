@@ -56283,7 +56283,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.saveFileContent = exports.readFileContent = exports.replaceTextInFile = exports.setOutput = exports.easyExec = void 0;
 const exec_1 = __nccwpck_require__(110);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
-const easyExec = async function easyExec(commandWithArgs) {
+const easyExec = async function easyExec(commandWithArgs, commandOptions = { silent: false }) {
     let output = "";
     let error = "";
     const options = {
@@ -56309,7 +56309,8 @@ const easyExec = async function easyExec(commandWithArgs) {
         }
         return arg;
     });
-    console.log(`${command} ${args.join(" ")}`);
+    if (!commandOptions.silent)
+        console.log(`${command} ${args.join(" ")}`);
     let exitCode;
     try {
         exitCode = await (0, exec_1.exec)(command, args, options);
@@ -58415,7 +58416,7 @@ const FETCH_QUERY = `
     }
   }
 `;
-const { GITHUB_REPOSITORY, GITHUB_WORKSPACE } = process.env;
+const { GITHUB_REPOSITORY, GITHUB_WORKSPACE, GITHUB_TOKEN } = process.env;
 if (!GITHUB_REPOSITORY)
     throw new Error('GITHUB_REPOSITORY is not set');
 const [owner, repo] = GITHUB_REPOSITORY.split('/');
@@ -58455,10 +58456,12 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
     const specifiedReleaseType = getReleaseType(pullRequests[0]);
     const releaseTypeVersionBumpArg = specifiedReleaseType ? ` pre${specifiedReleaseType}` : '';
-    const updatedPackages = JSON.parse((await (0,utils.easyExec)(`node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`)).output);
+    const updateVersionCommand = `node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`;
+    console.log(updateVersionCommand);
+    const updatedPackages = JSON.parse((await (0,utils.easyExec)(`GH_TOKEN="${GITHUB_TOKEN} ${updateVersionCommand}"`, { silent: true })).output);
     // If there are no changes, exit
     if (updatedPackages.length === 0) {
-        console.log('No changes detected');
+        console.log('No changes detected. Exiting...');
         return;
     }
     const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part

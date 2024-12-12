@@ -26056,7 +26056,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.saveFileContent = exports.readFileContent = exports.replaceTextInFile = exports.setOutput = exports.easyExec = void 0;
 const exec_1 = __nccwpck_require__(110);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
-const easyExec = async function easyExec(commandWithArgs) {
+const easyExec = async function easyExec(commandWithArgs, commandOptions = { silent: false }) {
     let output = "";
     let error = "";
     const options = {
@@ -26082,7 +26082,8 @@ const easyExec = async function easyExec(commandWithArgs) {
         }
         return arg;
     });
-    console.log(`${command} ${args.join(" ")}`);
+    if (!commandOptions.silent)
+        console.log(`${command} ${args.join(" ")}`);
     let exitCode;
     try {
         exitCode = await (0, exec_1.exec)(command, args, options);

@@ -1,7 +1,10 @@
 import { exec } from "@actions/exec"
 import fs from "fs"
 
-export const easyExec = async function easyExec(commandWithArgs: string) {
+export const easyExec = async function easyExec(
+  commandWithArgs: string,
+  commandOptions: { silent?: boolean } = { silent: false }
+) {
   let output = ""
   let error = ""
 
@@ -31,7 +34,7 @@ export const easyExec = async function easyExec(commandWithArgs: string) {
     return arg
   })
 
-  console.log(`${command} ${args.join(" ")}`)
+  if (!commandOptions.silent) console.log(`${command} ${args.join(" ")}`)
 
   let exitCode
   try {

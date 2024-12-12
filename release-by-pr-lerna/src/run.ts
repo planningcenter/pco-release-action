@@ -82,7 +82,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Find the last release version from main branch
   await easyExec(`git fetch origin`)
   await easyExec(`git checkout ${MAIN_BRANCH}`)
-  const lastReleaseVersion = (await easyExec(`jq -r .version ${GITHUB_WORKSPACE}/package.json`)).output.split('\n')[0]
+  const lastReleaseVersion = (await easyExec(`jq -r .version ./lerna.json`)).output.split('\n')[0]
   await easyExec('yarn install')
 
   // Fetch information needed about the repo

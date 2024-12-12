@@ -84,6 +84,7 @@ const octokit = new Octokit()
 export const run = async (inputs: Inputs): Promise<void> => {
   const MAIN_BRANCH = 'main'
   const RELEASE_BRANCH = 'pco-release--internal'
+  const TEMP_RELEASE_BRANCH = 'pco-release--internal-temp'
 
   // Find the last release version from main branch
   await easyExec(`git fetch origin`)
@@ -134,14 +135,25 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const pullRequests = releaseBranch?.associatedPullRequests.nodes || []
   let pullRequest: PullRequest
 
-  await easyExec(`git checkout ${RELEASE_BRANCH}`)
+  await easyExec(`git checkout ${TEMP_RELEASE_BRANCH}`)
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
+  await easyExec(`git checkout push -f`)
   // const releaseTypeVersionBumpArg = inputs.releaseType ? `${inputs.releaseType}` : ''
 
-  // TODO: I was editing this part way...finish that out
-  const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna publish --canary --no-git-reset --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag next --json -y`
+  const updateVersionCommandFlags = [
+    '--canary',
+    // '--no-git-reset',
+    '--conventional-prerelease',
+    '--conventionalCommits',
+    '--createRelease=github',
+    '--preid=rc',
+    '--dist-tag=next',
+    '--json',
+    '-y',
+  ]
+  const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna publish ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
 
   // If there are no changes, exit
@@ -159,6 +171,10 @@ export const run = async (inputs: Inputs): Promise<void> => {
   }[]
 
   const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
+
+  // Now that the version has been updated, commit the changes to the PR branch
+  await easyExec(`git checkout ${RELEASE_BRANCH}`)
+  await easyExec(`git reset --hard origin/${TEMP_RELEASE_BRANCH}`)
 
   // Create or update pull request
   if (pullRequests.length === 0) {
@@ -185,7 +201,6 @@ export const run = async (inputs: Inputs): Promise<void> => {
   }
 
   // Request reviews from authors of commits
-  console.log('lastRelease', lastRelease)
   await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
 }
 

@@ -153,7 +153,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   try {
     updatedPackages = JSON.parse(updateVersionOutput) as UpdatedPackage[]
-    updatedPackages = updatedPackages.sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1))
+    updatedPackages = updatedPackages.sort((a, b) => (a.private === b.private ? 0 : a.private ? -1 : 1))
   } catch (error) {
     console.log('Error parsing JSON', error)
   }

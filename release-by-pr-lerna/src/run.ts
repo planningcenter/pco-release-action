@@ -1,6 +1,5 @@
 import { Octokit } from '@octokit/action'
 import { easyExec, readFileContent } from '../../shared/utils.js'
-import fs from 'fs'
 
 type ReleaseType = 'patch' | 'minor' | 'major' | undefined
 type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
@@ -22,12 +21,6 @@ const FETCH_QUERY = `
   query($owner:String!, $repo:String!, $mainBranch:String!, $releaseBranch:String!, $lastRelease: String!) {
     repository(owner: $owner, name: $repo) {
       id
-      mainBranch: ref(qualifiedName: $mainBranch) {
-        id
-        target {
-          oid
-        }
-      }
       lastRelease: release(tagName: $lastRelease) {
         tag {
           compare(headRef: $mainBranch) {
@@ -111,8 +104,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
     releaseBranch: RELEASE_BRANCH,
     lastRelease: `v${lastReleaseVersion}`,
   })
-  const { mainBranch, releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } =
-    response.repository
+  const { releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } = response.repository
 
   // Find or create labels
   const { labelPendingId, labelMajorId, labelMinorId, labelPatchId } = await findOrCreateLabels(
@@ -143,96 +135,63 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git checkout ${RELEASE_BRANCH}`)
   await easyExec(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`) // Ensure the release branch is up to date with main
 
-  // await easyExec(`git push -f --set-upstream origin pco-release--internal-temp`)
-  // const releaseTypeVersionBumpArg = inputs.releaseType ? `pre${inputs.releaseType}` : ''
-
   const updateVersionCommandFlags = [
-    // '--canary',
-    // '--no-git-reset',
     '--conventional-prerelease',
     '--conventionalCommits',
     '--createRelease=github',
     '--preid=rc',
     '--amend',
-    // '--dist-tag=next',
     '--json',
-    // `--summary-file=${GITHUB_WORKSPACE}/lerna-publish-summary.json`,
     '-y',
   ]
-  // await easyExec(`git diff origin/main`, { silent: false })
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
 
-  // if (!updatedPackages || updatedPackages.length === 0) {
-  //   console.log('No changes detected. Exiting...',)
-  //   return
-  // }
+  let updatedPackages: { newVersion: string; name: string }[] | undefined
 
-  // await easyExec(`git diff origin/main`, { silent: false })
+  try {
+    updatedPackages = JSON.parse(updateVersionOutput) as { newVersion: string; name: string }[]
+  } catch (error) {
+    console.log('Error parsing JSON', error)
+  }
 
+  if (!updatedPackages || updatedPackages.length === 0) {
+    console.log('No changes detected. Exiting...')
+    return
+  }
+
+  const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
+
+  // Push the changes to the release branch
+  await easyExec(`git commit --amend --no-edit -m "v${version}"`)
   await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 
-  console.log('output', updateVersionOutput)
-  // let updatedPackages
-  // try {
-  //   updatedPackages = JSON.parse(fs.readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8')) as {
-  //     packageName: string
-  //     version: string
-  //   }[]
-  // } catch (error) {
-  //   console.error('Error parsing JSON')
-  //   throw error
-  // }
+  // Create or update pull request
+  if (pullRequests.length === 0) {
+    pullRequest = await createPullRequest({
+      labelPatchId,
+      labelPendingId,
+      repoId: id,
+      releaseBranch: RELEASE_BRANCH,
+      mainBranch: MAIN_BRANCH,
+      version,
+      lastReleaseVersion: `v${lastReleaseVersion}`,
+    })
+  } else {
+    await updatePullRequest({
+      pullRequest: pullRequests[0],
+      version,
+      releaseType: inputs.releaseType,
+      labelMajorId,
+      labelMinorId,
+      labelPatchId,
+      lastReleaseVersion: `v${lastReleaseVersion}`,
+    })
+    pullRequest = pullRequests[0]
+  }
 
-  // let updatedPackages
-  // try {
-  //   updatedPackages = JSON.parse(fs.readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8')) as {
-  //     packageName: string
-  //     version: string
-  //   }[]
-  // } catch (error) {
-  //   console.error('Error parsing JSON')
-  //   throw error
-  // }
-
-  // if (!updatedPackages || updatedPackages.length === 0) {
-  //   console.log('No changes detected. Exiting...',)
-  //   return
-  // }
-
-  // const version = updatedPackages[0].version.split('-')[0] // Remove the rc part
-
-  // // Now that the version has been updated, commit the changes to the PR branch
-  // await easyExec(`git checkout ${RELEASE_BRANCH}`)
-  // await easyExec(`git reset --hard origin/${TEMP_RELEASE_BRANCH}`)
-  // await easyExec(`git push -f`)
-
-  // // Create or update pull request
-  // if (pullRequests.length === 0) {
-  //   pullRequest = await createPullRequest({
-  //     labelPatchId,
-  //     labelPendingId,
-  //     repoId: id,
-  //     releaseBranch: RELEASE_BRANCH,
-  //     mainBranch: MAIN_BRANCH,
-  //     version,
-  //     lastReleaseVersion: `v${lastReleaseVersion}`,
-  //   })
-  // } else {
-  //   await updatePullRequest({
-  //     pullRequest: pullRequests[0],
-  //     version,
-  //     releaseType: inputs.releaseType,
-  //     labelMajorId,
-  //     labelMinorId,
-  //     labelPatchId,
-  //     lastReleaseVersion: `v${lastReleaseVersion}`,
-  //   })
-  //   pullRequest = pullRequests[0]
-  // }
-
-  // // Request reviews from authors of commits
-  // await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
+  // Request reviews from authors of commits
+  await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
 }
 
 const FOOTER = `## 🚀 PCO-Release

@@ -58362,12 +58362,6 @@ const FETCH_QUERY = `
   query($owner:String!, $repo:String!, $mainBranch:String!, $releaseBranch:String!, $lastRelease: String!) {
     repository(owner: $owner, name: $repo) {
       id
-      mainBranch: ref(qualifiedName: $mainBranch) {
-        id
-        target {
-          oid
-        }
-      }
       lastRelease: release(tagName: $lastRelease) {
         tag {
           compare(headRef: $mainBranch) {
@@ -58437,7 +58431,7 @@ const run = async (inputs) => {
         releaseBranch: RELEASE_BRANCH,
         lastRelease: `v${lastReleaseVersion}`,
     });
-    const { mainBranch, releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } = response.repository;
+    const { releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } = response.repository;
     // Find or create labels
     const { labelPendingId, labelMajorId, labelMinorId, labelPatchId } = await findOrCreateLabels({ labelPending, labelPatch, labelMajor, labelMinor }, { octokit, repoId: id });
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
@@ -58459,87 +58453,60 @@ const run = async (inputs) => {
     let pullRequest;
     await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
     await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`); // Ensure the release branch is up to date with main
-    // await easyExec(`git push -f --set-upstream origin pco-release--internal-temp`)
-    // const releaseTypeVersionBumpArg = inputs.releaseType ? `pre${inputs.releaseType}` : ''
     const updateVersionCommandFlags = [
-        // '--canary',
-        // '--no-git-reset',
         '--conventional-prerelease',
         '--conventionalCommits',
         '--createRelease=github',
         '--preid=rc',
         '--amend',
-        // '--dist-tag=next',
         '--json',
-        // `--summary-file=${GITHUB_WORKSPACE}/lerna-publish-summary.json`,
         '-y',
     ];
-    // await easyExec(`git diff origin/main`, { silent: false })
     const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
-    // if (!updatedPackages || updatedPackages.length === 0) {
-    //   console.log('No changes detected. Exiting...',)
-    //   return
-    // }
-    // await easyExec(`git diff origin/main`, { silent: false })
+    let updatedPackages;
+    try {
+        updatedPackages = JSON.parse(updateVersionOutput);
+    }
+    catch (error) {
+        console.log('Error parsing JSON', error);
+    }
+    if (!updatedPackages || updatedPackages.length === 0) {
+        console.log('No changes detected. Exiting...');
+        return;
+    }
+    const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part
+    // Push the changes to the release branch
+    await (0,utils.easyExec)(`git commit --amend --no-edit -m "v${version}"`);
     await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
-    console.log('output', updateVersionOutput);
-    // let updatedPackages
-    // try {
-    //   updatedPackages = JSON.parse(fs.readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8')) as {
-    //     packageName: string
-    //     version: string
-    //   }[]
-    // } catch (error) {
-    //   console.error('Error parsing JSON')
-    //   throw error
-    // }
-    // let updatedPackages
-    // try {
-    //   updatedPackages = JSON.parse(fs.readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8')) as {
-    //     packageName: string
-    //     version: string
-    //   }[]
-    // } catch (error) {
-    //   console.error('Error parsing JSON')
-    //   throw error
-    // }
-    // if (!updatedPackages || updatedPackages.length === 0) {
-    //   console.log('No changes detected. Exiting...',)
-    //   return
-    // }
-    // const version = updatedPackages[0].version.split('-')[0] // Remove the rc part
-    // // Now that the version has been updated, commit the changes to the PR branch
-    // await easyExec(`git checkout ${RELEASE_BRANCH}`)
-    // await easyExec(`git reset --hard origin/${TEMP_RELEASE_BRANCH}`)
-    // await easyExec(`git push -f`)
-    // // Create or update pull request
-    // if (pullRequests.length === 0) {
-    //   pullRequest = await createPullRequest({
-    //     labelPatchId,
-    //     labelPendingId,
-    //     repoId: id,
-    //     releaseBranch: RELEASE_BRANCH,
-    //     mainBranch: MAIN_BRANCH,
-    //     version,
-    //     lastReleaseVersion: `v${lastReleaseVersion}`,
-    //   })
-    // } else {
-    //   await updatePullRequest({
-    //     pullRequest: pullRequests[0],
-    //     version,
-    //     releaseType: inputs.releaseType,
-    //     labelMajorId,
-    //     labelMinorId,
-    //     labelPatchId,
-    //     lastReleaseVersion: `v${lastReleaseVersion}`,
-    //   })
-    //   pullRequest = pullRequests[0]
-    // }
-    // // Request reviews from authors of commits
-    // await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
+    // Create or update pull request
+    if (pullRequests.length === 0) {
+        pullRequest = await createPullRequest({
+            labelPatchId,
+            labelPendingId,
+            repoId: id,
+            releaseBranch: RELEASE_BRANCH,
+            mainBranch: MAIN_BRANCH,
+            version,
+            lastReleaseVersion: `v${lastReleaseVersion}`,
+        });
+    }
+    else {
+        await updatePullRequest({
+            pullRequest: pullRequests[0],
+            version,
+            releaseType: inputs.releaseType,
+            labelMajorId,
+            labelMinorId,
+            labelPatchId,
+            lastReleaseVersion: `v${lastReleaseVersion}`,
+        });
+        pullRequest = pullRequests[0];
+    }
+    // Request reviews from authors of commits
+    await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes });
 };
-const FOOTER = (/* unused pure expression or super */ null && (`## 🚀 PCO-Release
+const FOOTER = `## 🚀 PCO-Release
 
   This PR was automatically generated by pco-release-action.
   Merging it will create a new release.
@@ -58547,7 +58514,7 @@ const FOOTER = (/* unused pure expression or super */ null && (`## 🚀 PCO-Rele
   ### Actions
   - The version bump type is determined via [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). If the version bump is incorrect, you can manually update it by adding **\`pco-release-*\` label** (\`pco-release-patch\`, \`pco-release-minor\`, or \`pco-release-major\`) - Change the release type.
   - Release candidates are automatically created when this PR is updated. To deploy the release candidate to staging, add a comment \`@pco-release staging\`.
-  `));
+  `;
 async function findOrCreateLabels(labels, { octokit, repoId }) {
     const result = {};
     for (const key in labels) {
@@ -58585,7 +58552,7 @@ async function createPullRequest({ labelPatchId, labelPendingId, repoId, release
     return pullRequest;
 }
 async function buildBody({ version, lastReleaseVersion, }) {
-    const changelog = await readFileContent(`${GITHUB_WORKSPACE}/CHANGELOG.md`);
+    const changelog = await (0,utils.readFileContent)(`${GITHUB_WORKSPACE}/CHANGELOG.md`);
     const currentChanges = changelog.split(new RegExp(`##\\s\\[?v?((?!${version})\\d*\\.\\d*\\.\\d*)`))[0];
     const changesMatch = currentChanges.match(new RegExp(`##\\s\\[?v?${version}(\\]\\(.*\\))?\\s(.|\\n)*`, 'm'));
     if (changesMatch === null)

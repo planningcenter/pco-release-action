@@ -58478,22 +58478,14 @@ const run = async (inputs) => {
     const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part
     // const updatedChangelog = (await easyExec(`git diff origin/${MAIN_BRANCH} -- ./**/CHANGELOG.md`)).output
     const updatedChangelog = (await (0,utils.easyExec)(`${GITHUB_WORKSPACE}/node_modules/.bin/lerna exec -- bash -c '
-      # Get the current workspace name
-      workspace=$(basename "$PWD")
+      workspace=$(jq -r .name ./package.json)
+      echo "Workspace: $workspace"
 
-      # Check if CHANGELOG.md exists in the current workspace
-      if [ -f CHANGELOG.md ]; then
-        # Print the workspace name
-        echo "+# $workspace"
+      diff_output=$(git diff origin/main -- CHANGELOG.md)
 
-        # Run git diff for CHANGELOG.md
-        diff_output=$(git diff CHANGELOG.md)
+      echo "$diff_output"
 
-        echo "$diff_output"
-
-        # Print a separator for clarity
-        echo "----------------------------------------"
-      fi
+      echo "----------------------------------------"
     '`)).output;
     // .split('\n')
     // .filter((line) => line.startsWith('+') && !line.startsWith('+++'))

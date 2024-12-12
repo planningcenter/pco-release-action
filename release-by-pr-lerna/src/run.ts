@@ -167,7 +167,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const updatedChangelog = (
     await easyExec(`${GITHUB_WORKSPACE}/node_modules/.bin/lerna exec -- bash -c '
       workspace=$(jq -r .name ./package.json)
-      echo "Workspace: $workspace"
+      echo "+# $workspace"
 
       diff_output=$(git diff origin/main -- CHANGELOG.md)
 
@@ -176,10 +176,10 @@ export const run = async (inputs: Inputs): Promise<void> => {
       echo "----------------------------------------"
     '`)
   ).output
-  // .split('\n')
-  // .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
-  // .map((line) => line.substring(1))
-  // .join('\n')
+    .split('\n')
+    .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+    .map((line) => line.substring(1))
+    .join('\n')
 
   await easyExec(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`) // Reset the changelogs because we don't want it littered with rc versions
   // Push the changes to the release branch

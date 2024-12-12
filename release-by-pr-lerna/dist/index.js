@@ -58479,18 +58479,18 @@ const run = async (inputs) => {
     // const updatedChangelog = (await easyExec(`git diff origin/${MAIN_BRANCH} -- ./**/CHANGELOG.md`)).output
     const updatedChangelog = (await (0,utils.easyExec)(`${GITHUB_WORKSPACE}/node_modules/.bin/lerna exec -- bash -c '
       workspace=$(jq -r .name ./package.json)
-      echo "Workspace: $workspace"
+      echo "+# $workspace"
 
       diff_output=$(git diff origin/main -- CHANGELOG.md)
 
       echo "$diff_output"
 
       echo "----------------------------------------"
-    '`)).output;
-    // .split('\n')
-    // .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
-    // .map((line) => line.substring(1))
-    // .join('\n')
+    '`)).output
+        .split('\n')
+        .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+        .map((line) => line.substring(1))
+        .join('\n');
     await (0,utils.easyExec)(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`); // Reset the changelogs because we don't want it littered with rc versions
     // Push the changes to the release branch
     await (0,utils.easyExec)(`git commit --amend --no-edit -m "v${version}"`);

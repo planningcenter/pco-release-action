@@ -141,20 +141,21 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
   await easyExec(`git push -f --set-upstream origin pco-release--internal-temp`)
-  // const releaseTypeVersionBumpArg = inputs.releaseType ? `${inputs.releaseType}` : ''
+  // const releaseTypeVersionBumpArg = inputs.releaseType ? `pre${inputs.releaseType}` : ''
 
   const updateVersionCommandFlags = [
-    '--canary',
+    // '--canary',
     // '--no-git-reset',
     '--conventional-prerelease',
     '--conventionalCommits',
     '--createRelease=github',
     '--preid=rc',
-    '--dist-tag=next',
-    `--summary-file=${GITHUB_WORKSPACE}/lerna-publish-summary.json`,
+    // '--dist-tag=next',
+    '--json',
+    // `--summary-file=${GITHUB_WORKSPACE}/lerna-publish-summary.json`,
     '-y',
   ]
-  const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna publish ${updateVersionCommandFlags.join(' ')}`
+  const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`
   await easyExec(`${updateVersionCommand}"`)
 
   // let updatedPackages

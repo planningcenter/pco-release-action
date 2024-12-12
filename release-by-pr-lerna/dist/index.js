@@ -58334,35 +58334,6 @@ module.exports = parseParams
 /******/ }
 /******/ 
 /************************************************************************/
-/******/ /* webpack/runtime/compat get default export */
-/******/ (() => {
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__nccwpck_require__.n = (module) => {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			() => (module['default']) :
-/******/ 			() => (module);
-/******/ 		__nccwpck_require__.d(getter, { a: getter });
-/******/ 		return getter;
-/******/ 	};
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/define property getters */
-/******/ (() => {
-/******/ 	// define getter functions for harmony exports
-/******/ 	__nccwpck_require__.d = (exports, definition) => {
-/******/ 		for(var key in definition) {
-/******/ 			if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
-/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 			}
-/******/ 		}
-/******/ 	};
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/hasOwnProperty shorthand */
-/******/ (() => {
-/******/ 	__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ })();
-/******/ 
 /******/ /* webpack/runtime/compat */
 /******/ 
 /******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
@@ -58378,11 +58349,7 @@ var core = __nccwpck_require__(5316);
 var dist_node = __nccwpck_require__(266);
 // EXTERNAL MODULE: ../shared/utils.ts
 var utils = __nccwpck_require__(709);
-// EXTERNAL MODULE: external "fs"
-var external_fs_ = __nccwpck_require__(7147);
-var external_fs_default = /*#__PURE__*/__nccwpck_require__.n(external_fs_);
 ;// CONCATENATED MODULE: ./src/run.ts
-
 
 
 const LABEL_NAMES = {
@@ -58502,52 +58469,53 @@ const run = async (inputs) => {
         '-y',
     ];
     const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna publish ${updateVersionCommandFlags.join(' ')}`;
-    const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
-    let updatedPackages;
-    try {
-        updatedPackages = JSON.parse(external_fs_default().readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8'));
-    }
-    catch (error) {
-        console.error('Error parsing JSON');
-        throw error;
-    }
-    if (!updatedPackages || updatedPackages.length === 0) {
-        console.log('No changes detected. Exiting...', { updateVersionOutput });
-        return;
-    }
-    const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part
-    // Now that the version has been updated, commit the changes to the PR branch
-    await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
-    await (0,utils.easyExec)(`git reset --hard origin/${TEMP_RELEASE_BRANCH}`);
-    await (0,utils.easyExec)(`git push -f`);
-    // Create or update pull request
-    if (pullRequests.length === 0) {
-        pullRequest = await createPullRequest({
-            labelPatchId,
-            labelPendingId,
-            repoId: id,
-            releaseBranch: RELEASE_BRANCH,
-            mainBranch: MAIN_BRANCH,
-            version,
-            lastReleaseVersion: `v${lastReleaseVersion}`,
-        });
-    }
-    else {
-        await updatePullRequest({
-            pullRequest: pullRequests[0],
-            version,
-            releaseType: inputs.releaseType,
-            labelMajorId,
-            labelMinorId,
-            labelPatchId,
-            lastReleaseVersion: `v${lastReleaseVersion}`,
-        });
-        pullRequest = pullRequests[0];
-    }
-    // Request reviews from authors of commits
-    await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes });
+    await (0,utils.easyExec)(`${updateVersionCommand}"`);
+    // let updatedPackages
+    // try {
+    //   updatedPackages = JSON.parse(fs.readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8')) as {
+    //     packageName: string
+    //     version: string
+    //   }[]
+    // } catch (error) {
+    //   console.error('Error parsing JSON')
+    //   throw error
+    // }
+    // if (!updatedPackages || updatedPackages.length === 0) {
+    //   console.log('No changes detected. Exiting...',)
+    //   return
+    // }
+    // const version = updatedPackages[0].version.split('-')[0] // Remove the rc part
+    // // Now that the version has been updated, commit the changes to the PR branch
+    // await easyExec(`git checkout ${RELEASE_BRANCH}`)
+    // await easyExec(`git reset --hard origin/${TEMP_RELEASE_BRANCH}`)
+    // await easyExec(`git push -f`)
+    // // Create or update pull request
+    // if (pullRequests.length === 0) {
+    //   pullRequest = await createPullRequest({
+    //     labelPatchId,
+    //     labelPendingId,
+    //     repoId: id,
+    //     releaseBranch: RELEASE_BRANCH,
+    //     mainBranch: MAIN_BRANCH,
+    //     version,
+    //     lastReleaseVersion: `v${lastReleaseVersion}`,
+    //   })
+    // } else {
+    //   await updatePullRequest({
+    //     pullRequest: pullRequests[0],
+    //     version,
+    //     releaseType: inputs.releaseType,
+    //     labelMajorId,
+    //     labelMinorId,
+    //     labelPatchId,
+    //     lastReleaseVersion: `v${lastReleaseVersion}`,
+    //   })
+    //   pullRequest = pullRequests[0]
+    // }
+    // // Request reviews from authors of commits
+    // await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
 };
-const FOOTER = `## 🚀 PCO-Release
+const FOOTER = (/* unused pure expression or super */ null && (`## 🚀 PCO-Release
 
   This PR was automatically generated by pco-release-action.
   Merging it will create a new release.
@@ -58555,7 +58523,7 @@ const FOOTER = `## 🚀 PCO-Release
   ### Actions
   - The version bump type is determined via [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). If the version bump is incorrect, you can manually update it by adding **\`pco-release-*\` label** (\`pco-release-patch\`, \`pco-release-minor\`, or \`pco-release-major\`) - Change the release type.
   - Release candidates are automatically created when this PR is updated. To deploy the release candidate to staging, add a comment \`@pco-release staging\`.
-  `;
+  `));
 async function findOrCreateLabels(labels, { octokit, repoId }) {
     const result = {};
     for (const key in labels) {
@@ -58593,7 +58561,7 @@ async function createPullRequest({ labelPatchId, labelPendingId, repoId, release
     return pullRequest;
 }
 async function buildBody({ version, lastReleaseVersion, }) {
-    const changelog = await (0,utils.readFileContent)(`${GITHUB_WORKSPACE}/CHANGELOG.md`);
+    const changelog = await readFileContent(`${GITHUB_WORKSPACE}/CHANGELOG.md`);
     const currentChanges = changelog.split(new RegExp(`##\\s\\[?v?((?!${version})\\d*\\.\\d*\\.\\d*)`))[0];
     const changesMatch = currentChanges.match(new RegExp(`##\\s\\[?v?${version}(\\]\\(.*\\))?\\s(.|\\n)*`, 'm'));
     if (changesMatch === null)

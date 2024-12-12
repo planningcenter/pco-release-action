@@ -155,60 +155,57 @@ export const run = async (inputs: Inputs): Promise<void> => {
     '-y',
   ]
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna publish ${updateVersionCommandFlags.join(' ')}`
-  const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
+  await easyExec(`${updateVersionCommand}"`)
 
-  let updatedPackages
-  try {
-    updatedPackages = JSON.parse(fs.readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8')) as {
-      name: string
-      version: string
-      private: boolean
-      location: string
-      newVersion: string
-    }[]
-  } catch (error) {
-    console.error('Error parsing JSON')
-    throw error
-  }
+  // let updatedPackages
+  // try {
+  //   updatedPackages = JSON.parse(fs.readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8')) as {
+  //     packageName: string
+  //     version: string
+  //   }[]
+  // } catch (error) {
+  //   console.error('Error parsing JSON')
+  //   throw error
+  // }
 
-  if (!updatedPackages || updatedPackages.length === 0) {
-    console.log('No changes detected. Exiting...', { updateVersionOutput })
-    return
-  }
+  // if (!updatedPackages || updatedPackages.length === 0) {
+  //   console.log('No changes detected. Exiting...',)
+  //   return
+  // }
 
-  const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
+  // const version = updatedPackages[0].version.split('-')[0] // Remove the rc part
 
-  // Now that the version has been updated, commit the changes to the PR branch
-  await easyExec(`git checkout ${RELEASE_BRANCH}`)
-  await easyExec(`git reset --hard origin/${TEMP_RELEASE_BRANCH}`)
-  await easyExec(`git push -f`)
+  // // Now that the version has been updated, commit the changes to the PR branch
+  // await easyExec(`git checkout ${RELEASE_BRANCH}`)
+  // await easyExec(`git reset --hard origin/${TEMP_RELEASE_BRANCH}`)
+  // await easyExec(`git push -f`)
 
-  // Create or update pull request
-  if (pullRequests.length === 0) {
-    pullRequest = await createPullRequest({
-      labelPatchId,
-      labelPendingId,
-      repoId: id,
-      releaseBranch: RELEASE_BRANCH,
-      mainBranch: MAIN_BRANCH,
-      version,
-      lastReleaseVersion: `v${lastReleaseVersion}`,
-    })
-  } else {
-    await updatePullRequest({
-      pullRequest: pullRequests[0],
-      version,
-      releaseType: inputs.releaseType,
-      labelMajorId,
-      labelMinorId,
-      labelPatchId,
-      lastReleaseVersion: `v${lastReleaseVersion}`,
-    })
-    pullRequest = pullRequests[0]
-  }
+  // // Create or update pull request
+  // if (pullRequests.length === 0) {
+  //   pullRequest = await createPullRequest({
+  //     labelPatchId,
+  //     labelPendingId,
+  //     repoId: id,
+  //     releaseBranch: RELEASE_BRANCH,
+  //     mainBranch: MAIN_BRANCH,
+  //     version,
+  //     lastReleaseVersion: `v${lastReleaseVersion}`,
+  //   })
+  // } else {
+  //   await updatePullRequest({
+  //     pullRequest: pullRequests[0],
+  //     version,
+  //     releaseType: inputs.releaseType,
+  //     labelMajorId,
+  //     labelMinorId,
+  //     labelPatchId,
+  //     lastReleaseVersion: `v${lastReleaseVersion}`,
+  //   })
+  //   pullRequest = pullRequests[0]
+  // }
 
-  // Request reviews from authors of commits
-  await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
+  // // Request reviews from authors of commits
+  // await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
 }
 
 const FOOTER = `## 🚀 PCO-Release

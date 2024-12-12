@@ -58458,7 +58458,17 @@ const run = async (inputs) => {
     const releaseTypeVersionBumpArg = specifiedReleaseType ? ` pre${specifiedReleaseType}` : '';
     const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`;
     console.log(updateVersionCommand);
-    const updatedPackages = JSON.parse((await (0,utils.easyExec)(`${updateVersionCommand}"`, { silent: true })).output);
+    const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`, { silent: true })).output;
+    console.log('updateVersionOutput', updateVersionOutput);
+    let updatedPackages;
+    try {
+        updatedPackages = JSON.parse(updateVersionOutput);
+    }
+    catch (e) {
+        console.log(e);
+        console.log('updateVersionOutput', updateVersionOutput);
+        return;
+    }
     // If there are no changes, exit
     if (updatedPackages.length === 0) {
         console.log('No changes detected. Exiting...');

@@ -144,13 +144,20 @@ export const run = async (inputs: Inputs): Promise<void> => {
   console.log(updateVersionCommand)
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`, { silent: true })).output
   console.log('updateVersionOutput', updateVersionOutput)
-  const updatedPackages = JSON.parse(updateVersionOutput) as {
-    name: string
-    version: string
-    private: boolean
-    location: string
-    newVersion: string
-  }[]
+  let updatedPackages
+  try {
+    updatedPackages = JSON.parse(updateVersionOutput) as {
+      name: string
+      version: string
+      private: boolean
+      location: string
+      newVersion: string
+    }[]
+  } catch (e) {
+    console.log(e)
+    console.log('updateVersionOutput', updateVersionOutput)
+    return
+  }
 
   // If there are no changes, exit
   if (updatedPackages.length === 0) {

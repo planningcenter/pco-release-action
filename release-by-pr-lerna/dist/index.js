@@ -58477,14 +58477,11 @@ const run = async (inputs) => {
     }
     const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part
     // const updatedChangelog = (await easyExec(`git diff origin/${MAIN_BRANCH} -- ./**/CHANGELOG.md`)).output
-    const updatedChangelog = (await (0,utils.easyExec)(`${GITHUB_WORKSPACE}/node_modules/.bin/lerna exec -- bash -c '
+    const updatedChangelog = (await (0,utils.easyExec)(`${GITHUB_WORKSPACE}/node_modules/.bin/lerna exec --concurrency 1 -- '
       workspace=$(jq -r .name ./package.json)
       echo "+# $workspace"
-
       diff_output=$(git diff origin/main -- CHANGELOG.md)
-
       echo "$diff_output"
-
       echo "----------------------------------------"
     '`)).output
         .split('\n')

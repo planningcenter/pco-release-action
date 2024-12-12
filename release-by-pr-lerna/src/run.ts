@@ -165,14 +165,11 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   // const updatedChangelog = (await easyExec(`git diff origin/${MAIN_BRANCH} -- ./**/CHANGELOG.md`)).output
   const updatedChangelog = (
-    await easyExec(`${GITHUB_WORKSPACE}/node_modules/.bin/lerna exec -- bash -c '
+    await easyExec(`${GITHUB_WORKSPACE}/node_modules/.bin/lerna exec --concurrency 1 -- '
       workspace=$(jq -r .name ./package.json)
       echo "+# $workspace"
-
       diff_output=$(git diff origin/main -- CHANGELOG.md)
-
       echo "$diff_output"
-
       echo "----------------------------------------"
     '`)
   ).output

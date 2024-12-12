@@ -58454,9 +58454,9 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
-    await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} -f`);
+    // await easyExec(`git push origin ${RELEASE_BRANCH} -f`)
     const releaseTypeVersionBumpArg = inputs.releaseType ? ` pre${inputs.releaseType}` : '';
-    const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`;
+    const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --no-git-reset --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag next --json -y`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
     // If there are no changes, exit
     if (updateVersionOutput.trim().length === 0) {

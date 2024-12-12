@@ -1,0 +1,22 @@
+name: PCO Release - Release by PR
+description: A tool for creating and managing releases for PCO projects through Pull Requests.
+
+inputs:
+  # GITHUB_TOKEN:
+  #   description: token for access
+  #   required: true
+  # release_type:
+  #   required: false
+  #   default: nochange
+  # package_json_path:
+  #   description: 'The path to the package.json file to version.'
+  #   required: false
+  #   default: 'package.json'
+  # version_command:
+  #   description: 'The command to run to bump the version'
+  #   required: false
+  #   default: 'yarn version'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

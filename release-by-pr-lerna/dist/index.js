@@ -58416,7 +58416,7 @@ const FETCH_QUERY = `
     }
   }
 `;
-const { GITHUB_REPOSITORY, GITHUB_WORKSPACE, GITHUB_TOKEN } = process.env;
+const { GITHUB_REPOSITORY, GITHUB_WORKSPACE } = process.env;
 if (!GITHUB_REPOSITORY)
     throw new Error('GITHUB_REPOSITORY is not set');
 const [owner, repo] = GITHUB_REPOSITORY.split('/');
@@ -58456,9 +58456,9 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
     const specifiedReleaseType = getReleaseType(pullRequests[0]);
     const releaseTypeVersionBumpArg = specifiedReleaseType ? ` pre${specifiedReleaseType}` : '';
-    const updateVersionCommand = `node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`;
+    const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`;
     console.log(updateVersionCommand);
-    const updatedPackages = JSON.parse((await (0,utils.easyExec)(`GH_TOKEN="${GITHUB_TOKEN} ${updateVersionCommand}"`, { silent: true })).output);
+    const updatedPackages = JSON.parse((await (0,utils.easyExec)(`${updateVersionCommand}"`, { silent: true })).output);
     // If there are no changes, exit
     if (updatedPackages.length === 0) {
         console.log('No changes detected. Exiting...');

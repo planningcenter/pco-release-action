@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/action'
 import { easyExec, readFileContent } from '../../shared/utils.js'
+import fs from 'fs'
 
 type ReleaseType = 'patch' | 'minor' | 'major' | undefined
 type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
@@ -162,6 +163,14 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
 
+  const updatedChangelog = (await easyExec(`git diff origin/${MAIN_BRANCH} -- ./CHANGELOG.md`)).output
+    .split('\n')
+    .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+    .map((line) => line.substring(1))
+    .join('\n')
+
+  console.log('Updated changelog:', updatedChangelog)
+  await easyExec(`git reset origin/${MAIN_BRANCH} ./CHANGELOG.md`) // Reset the changelog because we don't want it littered with rc versions
   // Push the changes to the release branch
   await easyExec(`git commit --amend --no-edit -m "v${version}"`)
   await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)

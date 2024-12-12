@@ -138,7 +138,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
-  await easyExec(`git pull origin ${RELEASE_BRANCH} -f`)
+  await easyExec(`git push origin ${RELEASE_BRANCH} -f`)
   const releaseTypeVersionBumpArg = inputs.releaseType ? ` pre${inputs.releaseType}` : ''
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output

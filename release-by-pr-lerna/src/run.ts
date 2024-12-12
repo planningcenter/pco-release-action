@@ -182,10 +182,10 @@ export const run = async (inputs: Inputs): Promise<void> => {
       fi
     '`)
   ).output
-    .split('\n')
-    .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
-    .map((line) => line.substring(1))
-    .join('\n')
+  // .split('\n')
+  // .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+  // .map((line) => line.substring(1))
+  // .join('\n')
 
   await easyExec(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`) // Reset the changelogs because we don't want it littered with rc versions
   // Push the changes to the release branch

@@ -58492,11 +58492,11 @@ const run = async (inputs) => {
         # Print a separator for clarity
         echo "----------------------------------------"
       fi
-    '`)).output
-        .split('\n')
-        .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
-        .map((line) => line.substring(1))
-        .join('\n');
+    '`)).output;
+    // .split('\n')
+    // .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+    // .map((line) => line.substring(1))
+    // .join('\n')
     await (0,utils.easyExec)(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`); // Reset the changelogs because we don't want it littered with rc versions
     // Push the changes to the release branch
     await (0,utils.easyExec)(`git commit --amend --no-edit -m "v${version}"`);

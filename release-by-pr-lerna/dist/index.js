@@ -58490,7 +58490,7 @@ const run = async (inputs) => {
         pullRequest = pullRequests[0];
     }
     // Request reviews from authors of commits
-    console.log(lastRelease);
+    console.log('lastRelease', lastRelease);
     await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes });
 };
 const FOOTER = `## 🚀 PCO-Release

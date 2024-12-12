@@ -58492,6 +58492,7 @@ const run = async (inputs) => {
     // Push the changes to the release branch
     await (0,utils.easyExec)(`git commit --amend --no-edit -m "v${version}"`);
     await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
+    await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --tags`);
     // Create or update pull request
     if (pullRequests.length === 0) {
         pullRequest = await createPullRequest({

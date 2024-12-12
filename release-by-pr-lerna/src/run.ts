@@ -184,6 +184,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Push the changes to the release branch
   await easyExec(`git commit --amend --no-edit -m "v${version}"`)
   await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
+  await easyExec(`git push origin ${RELEASE_BRANCH} --tags`)
 
   // Create or update pull request
   if (pullRequests.length === 0) {

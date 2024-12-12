@@ -139,7 +139,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
-  await easyExec(`git push -f`)
+  await easyExec(`git push -f --set-upstream origin pco-release--internal-temp`)
   // const releaseTypeVersionBumpArg = inputs.releaseType ? `${inputs.releaseType}` : ''
 
   const updateVersionCommandFlags = [

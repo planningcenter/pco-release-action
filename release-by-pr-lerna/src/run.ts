@@ -89,6 +89,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git fetch origin`)
   await easyExec(`git checkout ${MAIN_BRANCH}`)
   const lastReleaseVersion = (await easyExec(`jq -r .version ./package.json`)).output.split('\n')[0]
+  await easyExec('yarn install')
 
   // Fetch information needed about the repo
   const response: {

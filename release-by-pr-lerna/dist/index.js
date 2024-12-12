@@ -58451,8 +58451,8 @@ const run = async (inputs) => {
     }
     const pullRequests = releaseBranch?.associatedPullRequests.nodes || [];
     let pullRequest;
-    await (0,utils.easyExec)(`git switch -c ${TEMP_RELEASE_BRANCH}`);
-    await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
+    await (0,utils.easyExec)(`git switch -c ${RELEASE_BRANCH}`);
+    await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --ff`); // Ensure the release branch is up to date with main
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
     await (0,utils.easyExec)(`git push -f --set-upstream origin pco-release--internal-temp`);
@@ -58464,13 +58464,26 @@ const run = async (inputs) => {
         '--conventionalCommits',
         '--createRelease=github',
         '--preid=rc',
+        '--amend',
         // '--dist-tag=next',
         '--json',
         // `--summary-file=${GITHUB_WORKSPACE}/lerna-publish-summary.json`,
         '-y',
     ];
     const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`;
-    await (0,utils.easyExec)(`${updateVersionCommand}"`);
+    const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
+    await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
+    console.log('output', updateVersionOutput);
+    // let updatedPackages
+    // try {
+    //   updatedPackages = JSON.parse(fs.readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8')) as {
+    //     packageName: string
+    //     version: string
+    //   }[]
+    // } catch (error) {
+    //   console.error('Error parsing JSON')
+    //   throw error
+    // }
     // let updatedPackages
     // try {
     //   updatedPackages = JSON.parse(fs.readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8')) as {

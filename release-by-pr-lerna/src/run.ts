@@ -136,8 +136,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const pullRequests = releaseBranch?.associatedPullRequests.nodes || []
   let pullRequest: PullRequest
 
-  await easyExec(`git switch -c ${TEMP_RELEASE_BRANCH}`)
-  await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
+  await easyExec(`git switch -c ${RELEASE_BRANCH}`)
+  await easyExec(`git rebase origin/${MAIN_BRANCH} --ff`) // Ensure the release branch is up to date with main
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
   await easyExec(`git push -f --set-upstream origin pco-release--internal-temp`)
@@ -150,6 +150,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
     '--conventionalCommits',
     '--createRelease=github',
     '--preid=rc',
+    '--amend',
     // '--dist-tag=next',
     '--json',
     // `--summary-file=${GITHUB_WORKSPACE}/lerna-publish-summary.json`,
@@ -157,6 +158,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
   ]
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
+
+  await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 
   console.log('output', updateVersionOutput)
   // let updatedPackages

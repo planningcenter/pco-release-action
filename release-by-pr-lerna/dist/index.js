@@ -58421,7 +58421,7 @@ const run = async (inputs) => {
     // Find the last release version from main branch
     await (0,utils.easyExec)(`git fetch origin`);
     await (0,utils.easyExec)(`git checkout ${MAIN_BRANCH}`);
-    const lastReleaseVersion = (await (0,utils.easyExec)(`jq -r .version ./package.json`)).output.split('\n')[0];
+    const lastReleaseVersion = (await (0,utils.easyExec)(`jq -r .version ${GITHUB_WORKSPACE}/package.json`)).output.split('\n')[0];
     await (0,utils.easyExec)('yarn install');
     // Fetch information needed about the repo
     const response = await octokit.graphql(FETCH_QUERY, {

@@ -156,7 +156,19 @@ export const run = async (inputs: Inputs): Promise<void> => {
     '-y',
   ]
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version ${updateVersionCommandFlags.join(' ')}`
-  await easyExec(`${updateVersionCommand}"`)
+  const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
+
+  console.log('output', updateVersionOutput)
+  // let updatedPackages
+  // try {
+  //   updatedPackages = JSON.parse(fs.readFileSync(`${GITHUB_WORKSPACE}/lerna-publish-summary.json`, 'utf8')) as {
+  //     packageName: string
+  //     version: string
+  //   }[]
+  // } catch (error) {
+  //   console.error('Error parsing JSON')
+  //   throw error
+  // }
 
   // let updatedPackages
   // try {

@@ -142,7 +142,9 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const releaseTypeVersionBumpArg = specifiedReleaseType ? ` pre${specifiedReleaseType}` : ''
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`
   console.log(updateVersionCommand)
-  const updatedPackages = JSON.parse((await easyExec(`${updateVersionCommand}"`, { silent: true })).output) as {
+  const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`, { silent: true })).output
+  console.log('updateVersionOutput', updateVersionOutput)
+  const updatedPackages = JSON.parse(updateVersionOutput) as {
     name: string
     version: string
     private: boolean

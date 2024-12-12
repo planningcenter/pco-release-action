@@ -138,8 +138,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
-  const specifiedReleaseType = getReleaseType(pullRequests[0])
-  const releaseTypeVersionBumpArg = specifiedReleaseType ? ` pre${specifiedReleaseType}` : ''
+  const releaseTypeVersionBumpArg = inputs.releaseType ? ` pre${inputs.releaseType}` : ''
   const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
 
@@ -222,15 +221,6 @@ async function findOrCreateLabels(
   }
 
   return result as LabelIds
-}
-
-function getReleaseType(pullRequest: PullRequest | undefined) {
-  if (!pullRequest) return
-
-  const releaseType = pullRequest.labels.nodes.find(
-    (label) => label.name.startsWith('pco-release-') && label.name !== 'pco-release-pending',
-  )
-  return releaseType ? releaseType.name.split('-')[2] : undefined
 }
 
 async function createPullRequest({

@@ -58454,8 +58454,7 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
-    const specifiedReleaseType = getReleaseType(pullRequests[0]);
-    const releaseTypeVersionBumpArg = specifiedReleaseType ? ` pre${specifiedReleaseType}` : '';
+    const releaseTypeVersionBumpArg = inputs.releaseType ? ` pre${inputs.releaseType}` : '';
     const updateVersionCommand = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna version${releaseTypeVersionBumpArg} --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --json -y`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
     // If there are no changes, exit
@@ -58517,12 +58516,6 @@ async function findOrCreateLabels(labels, { octokit, repoId }) {
         }
     }
     return result;
-}
-function getReleaseType(pullRequest) {
-    if (!pullRequest)
-        return;
-    const releaseType = pullRequest.labels.nodes.find((label) => label.name.startsWith('pco-release-') && label.name !== 'pco-release-pending');
-    return releaseType ? releaseType.name.split('-')[2] : undefined;
 }
 async function createPullRequest({ labelPatchId, labelPendingId, repoId, releaseBranch, mainBranch, version, lastReleaseVersion, }) {
     // Create a pull request

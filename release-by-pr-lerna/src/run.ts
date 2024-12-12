@@ -169,7 +169,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
     .map((line) => line.substring(1))
     .join('\n')
 
-  await easyExec(`git reset origin/${MAIN_BRANCH} ./CHANGELOG.md`) // Reset the changelog because we don't want it littered with rc versions
+  await easyExec(`git diff origin/main -- ./**/CHANGELOG.md`)
+  await easyExec(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md`) // Reset the changelog because we don't want it littered with rc versions
   // Push the changes to the release branch
   await easyExec(`git commit --amend --no-edit -m "v${version}"`)
   await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)

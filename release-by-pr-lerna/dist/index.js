@@ -58440,6 +58440,8 @@ const run = async (inputs) => {
     const { mainBranch, releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } = response.repository;
     // Find or create labels
     const { labelPendingId, labelMajorId, labelMinorId, labelPatchId } = await findOrCreateLabels({ labelPending, labelPatch, labelMajor, labelMinor }, { octokit, repoId: id });
+    await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
+    await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
     // Create release branch if it doesn't exist
     if (!releaseBranch) {
         await octokit.graphql(`mutation($repoId: ID!, $oid: GitObjectID!, $name: String!) {
@@ -58454,8 +58456,6 @@ const run = async (inputs) => {
     let pullRequest;
     await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
     await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`); // Ensure the release branch is up to date with main
-    await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
-    await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
     // await easyExec(`git push -f --set-upstream origin pco-release--internal-temp`)
     // const releaseTypeVersionBumpArg = inputs.releaseType ? `pre${inputs.releaseType}` : ''
     const updateVersionCommandFlags = [

@@ -120,6 +120,9 @@ export const run = async (inputs: Inputs): Promise<void> => {
     { octokit, repoId: id },
   )
 
+  await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
+  await easyExec(`git config --global user.name "github-actions[bot]"`)
+
   // Create release branch if it doesn't exist
   if (!releaseBranch) {
     await octokit.graphql(
@@ -139,8 +142,6 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   await easyExec(`git checkout ${RELEASE_BRANCH}`)
   await easyExec(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`) // Ensure the release branch is up to date with main
-  await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
-  await easyExec(`git config --global user.name "github-actions[bot]"`)
 
   // await easyExec(`git push -f --set-upstream origin pco-release--internal-temp`)
   // const releaseTypeVersionBumpArg = inputs.releaseType ? `pre${inputs.releaseType}` : ''

@@ -58455,7 +58455,7 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
-    await (0,utils.easyExec)(`git checkout push -f`);
+    await (0,utils.easyExec)(`git push -f`);
     // const releaseTypeVersionBumpArg = inputs.releaseType ? `${inputs.releaseType}` : ''
     const updateVersionCommandFlags = [
         '--canary',
@@ -58480,6 +58480,7 @@ const run = async (inputs) => {
     // Now that the version has been updated, commit the changes to the PR branch
     await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
     await (0,utils.easyExec)(`git reset --hard origin/${TEMP_RELEASE_BRANCH}`);
+    await (0,utils.easyExec)(`git push -f`);
     // Create or update pull request
     if (pullRequests.length === 0) {
         pullRequest = await createPullRequest({

@@ -139,7 +139,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
-  await easyExec(`git checkout push -f`)
+  await easyExec(`git push -f`)
   // const releaseTypeVersionBumpArg = inputs.releaseType ? `${inputs.releaseType}` : ''
 
   const updateVersionCommandFlags = [
@@ -175,6 +175,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Now that the version has been updated, commit the changes to the PR branch
   await easyExec(`git checkout ${RELEASE_BRANCH}`)
   await easyExec(`git reset --hard origin/${TEMP_RELEASE_BRANCH}`)
+  await easyExec(`git push -f`)
 
   // Create or update pull request
   if (pullRequests.length === 0) {

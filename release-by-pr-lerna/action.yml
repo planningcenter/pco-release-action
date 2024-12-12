@@ -17,8 +17,9 @@ inputs:
     required: false
     deprecated: true
 
+env:
+  GH_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+
 runs:
   using: 'node20'
   main: 'dist/index.js'
-  env:
-    GH_TOKEN: ${{ inputs.GITHUB_TOKEN }}

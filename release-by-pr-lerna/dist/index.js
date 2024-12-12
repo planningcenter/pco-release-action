@@ -58424,7 +58424,6 @@ const octokit = new dist_node.Octokit();
 const run = async (inputs) => {
     const MAIN_BRANCH = 'main';
     const RELEASE_BRANCH = 'pco-release--internal';
-    const TEMP_RELEASE_BRANCH = 'pco-release--internal-temp';
     // Find the last release version from main branch
     await (0,utils.easyExec)(`git fetch origin`);
     await (0,utils.easyExec)(`git checkout ${MAIN_BRANCH}`);
@@ -58455,7 +58454,7 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --ff`); // Ensure the release branch is up to date with main
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
-    await (0,utils.easyExec)(`git push -f --set-upstream origin pco-release--internal-temp`);
+    // await easyExec(`git push -f --set-upstream origin pco-release--internal-temp`)
     // const releaseTypeVersionBumpArg = inputs.releaseType ? `pre${inputs.releaseType}` : ''
     const updateVersionCommandFlags = [
         // '--canary',

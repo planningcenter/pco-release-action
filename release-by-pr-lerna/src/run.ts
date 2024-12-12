@@ -85,7 +85,6 @@ const octokit = new Octokit()
 export const run = async (inputs: Inputs): Promise<void> => {
   const MAIN_BRANCH = 'main'
   const RELEASE_BRANCH = 'pco-release--internal'
-  const TEMP_RELEASE_BRANCH = 'pco-release--internal-temp'
 
   // Find the last release version from main branch
   await easyExec(`git fetch origin`)
@@ -140,7 +139,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git rebase origin/${MAIN_BRANCH} --ff`) // Ensure the release branch is up to date with main
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
-  await easyExec(`git push -f --set-upstream origin pco-release--internal-temp`)
+  // await easyExec(`git push -f --set-upstream origin pco-release--internal-temp`)
   // const releaseTypeVersionBumpArg = inputs.releaseType ? `pre${inputs.releaseType}` : ''
 
   const updateVersionCommandFlags = [

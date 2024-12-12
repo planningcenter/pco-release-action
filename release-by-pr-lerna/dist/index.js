@@ -58451,7 +58451,7 @@ const run = async (inputs) => {
     }
     const pullRequests = releaseBranch?.associatedPullRequests.nodes || [];
     let pullRequest;
-    await (0,utils.easyExec)(`git checkout ${TEMP_RELEASE_BRANCH}`);
+    await (0,utils.easyExec)(`git switch -c ${TEMP_RELEASE_BRANCH}`);
     await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);

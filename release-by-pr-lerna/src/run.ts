@@ -135,7 +135,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const pullRequests = releaseBranch?.associatedPullRequests.nodes || []
   let pullRequest: PullRequest
 
-  await easyExec(`git checkout ${TEMP_RELEASE_BRANCH}`)
+  await easyExec(`git switch -c ${TEMP_RELEASE_BRANCH}`)
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)

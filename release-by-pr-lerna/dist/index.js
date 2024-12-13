@@ -58464,7 +58464,7 @@ const run = async (inputs) => {
         '--preid=rc',
         '--dist-tag=next',
         '--json',
-        `--registry="//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}"`,
+        `--registry="https://registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}"`,
         '-y',
     ];
     const updateVersionCommand = `${LERNA} publish ${updateVersionCommandFlags.join(' ')}`;

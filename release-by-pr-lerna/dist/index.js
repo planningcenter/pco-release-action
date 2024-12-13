@@ -58451,8 +58451,7 @@ const run = async (inputs) => {
     // Push the changes to the release branch
     await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
     // Set up NPM permissions
-    await (0,utils.easyExec)(`echo "registry=http://registry.npmjs.org/" >> ${GITHUB_WORKSPACE}/.npmrc`);
-    await (0,utils.easyExec)(`echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ${GITHUB_WORKSPACE}/.npmrc`);
+    await (0,utils.easyExec)(`echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc`);
     await (0,utils.easyExec)(`npm whoami`);
     // Bump the version, editing the last commit (which should be the version bump)
     const updateVersionCommandFlags = [

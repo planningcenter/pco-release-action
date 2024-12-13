@@ -23,7 +23,7 @@ jobs:
       - run: ./node_modules/.bin/lerna publish --canary --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y
         id: lerna_publish
     outputs:
-      releases: ${{ steps.lerna_publish.outputs }}
+      releases: ${{ steps.lerna_publish.outputs.stdout }}
   setup-release-branch:
     needs: create-rc-release
     runs-on: ubuntu-latest

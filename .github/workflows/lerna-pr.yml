@@ -20,7 +20,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
       - run: yarn install
-      - run: ./node_modules/.bin/lerna publish --canary --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y
+      - run: ./node_modules/.bin/lerna publish --canary --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y | echo "::set-output name=releases::$(cat)"
         id: lerna_publish
     outputs:
       releases: ${{ steps.lerna_publish.outputs.stdout }}

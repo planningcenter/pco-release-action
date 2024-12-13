@@ -58450,6 +58450,8 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`);
     // Push the changes to the release branch
     await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
+    // Set up NPM permissions
+    await (0,utils.easyExec)(`echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc`);
     // Bump the version, editing the last commit (which should be the version bump)
     const updateVersionCommandFlags = [
         '--canary',

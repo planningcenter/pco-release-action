@@ -20,10 +20,11 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
       - run: yarn install
-      - run: ./node_modules/.bin/lerna publish --canary --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y | echo "::set-output name=releases::$(cat)"
+      - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y | echo "inlinereleases=$(cat)" >> $GITHUB_OUTPUT
         id: lerna_publish
     outputs:
       releases: ${{ steps.lerna_publish.outputs.stdout }}
+      inlinereleases: ${{ steps.lerna_publish.outputs.inlinereleases }}
   setup-release-branch:
     needs: create-rc-release
     runs-on: ubuntu-latest
@@ -52,3 +53,4 @@ jobs:
       - run: git rebase origin/main --strategy-option=theirs
       - run: git push -f --set-upstream origin pco-release--internal
       - run: 'echo "Lerna publish output: ${{ needs.create-rc-release.outputs.releases }}"'
+      - run: 'echo "Lerna publish output: ${{ needs.create-rc-release.outputs.inlinereleases }}"'

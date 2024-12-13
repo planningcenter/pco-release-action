@@ -34,13 +34,13 @@ jobs:
       - run: git push -f --set-upstream origin pco-release--internal
       - run: |
           output = $(./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y)
-          echo "inlinereleases=$output" >> $GITHUB_OUTPUT
+          echo "inlinereleases=$output" >> $GITHUB_ENV
         id: lerna_publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
       releases: ${{ steps.lerna_publish.outputs.stdout }}
-      inlinereleases: ${{ steps.lerna_publish.outputs.inlinereleases }}
+      inlinereleases: ${{ env.inlinereleases }}
   setup-release-branch:
     needs: create-rc-release
     runs-on: ubuntu-latest

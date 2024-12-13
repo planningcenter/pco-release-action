@@ -22,7 +22,16 @@ jobs:
       - run: yarn install
       - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --global user.name "github-actions[bot]"
-      - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y | echo "inlinereleases=$(cat)" >> $GITHUB_OUTPUT
+      - run: |
+          if git rev-parse --verify pco-release--internal > /dev/null 2>&1; then
+            git checkout pco-release--internal
+          else
+            git checkout -b pco-release--internal
+            git commit --allow-empty -m "New release branch"
+          fi
+      - run: git rebase origin/main --strategy-option=theirs
+      - run: git push -f --set-upstream origin pco-release--internal
+      - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y >> $GITHUB_OUTPUT
         id: lerna_publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -36,25 +45,25 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-          fetch-tags: true
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "yarn"
-      - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      - run: git config --global user.name "github-actions[bot]"
-      - run: |
-          if git rev-parse --verify pco-release--internal > /dev/null 2>&1; then
-            git checkout pco-release--internal
-          else
-            git checkout -b pco-release--internal
-            git commit --allow-empty -m "New release branch"
-          fi
-      - run: git rebase origin/main --strategy-option=theirs
-      - run: git push -f --set-upstream origin pco-release--internal
+      # - uses: actions/checkout@v4
+      #   with:
+      #     ref: main
+      #     fetch-depth: 0
+      #     fetch-tags: true
+      # - uses: actions/setup-node@v4
+      #   with:
+      #     node-version: "20"
+      #     cache: "yarn"
+      # - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      # - run: git config --global user.name "github-actions[bot]"
+      # - run: |
+      #     if git rev-parse --verify pco-release--internal > /dev/null 2>&1; then
+      #       git checkout pco-release--internal
+      #     else
+      #       git checkout -b pco-release--internal
+      #       git commit --allow-empty -m "New release branch"
+      #     fi
+      # - run: git rebase origin/main --strategy-option=theirs
+      # - run: git push -f --set-upstream origin pco-release--internal
       - run: 'echo "Lerna publish output: ${{ needs.create-rc-release.outputs.releases }}"'
       - run: 'echo "Lerna publish output: ${{ needs.create-rc-release.outputs.inlinereleases }}"'

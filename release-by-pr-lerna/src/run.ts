@@ -169,6 +169,14 @@ export const run = async (inputs: Inputs): Promise<void> => {
     )
   ).join('\n')
 
+  await Promise.all(
+    updatedPackages.map(async (updatedPackage) => {
+      if (updatedPackage.private) return
+      await easyExec(
+        `cd ${updatedPackage.location} && npm publish --tag next --access public && cd ${GITHUB_WORKSPACE}`,
+      )
+    }),
+  )
   // Set up the release branch and tag to be pushed with minimal changes
   const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
   await easyExec(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`) // Reset the changelogs because we don't want it littered with rc versions

@@ -20,12 +20,12 @@ runs:
       shell: bash
     - shell: bash
       run: |
-      if git rev-parse --verify pco-release--internal > /dev/null 2>&1; then
-        git checkout pco-release--internal
-      else
-        git checkout -b pco-release--internal
-        git commit --allow-empty -m "New release branch"
-      fi
+        if git rev-parse --verify pco-release--internal > /dev/null 2>&1; then
+          git checkout pco-release--internal
+        else
+          git checkout -b pco-release--internal
+          git commit --allow-empty -m "New release branch"
+        fi
     - run: git rebase origin/main --strategy-option=theirs
       shell: bash
     - run: git push -f --set-upstream origin pco-release--internal

@@ -23,6 +23,7 @@ jobs:
       - run: yarn install
       - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --global user.name "github-actions[bot]"
+      - run: git rev-parse --verify pco-release--internal
       - run: |
           if git rev-parse --verify pco-release--internal > /dev/null 2>&1; then
             git checkout pco-release--internal

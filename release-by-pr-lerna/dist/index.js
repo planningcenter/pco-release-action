@@ -58410,7 +58410,7 @@ const FETCH_QUERY = `
     }
   }
 `;
-const { GITHUB_REPOSITORY, GITHUB_WORKSPACE } = process.env;
+const { GITHUB_REPOSITORY, GITHUB_WORKSPACE, NODE_AUTH_TOKEN } = process.env;
 if (!GITHUB_REPOSITORY)
     throw new Error('GITHUB_REPOSITORY is not set');
 const [owner, repo] = GITHUB_REPOSITORY.split('/');
@@ -58480,7 +58480,10 @@ const run = async (inputs) => {
     await Promise.all(updatedPackages.map(async (updatedPackage) => {
         if (updatedPackage.private)
             return;
-        await (0,utils.easyExec)(`npm publish ${updatedPackage.location} --tag next --access public`);
+        console.log('publishing to npm', updatedPackage.name);
+        await (0,utils.easyExec)(`NODE_AUTH_TOKEN="${NODE_AUTH_TOKEN}" npm publish ${updatedPackage.location} --tag next --access public`, {
+            silent: true,
+        });
     }));
     // Set up the release branch and tag to be pushed with minimal changes
     const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part

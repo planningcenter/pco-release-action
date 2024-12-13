@@ -58433,31 +58433,25 @@ const run = async (inputs) => {
         lastRelease: `v${lastReleaseVersion}`,
     });
     const { releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } = response.repository;
+    const pullRequests = releaseBranch?.associatedPullRequests.nodes || [];
+    let pullRequest;
     // Find or create labels
     const { labelPendingId, labelMajorId, labelMinorId, labelPatchId } = await findOrCreateLabels({ labelPending, labelPatch, labelMajor, labelMinor }, { octokit, repoId: id });
+    // Setup git
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
     // Create release branch if it doesn't exist
     if (!releaseBranch) {
-        // await octokit.graphql(
-        //   `mutation($repoId: ID!, $oid: GitObjectID!, $name: String!) {
-        //     createRef(input: { repositoryId: $repoId, oid: $oid, name: $name }) {
-        //       clientMutationId
-        //     }
-        //   }`,
-        //   { repoId: id, oid: mainBranch.target.oid, name: `refs/heads/${RELEASE_BRANCH}` },
-        // )
         await (0,utils.easyExec)(`git checkout -b ${RELEASE_BRANCH}`);
         await (0,utils.easyExec)(`git commit --allow-empty -m "New release branch"`);
     }
-    const pullRequests = releaseBranch?.associatedPullRequests.nodes || [];
-    let pullRequest;
+    // Update the release branch with the latest main (but keep our release branch changes)
     await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
-    await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`); // Ensure the release branch is up to date with main
+    await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`);
+    // Bump the version, editing the last commit (which should be the version bump)
     const updateVersionCommandFlags = [
         '--conventional-prerelease',
         '--conventionalCommits',
-        '--createRelease=github',
         '--preid=rc',
         '--amend',
         '--json',
@@ -58465,19 +58459,13 @@ const run = async (inputs) => {
     ];
     const updateVersionCommand = `${LERNA} version ${updateVersionCommandFlags.join(' ')}`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
-    let updatedPackages;
-    try {
-        updatedPackages = JSON.parse(updateVersionOutput);
-        updatedPackages = updatedPackages.sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1));
-    }
-    catch (error) {
-        console.log('Error parsing JSON', error);
-    }
+    const updatedPackages = JSON.parse(updateVersionOutput).sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1));
+    // See if any of the changes are something that would require a release. If not, let's exit early.
     if (!updatedPackages || updatedPackages.length === 0) {
         console.log('No changes detected. Exiting...');
         return;
     }
-    const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part
+    // Track the changelog changes for the PR body before it is reset
     const updatedChangelog = (await Promise.all(updatedPackages.map(async (updatedPackage) => {
         const diff = (await (0,utils.easyExec)(`git diff origin/${MAIN_BRANCH} -- ${updatedPackage.location}/CHANGELOG.md`)).output
             .split('\n')
@@ -58489,11 +58477,12 @@ const run = async (inputs) => {
         }
         return '';
     }))).join('\n');
+    // Set up the release branch and tag to be pushed with minimal changes
+    const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part
     await (0,utils.easyExec)(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`); // Reset the changelogs because we don't want it littered with rc versions
-    // Push the changes to the release branch
-    await (0,utils.easyExec)(`git commit --amend --no-edit -m "v${version}"`);
-    await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
-    await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --tags`);
+    await (0,utils.easyExec)(`git commit --amend --no-edit -m "v${version}"`); // Amend the commit to make sure it's the latest version
+    await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`); // Push the changes to the release branch
+    await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --tags`); // Push the rc tag that is created
     // Create or update pull request
     if (pullRequests.length === 0) {
         pullRequest = await createPullRequest({

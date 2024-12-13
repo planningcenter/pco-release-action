@@ -58450,8 +58450,6 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`);
     // Push the changes to the release branch
     await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
-    // Set up NPM permissions
-    await (0,utils.easyExec)(`echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc`);
     // Bump the version, editing the last commit (which should be the version bump)
     const updateVersionCommandFlags = [
         '--canary',
@@ -58462,7 +58460,7 @@ const run = async (inputs) => {
         '--json',
         '-y',
     ];
-    const updateVersionCommand = `${LERNA} publish ${updateVersionCommandFlags.join(' ')}`;
+    const updateVersionCommand = `npm_config__auth="${NODE_AUTH_TOKEN}" ${LERNA} publish ${updateVersionCommandFlags.join(' ')}`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
     // const updatedPackages = (
     //   JSON.parse(updateVersionOutput) as { newVersion: string; name: string; private: boolean; location: string }[]

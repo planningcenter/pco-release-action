@@ -172,9 +172,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await Promise.all(
     updatedPackages.map(async (updatedPackage) => {
       if (updatedPackage.private) return
-      await easyExec(
-        `cd ${updatedPackage.location} && npm publish --tag next --access public && cd ${GITHUB_WORKSPACE}`,
-      )
+      await easyExec(`npm publish ${updatedPackage.location} --tag next --access public`)
     }),
   )
   // Set up the release branch and tag to be pushed with minimal changes

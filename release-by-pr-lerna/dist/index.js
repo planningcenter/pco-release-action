@@ -58480,7 +58480,7 @@ const run = async (inputs) => {
     await Promise.all(updatedPackages.map(async (updatedPackage) => {
         if (updatedPackage.private)
             return;
-        await (0,utils.easyExec)(`cd ${updatedPackage.location} && npm publish --tag next --access public && cd ${GITHUB_WORKSPACE}`);
+        await (0,utils.easyExec)(`npm publish ${updatedPackage.location} --tag next --access public`);
     }));
     // Set up the release branch and tag to be pushed with minimal changes
     const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part

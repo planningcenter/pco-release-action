@@ -142,7 +142,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
     '--json',
     '-y',
   ]
-  const updateVersionCommand = `npm_config__auth="${NODE_AUTH_TOKEN}" ${LERNA} publish ${updateVersionCommandFlags.join(' ')}`
+  const updateVersionCommand = `${LERNA} publish ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
   // const updatedPackages = (
   //   JSON.parse(updateVersionOutput) as { newVersion: string; name: string; private: boolean; location: string }[]

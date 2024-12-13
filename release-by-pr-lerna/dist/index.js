@@ -58460,7 +58460,7 @@ const run = async (inputs) => {
         '--json',
         '-y',
     ];
-    const updateVersionCommand = `npm_config__auth="${NODE_AUTH_TOKEN}" ${LERNA} publish ${updateVersionCommandFlags.join(' ')}`;
+    const updateVersionCommand = `${LERNA} publish ${updateVersionCommandFlags.join(' ')}`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
     // const updatedPackages = (
     //   JSON.parse(updateVersionOutput) as { newVersion: string; name: string; private: boolean; location: string }[]

@@ -22,6 +22,8 @@ jobs:
       - run: yarn install
       - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y | echo "inlinereleases=$(cat)" >> $GITHUB_OUTPUT
         id: lerna_publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
       releases: ${{ steps.lerna_publish.outputs.stdout }}
       inlinereleases: ${{ steps.lerna_publish.outputs.inlinereleases }}

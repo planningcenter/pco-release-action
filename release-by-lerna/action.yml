@@ -35,5 +35,5 @@ runs:
       shell: bash
     - run: git push -f --set-upstream origin pco-release--internal
       shell: bash
-    - run: echo "Lerna publish output: ${{ steps.lerna_publish.outputs }}"
+    - run: 'echo "Lerna publish output: ${{ steps.lerna_publish.outputs }}"'
       shell: bash

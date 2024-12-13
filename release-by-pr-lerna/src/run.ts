@@ -141,6 +141,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
     '--dist-tag=next',
     '--json',
     '-y',
+    `--registry=https://registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`,
   ]
   const updateVersionCommand = `${LERNA} publish ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output

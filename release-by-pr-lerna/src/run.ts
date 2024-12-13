@@ -132,6 +132,11 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Push the changes to the release branch
   await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 
+  // Set up NPM permissions
+  await easyExec(`echo "registry=http://registry.npmjs.org/" >> ${GITHUB_WORKSPACE}/.npmrc`)
+  await easyExec(`echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ${GITHUB_WORKSPACE}/.npmrc`)
+  await easyExec(`npm whoami`)
+
   // Bump the version, editing the last commit (which should be the version bump)
   const updateVersionCommandFlags = [
     '--canary',
@@ -141,7 +146,6 @@ export const run = async (inputs: Inputs): Promise<void> => {
     '--dist-tag=next',
     '--json',
     '-y',
-    `--registry=https://registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`,
   ]
   const updateVersionCommand = `${LERNA} publish ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output

@@ -1,0 +1,36 @@
+name: PCO Release - Create Release on PR Merge
+description: Automates the creation of a release when a `PCO-Release` PR is merged.
+
+inputs:
+  package_json_path:
+    description: "The path to the package.json file to version."
+    required: false
+    default: "package.json"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: main
+        fetch-depth: 0
+        fetch-tags: true
+    - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+    - run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+    - run: yarn install
+    - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
+    - run: git config --global user.name "github-actions[bot]"
+    - run: |
+      if git rev-parse --verify pco-release--internal > /dev/null 2>&1; then
+        git checkout pco-release--internal
+      else
+        git checkout -b pco-release--internal
+        git commit --allow-empty -m "New release branch"
+      fi
+    - run: git rebase origin/main --strategy-option=theirs
+    - run: git push -f --set-upstream origin pco-release--internal
+    - run: npm whoami
+    - run: ./node_modules/.bin/lerna publish --canary --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y

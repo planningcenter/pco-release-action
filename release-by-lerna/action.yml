@@ -9,7 +9,7 @@ description: Automates the creation of a release when a `PCO-Release` PR is merg
 
 runs:
   using: "composite"
-  steps
+  steps:
     - run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
       shell: bash
     - run: yarn install

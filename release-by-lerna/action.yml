@@ -14,6 +14,11 @@ runs:
       shell: bash
     - run: yarn install
       shell: bash
+    # Create an RC release
+    - run: ./node_modules/.bin/lerna publish --canary --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y
+      shell: bash
+      id: lerna_publish
+    # Setup release branch
     - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
       shell: bash
     - run: git config --global user.name "github-actions[bot]"
@@ -30,7 +35,5 @@ runs:
       shell: bash
     - run: git push -f --set-upstream origin pco-release--internal
       shell: bash
-    - run: git checkout main
-      shell: bash
-    - run: ./node_modules/.bin/lerna publish --canary --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --create-release=github --json -y
+    - run: echo "Lerna publish output: ${{ steps.lerna_publish.outputs }}"
       shell: bash

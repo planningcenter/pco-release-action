@@ -30,7 +30,7 @@ runs:
       shell: bash
     - run: git push -f --set-upstream origin pco-release--internal
       shell: bash
-    - run: npm whoami
+    - run: git checkout main
       shell: bash
     - run: ./node_modules/.bin/lerna publish --canary --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y
       shell: bash

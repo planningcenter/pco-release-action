@@ -51,3 +51,4 @@ jobs:
           fi
       - run: git rebase origin/main --strategy-option=theirs
       - run: git push -f --set-upstream origin pco-release--internal
+      - run: 'echo "Lerna publish output: ${{ needs.create-rc-release.outputs.releases }}"'

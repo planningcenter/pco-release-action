@@ -20,6 +20,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
       - run: yarn install
+      - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - run: git config --global user.name "github-actions[bot]"
       - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y | echo "inlinereleases=$(cat)" >> $GITHUB_OUTPUT
         id: lerna_publish
         env:

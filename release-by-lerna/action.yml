@@ -32,5 +32,5 @@ runs:
       shell: bash
     - run: git checkout main
       shell: bash
-    - run: ./node_modules/.bin/lerna publish --canary --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --create-release --json -y
+    - run: ./node_modules/.bin/lerna publish --canary --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --create-release=github --json -y
       shell: bash

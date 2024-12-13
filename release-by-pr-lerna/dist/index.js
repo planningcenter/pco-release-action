@@ -58450,9 +58450,12 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`);
     // Push the changes to the release branch
     await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
+    if (!NODE_AUTH_TOKEN || NODE_AUTH_TOKEN.length < 10) {
+        throw new Error('NODE_AUTH_TOKEN is missing or too short');
+    }
     // Set up NPM permissions
-    await (0,utils.easyExec)(`echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc`);
-    await (0,utils.easyExec)(`npm whoami`);
+    // await easyExec(`echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc`)
+    // await easyExec(`npm whoami`)
     // Bump the version, editing the last commit (which should be the version bump)
     const updateVersionCommandFlags = [
         '--canary',
@@ -58461,6 +58464,7 @@ const run = async (inputs) => {
         '--preid=rc',
         '--dist-tag=next',
         '--json',
+        `--registry="//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}"`,
         '-y',
     ];
     const updateVersionCommand = `${LERNA} publish ${updateVersionCommandFlags.join(' ')}`;

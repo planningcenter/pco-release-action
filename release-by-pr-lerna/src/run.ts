@@ -70,7 +70,7 @@ const FETCH_QUERY = `
   }
 `
 
-const { GITHUB_REPOSITORY, GITHUB_WORKSPACE, NODE_AUTH_TOKEN } = process.env
+const { GITHUB_REPOSITORY, GITHUB_WORKSPACE } = process.env
 if (!GITHUB_REPOSITORY) throw new Error('GITHUB_REPOSITORY is not set')
 const [owner, repo] = GITHUB_REPOSITORY.split('/')
 const octokit = new Octokit()
@@ -122,7 +122,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Create release branch if it doesn't exist
   if (!releaseBranch) {
     await easyExec(`git checkout -b ${RELEASE_BRANCH}`)
-    await easyExec(`git commit --allow-empty -m "New release branch"`)
+    // await easyExec(`git commit --allow-empty -m "New release branch"`)
   }
 
   // Update the release branch with the latest main (but keep our release branch changes)
@@ -132,103 +132,74 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Push the changes to the release branch
   await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 
-  if (!NODE_AUTH_TOKEN || NODE_AUTH_TOKEN.length < 10) {
-    throw new Error('NODE_AUTH_TOKEN is missing or too short')
+  // Bump the version, editing the last commit (which should be the version bump)
+  const updateVersionCommandFlags = ['--json', '-y']
+  const updateVersionCommand = `${LERNA} version ${updateVersionCommandFlags.join(' ')}`
+  const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
+  const updatedPackages = (
+    JSON.parse(updateVersionOutput) as { newVersion: string; name: string; private: boolean; location: string }[]
+  ).sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1))
+
+  // See if any of the changes are something that would require a release. If not, let's exit early.
+  if (!updatedPackages || updatedPackages.length === 0) {
+    console.log('No changes detected. Exiting...')
+    return
   }
 
-  // Set up NPM permissions
-  // await easyExec(`echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc`)
-  // await easyExec(`npm whoami`)
+  // Track the changelog changes for the PR body before it is reset
+  const updatedChangelog = (
+    await Promise.all(
+      updatedPackages.map(async (updatedPackage) => {
+        const diff = (
+          await easyExec(`git diff origin/${MAIN_BRANCH} -- ${updatedPackage.location}/CHANGELOG.md`)
+        ).output
+          .split('\n')
+          .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+          .map((line) => line.substring(1))
+          .join('\n')
+        if (diff) {
+          return `# ${updatedPackage.name}\n${diff}\n`
+        }
+        return ''
+      }),
+    )
+  ).join('\n')
 
-  // Bump the version, editing the last commit (which should be the version bump)
-  const updateVersionCommandFlags = [
-    '--canary',
-    '--conventional-prerelease',
-    '--conventionalCommits',
-    '--preid=rc',
-    '--dist-tag=next',
-    '--json',
-    `--registry="https://registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}"`,
-    '-y',
-  ]
-  const updateVersionCommand = `${LERNA} publish ${updateVersionCommandFlags.join(' ')}`
-  const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
-  // const updatedPackages = (
-  //   JSON.parse(updateVersionOutput) as { newVersion: string; name: string; private: boolean; location: string }[]
-  // ).sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1))
+  // Set up the release branch and tag to be pushed with minimal changes
+  const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
+  await easyExec(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`) // Reset the changelogs because we don't want it littered with rc versions
+  await easyExec(`git commit --amend --no-edit -m "v${version}"`) // Amend the commit to make sure it's the latest version
+  await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`) // Push the changes to the release branch
+  await easyExec(`git push origin ${RELEASE_BRANCH} --tags`) // Push the rc tag that is created
 
-  // // See if any of the changes are something that would require a release. If not, let's exit early.
-  // if (!updatedPackages || updatedPackages.length === 0) {
-  //   console.log('No changes detected. Exiting...')
-  //   return
-  // }
+  // Create or update pull request
+  if (pullRequests.length === 0) {
+    pullRequest = await createPullRequest({
+      labelPatchId,
+      labelPendingId,
+      repoId: id,
+      releaseBranch: RELEASE_BRANCH,
+      mainBranch: MAIN_BRANCH,
+      version,
+      lastReleaseVersion: `v${lastReleaseVersion}`,
+      changelog: updatedChangelog,
+    })
+  } else {
+    await updatePullRequest({
+      pullRequest: pullRequests[0],
+      version,
+      releaseType: inputs.releaseType,
+      labelMajorId,
+      labelMinorId,
+      labelPatchId,
+      lastReleaseVersion: `v${lastReleaseVersion}`,
+      changelog: updatedChangelog,
+    })
+    pullRequest = pullRequests[0]
+  }
 
-  // // Track the changelog changes for the PR body before it is reset
-  // const updatedChangelog = (
-  //   await Promise.all(
-  //     updatedPackages.map(async (updatedPackage) => {
-  //       const diff = (
-  //         await easyExec(`git diff origin/${MAIN_BRANCH} -- ${updatedPackage.location}/CHANGELOG.md`)
-  //       ).output
-  //         .split('\n')
-  //         .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
-  //         .map((line) => line.substring(1))
-  //         .join('\n')
-  //       if (diff) {
-  //         return `# ${updatedPackage.name}\n${diff}\n`
-  //       }
-  //       return ''
-  //     }),
-  //   )
-  // ).join('\n')
-
-  // await Promise.all(
-  //   updatedPackages.map(async (updatedPackage) => {
-  //     if (updatedPackage.private) return
-  //     console.log('publishing to npm', updatedPackage.name)
-  //     await easyExec(
-  //       `NODE_AUTH_TOKEN="${NODE_AUTH_TOKEN}" npm publish ${updatedPackage.location} --tag next --access public`,
-  //       {
-  //         silent: true,
-  //       },
-  //     )
-  //   }),
-  // )
-  // // Set up the release branch and tag to be pushed with minimal changes
-  // const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
-  // await easyExec(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`) // Reset the changelogs because we don't want it littered with rc versions
-  // await easyExec(`git commit --amend --no-edit -m "v${version}"`) // Amend the commit to make sure it's the latest version
-  // await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`) // Push the changes to the release branch
-  // await easyExec(`git push origin ${RELEASE_BRANCH} --tags`) // Push the rc tag that is created
-
-  // // Create or update pull request
-  // if (pullRequests.length === 0) {
-  //   pullRequest = await createPullRequest({
-  //     labelPatchId,
-  //     labelPendingId,
-  //     repoId: id,
-  //     releaseBranch: RELEASE_BRANCH,
-  //     mainBranch: MAIN_BRANCH,
-  //     version,
-  //     lastReleaseVersion: `v${lastReleaseVersion}`,
-  //     changelog: updatedChangelog,
-  //   })
-  // } else {
-  //   await updatePullRequest({
-  //     pullRequest: pullRequests[0],
-  //     version,
-  //     releaseType: inputs.releaseType,
-  //     labelMajorId,
-  //     labelMinorId,
-  //     labelPatchId,
-  //     lastReleaseVersion: `v${lastReleaseVersion}`,
-  //     changelog: updatedChangelog,
-  //   })
-  //   pullRequest = pullRequests[0]
-  // }
-
-  // // Request reviews from authors of commits
-  // await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
+  // Request reviews from authors of commits
+  await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
 }
 
 const FOOTER = `## 🚀 PCO-Release

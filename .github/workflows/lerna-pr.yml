@@ -40,7 +40,6 @@ jobs:
     outputs:
       releases: ${{ steps.published_packages.outputs.packages }}
   setup-release-branch:
-    needs: create-rc-release
     runs-on: ubuntu-latest
     permissions:
       contents: write

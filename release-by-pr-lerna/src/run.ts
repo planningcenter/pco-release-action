@@ -82,8 +82,26 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   // Find the last release version from main branch
   await easyExec(`git fetch origin`)
+  // If there are no changes, exit
   await easyExec(`git checkout ${MAIN_BRANCH}`)
   const lastReleaseVersion = (await easyExec(`jq -r .version ./lerna.json`)).output.split('\n')[0]
+  try {
+    await easyExec(`git fetch origin --tags`)
+    const diff = await easyExec(`git diff origin/${MAIN_BRANCH}..refs/tags/v${lastReleaseVersion}`)
+    if (diff.exitCode !== 0) throw diff
+    if (diff.output === '') {
+      console.log('No changes detected. Exiting...')
+      return
+    }
+  } catch (e) {
+    console.log(
+      `Could not find a release for v${lastReleaseVersion}. This often happens when merging a new release.
+      If this happens unexpectedly, make sure there is a release labeled "v${lastReleaseVersion}" and try again.`,
+      e,
+    )
+    return
+  }
+
   await easyExec('yarn install')
 
   // Fetch information needed about the repo
@@ -166,6 +184,21 @@ export const run = async (inputs: Inputs): Promise<void> => {
       }),
     )
   ).join('\n')
+
+  // If there are no changes, exit
+  try {
+    await easyExec(`git fetch origin --tags`)
+    const diff = await easyExec(`git diff origin/${MAIN_BRANCH}..refs/tags/v${lastReleaseVersion}`)
+    if (diff.exitCode !== 0) throw diff
+    if (diff.output === '') return
+  } catch (e) {
+    console.log(
+      `Could not find a release for v${lastReleaseVersion}. This often happens when merging a new release.
+      If this happens unexpectedly, make sure there is a release labeled "v${lastReleaseVersion}" and try again.`,
+      e,
+    )
+    return
+  }
 
   // Set up the release branch and tag to be pushed with minimal changes
   const version = updatedPackages[0].newVersion

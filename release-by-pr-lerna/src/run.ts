@@ -105,7 +105,6 @@ export const run = async (inputs: Inputs): Promise<void> => {
     releaseBranch: RELEASE_BRANCH,
     lastRelease: `v${lastReleaseVersion}`,
   })
-  console.log(response, `v${lastReleaseVersion}`)
   const { releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } = response.repository
   const pullRequests = releaseBranch?.associatedPullRequests.nodes || []
   let pullRequest: PullRequest
@@ -147,6 +146,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
     return
   }
 
+  console.log((await easyExec(`git status`)).output)
   await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 
   // Track the changelog changes for the PR body before it is reset
@@ -198,7 +198,6 @@ export const run = async (inputs: Inputs): Promise<void> => {
   }
 
   // Request reviews from authors of commits
-  console.log('lastRelease', lastRelease)
   await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
 }
 

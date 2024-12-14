@@ -58432,7 +58432,6 @@ const run = async (inputs) => {
         releaseBranch: RELEASE_BRANCH,
         lastRelease: `v${lastReleaseVersion}`,
     });
-    console.log(response, `v${lastReleaseVersion}`);
     const { releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } = response.repository;
     const pullRequests = releaseBranch?.associatedPullRequests.nodes || [];
     let pullRequest;
@@ -58461,6 +58460,7 @@ const run = async (inputs) => {
         console.log('No changes detected. Exiting...');
         return;
     }
+    console.log((await (0,utils.easyExec)(`git status`)).output);
     await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
     // Track the changelog changes for the PR body before it is reset
     const updatedChangelog = (await Promise.all(updatedPackages.map(async (updatedPackage) => {
@@ -58503,7 +58503,6 @@ const run = async (inputs) => {
         pullRequest = pullRequests[0];
     }
     // Request reviews from authors of commits
-    console.log('lastRelease', lastRelease);
     await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes });
 };
 const FOOTER = `## 🚀 PCO-Release

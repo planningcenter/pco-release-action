@@ -105,6 +105,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
     releaseBranch: RELEASE_BRANCH,
     lastRelease: `v${lastReleaseVersion}`,
   })
+  console.log(response, `v${lastReleaseVersion}`)
   const { releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } = response.repository
   const pullRequests = releaseBranch?.associatedPullRequests.nodes || []
   let pullRequest: PullRequest

@@ -168,11 +168,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   ).join('\n')
 
   // Set up the release branch and tag to be pushed with minimal changes
-  const version = updatedPackages[0].newVersion.split('-')[0] // Remove the rc part
-  await easyExec(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`) // Reset the changelogs because we don't want it littered with rc versions
-  await easyExec(`git commit --amend --no-edit -m "v${version}"`) // Amend the commit to make sure it's the latest version
-  await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`) // Push the changes to the release branch
-  await easyExec(`git push origin ${RELEASE_BRANCH} --tags`) // Push the rc tag that is created
+  const version = updatedPackages[0].newVersion
 
   // Create or update pull request
   if (pullRequests.length === 0) {
@@ -201,6 +197,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   }
 
   // Request reviews from authors of commits
+  console.log('lastRelease', lastRelease)
   await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
 }
 

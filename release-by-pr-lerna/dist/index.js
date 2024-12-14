@@ -58474,11 +58474,7 @@ const run = async (inputs) => {
         return '';
     }))).join('\n');
     // Set up the release branch and tag to be pushed with minimal changes
-    const version = updatedPackages[0].newVersion.split('-')[0]; // Remove the rc part
-    await (0,utils.easyExec)(`git reset origin/${MAIN_BRANCH} ./**/CHANGELOG.md ./CHANGELOG.md`); // Reset the changelogs because we don't want it littered with rc versions
-    await (0,utils.easyExec)(`git commit --amend --no-edit -m "v${version}"`); // Amend the commit to make sure it's the latest version
-    await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`); // Push the changes to the release branch
-    await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --tags`); // Push the rc tag that is created
+    const version = updatedPackages[0].newVersion;
     // Create or update pull request
     if (pullRequests.length === 0) {
         pullRequest = await createPullRequest({
@@ -58506,6 +58502,7 @@ const run = async (inputs) => {
         pullRequest = pullRequests[0];
     }
     // Request reviews from authors of commits
+    console.log('lastRelease', lastRelease);
     await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes });
 };
 const FOOTER = `## 🚀 PCO-Release

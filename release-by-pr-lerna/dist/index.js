@@ -58460,7 +58460,6 @@ const run = async (inputs) => {
         console.log('No changes detected. Exiting...');
         return;
     }
-    console.log((await (0,utils.easyExec)(`git status`)).output);
     await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
     // Track the changelog changes for the PR body before it is reset
     const updatedChangelog = (await Promise.all(updatedPackages.map(async (updatedPackage) => {

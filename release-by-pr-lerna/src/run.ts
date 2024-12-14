@@ -146,7 +146,6 @@ export const run = async (inputs: Inputs): Promise<void> => {
     return
   }
 
-  console.log((await easyExec(`git status`)).output)
   await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 
   // Track the changelog changes for the PR body before it is reset

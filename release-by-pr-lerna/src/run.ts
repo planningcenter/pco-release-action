@@ -127,7 +127,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   // Update the release branch with the latest main (but keep our release branch changes)
   await easyExec(`git checkout ${RELEASE_BRANCH}`)
-  await easyExec(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`)
+  await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
 
   // Push the changes to the release branch
   await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
@@ -145,6 +145,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
     console.log('No changes detected. Exiting...')
     return
   }
+
+  await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 
   // Track the changelog changes for the PR body before it is reset
   const updatedChangelog = (

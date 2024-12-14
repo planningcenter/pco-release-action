@@ -58447,7 +58447,7 @@ const run = async (inputs) => {
     }
     // Update the release branch with the latest main (but keep our release branch changes)
     await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
-    await (0,utils.easyExec)(`git rebase origin/${MAIN_BRANCH} --strategy-option=theirs`);
+    await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
     // Push the changes to the release branch
     await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
     // Bump the version, editing the last commit (which should be the version bump)
@@ -58460,6 +58460,7 @@ const run = async (inputs) => {
         console.log('No changes detected. Exiting...');
         return;
     }
+    await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
     // Track the changelog changes for the PR body before it is reset
     const updatedChangelog = (await Promise.all(updatedPackages.map(async (updatedPackage) => {
         const diff = (await (0,utils.easyExec)(`git diff origin/${MAIN_BRANCH} -- ${updatedPackage.location}/CHANGELOG.md`)).output

@@ -39,7 +39,9 @@ jobs:
         id: published_packages
     outputs:
       releases: ${{ steps.published_packages.outputs.packages }}
-  setup-release-branch:
+  setup-release-pr:
+    if: ${{ needs.create-rc-release.outputs.releases.length > 2 }}
+    needs: create-rc-release
     runs-on: ubuntu-latest
     permissions:
       contents: write

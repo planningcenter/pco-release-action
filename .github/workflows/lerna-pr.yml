@@ -32,7 +32,7 @@ jobs:
           fi
       - run: git rebase origin/main --strategy-option=theirs
       - run: git push -f --set-upstream origin pco-release--internal-rc
-      - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --summary-file -y
+      - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag=next --summary-file -y
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: echo packages=$(cat ./lerna-publish-summary.json) >> $GITHUB_OUTPUT

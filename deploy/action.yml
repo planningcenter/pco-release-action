@@ -59,6 +59,10 @@ inputs:
   package-names:
     description: "The names of the packages to update"
     required: false
+  deploy-token:
+    description: "The github token"
+    required: false
+    default: ""
 outputs:
   json:
     description: "The json output of the upgrade prs."
@@ -117,7 +121,7 @@ runs:
       id: setup-upgrade-prs
       run: bundle exec ruby ${{ github.action_path }}/run.rb
       env:
-        GITHUB_TOKEN: ${{ secrets.LERNA_TMP_DEPLOY }}
+        GITHUB_TOKEN: ${{ inputs.deploy_token }}
         PACKAGE_NAMES: $${ inputs.package_names }}
         PACKAGE_NAME: ${{ steps.find-package-name.outputs.package-name }}
         PACKAGE_VERSION: ${{ steps.find-version.outputs.version }}

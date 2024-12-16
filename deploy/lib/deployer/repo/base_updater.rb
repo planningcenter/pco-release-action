@@ -3,9 +3,10 @@ require "yaml"
 class Deployer
   class Repo
     class BaseUpdater
-      def initialize(name, config:)
+      def initialize(name, config:, package_name:)
         @name = name
         @config = config
+        @package_name = package_name
       end
 
       def run
@@ -28,7 +29,7 @@ class Deployer
 
       protected
 
-      attr_reader :name, :config
+      attr_reader :name, :config, :package_name
 
       def make_changes
         raise NotImplementedError
@@ -132,10 +133,6 @@ class Deployer
 
       def owner
         config.owner
-      end
-
-      def package_name
-        config.package_name
       end
 
       def version

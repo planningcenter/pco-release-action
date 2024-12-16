@@ -45,8 +45,8 @@ class Deployer
     raise "[PCO-Release]: Failed in the following repos:\n- #{failed_repos.map(&:name).join("\n- ")}"
   end
 
-  def package_name
-    config.package_name
+  def package_names
+    config.package_names
   end
 
   def version
@@ -58,18 +58,18 @@ class Deployer
   end
 
   def log_deployer_start
-    log "Updating #{package_name} to #{version} in the following repositories: #{repos.map(&:name).join(", ")}"
+    log "Updating #{package_names.join(", ")} to #{version} in the following repositories: #{repos.map(&:name).join(", ")}"
   end
 
   def log_repo_start(repo)
-    log "updating #{package_name} in #{repo.name}"
+    log "updating #{repo.package_name} in #{repo.name}"
   end
 
   def log_result(repo)
     if repo.success?
       log repo.success_message
     else
-      log "Failed to update #{package_name} in #{repo.name}: #{repo.error_message}"
+      log "Failed to update #{repo.package_name} in #{repo.name}: #{repo.error_message}"
     end
   end
 end

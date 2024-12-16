@@ -67,7 +67,6 @@ outputs:
   json:
     description: "The json output of the upgrade prs."
 runs:
-  secrets: inherit
   using: "composite"
   steps:
     # - name: Generate a token

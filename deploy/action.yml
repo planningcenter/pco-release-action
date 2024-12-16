@@ -59,7 +59,7 @@ inputs:
   package-names:
     description: "The names of the packages to update"
     required: false
-  deploy_token:
+  deploy-token:
     description: "The github token"
     required: false
     default: ""
@@ -120,7 +120,7 @@ runs:
       id: setup-upgrade-prs
       run: bundle exec ruby ${{ github.action_path }}/run.rb
       env:
-        GITHUB_TOKEN: ${{ inputs.deploy_token }}
+        GITHUB_TOKEN: ${{ inputs.deploy-token }}
         PACKAGE_NAMES: ${{ inputs.package-names }}
         PACKAGE_NAME: ${{ steps.find-package-name.outputs.package-name }}
         PACKAGE_VERSION: ${{ steps.find-version.outputs.version }}

@@ -121,7 +121,7 @@ runs:
       run: bundle exec ruby ${{ github.action_path }}/run.rb
       env:
         GITHUB_TOKEN: ${{ inputs.deploy_token }}
-        PACKAGE_NAMES: ${{ inputs.package_names }}
+        PACKAGE_NAMES: ${{ inputs.package-names }}
         PACKAGE_NAME: ${{ steps.find-package-name.outputs.package-name }}
         PACKAGE_VERSION: ${{ steps.find-version.outputs.version }}
         OWNER: ${{ inputs.owner }}

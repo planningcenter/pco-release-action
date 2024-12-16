@@ -59,7 +59,7 @@ inputs:
   package-names:
     description: "The names of the packages to update"
     required: false
-  deploy-token:
+  deploy_token:
     description: "The github token"
     required: false
     default: ""

@@ -21,8 +21,8 @@ def run_for_packages
 end
 
 def package_names
-  JSON.parse(ENV["PACKAGE_NAMES"])
-rescue JSON::ParserError, TypeError
+  return ENV["PACKAGE_NAMES"].split(",") if ENV["PACKAGE_NAMES"]
+
   [ENV["PACKAGE_NAME"]]
 end
 

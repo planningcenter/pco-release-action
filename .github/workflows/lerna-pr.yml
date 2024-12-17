@@ -76,7 +76,7 @@ jobs:
             if (!process.env.RELEASES || !process.env.PR_NUMBER) return
             const header = `## Release Candidate(s) successfully created`
             const releases = JSON.parse(process.env.RELEASES)
-            const body = releases.map(release => `- \`${release.packageName}\` @ ${release.version}`).join("\n")
+            const body = releases.map(release => `- \`${release.packageName}\` @ [${release.version}](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/v${release.version})`).join("\n")
 
             github.rest.issues.createComment({
               issue_number: process.env.PR_NUMBER,

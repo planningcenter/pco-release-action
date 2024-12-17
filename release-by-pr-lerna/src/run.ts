@@ -154,9 +154,16 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const updateVersionCommandFlags = ['--no-push', '--json', '-y']
   const updateVersionCommand = `${LERNA} version ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
-  const updatedPackages = (
-    JSON.parse(updateVersionOutput) as { newVersion: string; name: string; private: boolean; location: string }[]
-  ).sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1))
+  let updatedPackages
+
+  try {
+    updatedPackages = (
+      JSON.parse(updateVersionOutput) as { newVersion: string; name: string; private: boolean; location: string }[]
+    ).sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1))
+  } catch {
+    console.log('No changes detected. Exiting...')
+    return
+  }
 
   // See if any of the changes are something that would require a release. If not, let's exit early.
   if (!updatedPackages || updatedPackages.length === 0) {

@@ -58470,7 +58470,14 @@ const run = async (inputs) => {
     const updateVersionCommandFlags = ['--no-push', '--json', '-y'];
     const updateVersionCommand = `${LERNA} version ${updateVersionCommandFlags.join(' ')}`;
     const updateVersionOutput = (await (0,utils.easyExec)(`${updateVersionCommand}"`)).output;
-    const updatedPackages = JSON.parse(updateVersionOutput).sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1));
+    let updatedPackages;
+    try {
+        updatedPackages = JSON.parse(updateVersionOutput).sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1));
+    }
+    catch {
+        console.log('No changes detected. Exiting...');
+        return;
+    }
     // See if any of the changes are something that would require a release. If not, let's exit early.
     if (!updatedPackages || updatedPackages.length === 0) {
         console.log('No changes detected. Exiting...');

@@ -151,7 +151,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 
   // Bump the version, editing the last commit (which should be the version bump)
-  const updateVersionCommandFlags = ['--no-push', '--json', '-y']
+  const specificVersion = inputs.releaseType ? [`pre${inputs.releaseType}`] : []
+  const updateVersionCommandFlags = [...specificVersion, '--no-push', '--json', '-y']
   const updateVersionCommand = `${LERNA} version ${updateVersionCommandFlags.join(' ')}`
   const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
   let updatedPackages

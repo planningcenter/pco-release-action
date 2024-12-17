@@ -7,7 +7,6 @@ inputs:
     required: true
   release_type:
     required: false
-    deprecated: true
   package_json_path:
     description: 'The path to the package.json file to version.'
     required: false

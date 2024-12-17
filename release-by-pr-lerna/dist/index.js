@@ -58352,6 +58352,7 @@ var utils = __nccwpck_require__(709);
 ;// CONCATENATED MODULE: ./src/run.ts
 
 
+
 const LABEL_NAMES = {
     labelPending: 'pco-release-pending',
     labelPatch: 'pco-release-patch',
@@ -58538,6 +58539,7 @@ const run = async (inputs) => {
         });
         pullRequest = pullRequests[0];
     }
+    (0,core.setOutput)('pull_request_id', pullRequest.id);
     // Request reviews from authors of commits
     await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes });
 };

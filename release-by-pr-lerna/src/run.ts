@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/action'
 import { easyExec } from '../../shared/utils.js'
+import { setOutput } from '@actions/core'
 
 type ReleaseType = 'patch' | 'minor' | 'major' | undefined
 type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
@@ -235,6 +236,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
     })
     pullRequest = pullRequests[0]
   }
+
+  setOutput('pull_request_id', pullRequest.id)
 
   // Request reviews from authors of commits
   await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })

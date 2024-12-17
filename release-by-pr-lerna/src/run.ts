@@ -214,7 +214,6 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Create or update pull request
   if (pullRequests.length === 0) {
     pullRequest = await createPullRequest({
-      labelPatchId,
       labelPendingId,
       repoId: id,
       releaseBranch: RELEASE_BRANCH,
@@ -278,7 +277,6 @@ async function findOrCreateLabels(
 }
 
 async function createPullRequest({
-  labelPatchId,
   labelPendingId,
   repoId,
   releaseBranch,
@@ -287,7 +285,6 @@ async function createPullRequest({
   lastReleaseVersion,
   changelog,
 }: {
-  labelPatchId: string
   labelPendingId: string
   repoId: string
   releaseBranch: string
@@ -316,11 +313,7 @@ async function createPullRequest({
     },
   )
 
-  // add patch and pending label
-  await octokit.graphql(
-    `mutation($prId: ID!, $labelId: ID!) { addLabelsToLabelable(input: {labelIds: [$labelId], labelableId: $prId}) { clientMutationId} }`,
-    { prId: pullRequest.id, labelId: labelPatchId },
-  )
+  // add pending label
   await octokit.graphql(
     `mutation($prId: ID!, $labelId: ID!) { addLabelsToLabelable(input: {labelIds: [$labelId], labelableId: $prId}) { clientMutationId} }`,
     { prId: pullRequest.id, labelId: labelPendingId },
@@ -372,10 +365,12 @@ async function updatePullRequest({
             (label) =>
               label.name === 'pco-release-pending' ||
               !Object.values(LABEL_NAMES).includes(label.name) ||
-              label.name === `pco-release-${releaseType}`,
+              (releaseType && label.name === `pco-release-${releaseType}`),
           )
           .map((label) => label.id),
-        releaseType === 'major' ? labelMajorId : releaseType === 'minor' ? labelMinorId : labelPatchId,
+        ...(releaseType
+          ? [releaseType === 'major' ? labelMajorId : releaseType === 'minor' ? labelMinorId : labelPatchId]
+          : []),
       ],
     },
   )

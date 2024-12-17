@@ -58516,7 +58516,6 @@ const run = async (inputs) => {
     // Create or update pull request
     if (pullRequests.length === 0) {
         pullRequest = await createPullRequest({
-            labelPatchId,
             labelPendingId,
             repoId: id,
             releaseBranch: RELEASE_BRANCH,
@@ -58567,7 +58566,7 @@ async function findOrCreateLabels(labels, { octokit, repoId }) {
     }
     return result;
 }
-async function createPullRequest({ labelPatchId, labelPendingId, repoId, releaseBranch, mainBranch, version, lastReleaseVersion, changelog, }) {
+async function createPullRequest({ labelPendingId, repoId, releaseBranch, mainBranch, version, lastReleaseVersion, changelog, }) {
     // Create a pull request
     const { createPullRequest: { pullRequest }, } = await octokit.graphql(`mutation($repoId: ID!, $baseRefName: String!, $headRefName: String!, $body: String!, $title: String!) {
         createPullRequest(input: { repositoryId: $repoId, baseRefName: $baseRefName, headRefName: $headRefName, body: $body, title: $title}) {
@@ -58582,8 +58581,7 @@ async function createPullRequest({ labelPatchId, labelPendingId, repoId, release
         body: buildBody({ version, lastReleaseVersion, changelog }),
         title: `v${version}`,
     });
-    // add patch and pending label
-    await octokit.graphql(`mutation($prId: ID!, $labelId: ID!) { addLabelsToLabelable(input: {labelIds: [$labelId], labelableId: $prId}) { clientMutationId} }`, { prId: pullRequest.id, labelId: labelPatchId });
+    // add pending label
     await octokit.graphql(`mutation($prId: ID!, $labelId: ID!) { addLabelsToLabelable(input: {labelIds: [$labelId], labelableId: $prId}) { clientMutationId} }`, { prId: pullRequest.id, labelId: labelPendingId });
     return pullRequest;
 }
@@ -58601,9 +58599,11 @@ async function updatePullRequest({ pullRequest, version, releaseType, labelMajor
             ...pullRequest.labels.nodes
                 .filter((label) => label.name === 'pco-release-pending' ||
                 !Object.values(LABEL_NAMES).includes(label.name) ||
-                label.name === `pco-release-${releaseType}`)
+                (releaseType && label.name === `pco-release-${releaseType}`))
                 .map((label) => label.id),
-            releaseType === 'major' ? labelMajorId : releaseType === 'minor' ? labelMinorId : labelPatchId,
+            ...(releaseType
+                ? [releaseType === 'major' ? labelMajorId : releaseType === 'minor' ? labelMinorId : labelPatchId]
+                : []),
         ],
     });
 }

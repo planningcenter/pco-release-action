@@ -148,7 +148,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
 
   // Push the changes to the release branch
-  await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
+  // await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 
   // Bump the version, editing the last commit (which should be the version bump)
   const updateVersionCommandFlags = ['--no-push', '--json', '-y']

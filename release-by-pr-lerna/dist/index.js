@@ -58465,7 +58465,7 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
     await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
     // Push the changes to the release branch
-    await (0,utils.easyExec)(`git push -f --set-upstream origin ${RELEASE_BRANCH}`);
+    // await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
     // Bump the version, editing the last commit (which should be the version bump)
     const updateVersionCommandFlags = ['--no-push', '--json', '-y'];
     const updateVersionCommand = `${LERNA} version ${updateVersionCommandFlags.join(' ')}`;

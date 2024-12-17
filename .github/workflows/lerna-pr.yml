@@ -73,7 +73,7 @@ jobs:
           RELEASES: ${{ needs.create-rc-release.outputs.releases }}
         with:
           script: |
-            if (!process.env.RELEASES) return
+            if (!process.env.RELEASES || !process.env.PR_NUMBER) return
             const header = `## Release Candidate(s) successfully created`
             const releases = JSON.parse(process.env.RELEASES)
             const body = releases.map(release => `- \`${release.name}\` @ ${release.version}`).join("\n")

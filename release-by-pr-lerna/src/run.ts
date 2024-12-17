@@ -47,11 +47,11 @@ const FETCH_QUERY = `
         associatedPullRequests(first: 1, states: OPEN) {
           nodes {
             id
+            number
             labels(first: 25) {
               nodes {
                 id
                 name
-                number
               }
             }
           }

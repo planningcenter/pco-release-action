@@ -58391,6 +58391,7 @@ const FETCH_QUERY = `
               nodes {
                 id
                 name
+                number
               }
             }
           }
@@ -58539,7 +58540,8 @@ const run = async (inputs) => {
         });
         pullRequest = pullRequests[0];
     }
-    (0,core.setOutput)('pull_request_id', pullRequest.id);
+    console.log(pullRequest);
+    (0,core.setOutput)('pull_request_id', pullRequest.number);
     // Request reviews from authors of commits
     await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes });
 };

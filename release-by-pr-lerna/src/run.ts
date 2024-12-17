@@ -5,8 +5,9 @@ import { setOutput } from '@actions/core'
 type ReleaseType = 'patch' | 'minor' | 'major' | undefined
 type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
 type Label = { id: string }
-type PullRequest<Label extends Record<string, any> = { id: string; name: string }> = {
+type PullRequest<Label extends Record<string, any> = { id: string; name: string; number: number }> = {
   id: string
+  number: number
   labels: { nodes: Label[] }
 }
 type LabelIds = Record<'labelPendingId' | 'labelPatchId' | 'labelMinorId' | 'labelMajorId', string>
@@ -50,6 +51,7 @@ const FETCH_QUERY = `
               nodes {
                 id
                 name
+                number
               }
             }
           }
@@ -237,7 +239,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
     pullRequest = pullRequests[0]
   }
 
-  setOutput('pull_request_id', pullRequest.id)
+  console.log(pullRequest)
+  setOutput('pull_request_id', pullRequest.number)
 
   // Request reviews from authors of commits
   await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })

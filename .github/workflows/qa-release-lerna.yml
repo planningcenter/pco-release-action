@@ -60,22 +60,27 @@ jobs:
       - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --global user.name "github-actions[bot]"
       - run: |
-          if git rev-parse --verify origin/pco-release--internal-qa-${{ github.event.issue.number }} > /dev/null 2>&1; then
-            git checkout pco-release--internal-qa-${{ github.event.issue.number }}
+          if git rev-parse --verify origin/pco-release--internal-qa > /dev/null 2>&1; then
+            git checkout pco-release--internal-qa
           else
-            git checkout -b pco-release--internal-qa-${{ github.event.issue.number }}
+            git checkout -b pco-release--internal-qa
             git commit --allow-empty -m "New release branch"
           fi
       - run: git rebase origin/main --strategy-option=theirs
-      - run: git push -f --set-upstream origin pco-release--internal-qa-${{ github.event.issue.number }}
+      - run: git push -f --set-upstream origin pco-release--internal-qa
       - run: ./node_modules/.bin/lerna run build
       - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid="qa-${{ github.event.issue.number }}" --dist-tag=qa --summary-file -y
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: echo releases=$(cat ./lerna-publish-summary.json) >> $GITHUB_OUTPUT
+      - run: |
+          echo releases=$(cat ./lerna-publish-summary.json) >> $GITHUB_OUTPUT
+          echo version=$(cat ./lerna-publish-summary.json | jq -r '.[0].version') >> $GITHUB_OUTPUT
+          echo packageNames=$(cat ./lerna-publish-summary.json | jq -r '.[].packageName') >> $GITHUB_OUTPUT
         id: published_packages
     outputs:
       releases: ${{ steps.published_packages.outputs.releases }}
+      version: ${{ steps.published_packages.outputs.version }}
+      packageNames: ${{ steps.published_packages.outputs.packageNames }}
   deploy-to-proto-for-consumers:
     needs: create-qa-release
     runs-on: ubuntu-latest
@@ -84,21 +89,14 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - name: Pull version and package names from published packages
-        id: get-published-packages
-        run: |
-          $release-tag=$(echo "${{ needs.create-qa-release.outputs.releases }}" | jq -r '.[0].version')
-          $package-names=$(echo "${{ needs.create-qa-release.outputs.releases }}" | jq -r '.[].packageName')
-          echo "release-tag=$release-tag" >> $GITHUB_OUTPUT
-          echo "package-names=$package-names" >> $GITHUB_OUTPUT
       - name: Push to protonova branch for Consumers
         uses: planningcenter/pco-release-action/deploy@km/lerna
         if: ${{ !contains(github.event.comment.body, '--no-deploy') }}
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
-          ref: ${{ steps.get-published-packages.outputs.release-tag }}
-          package-names: ${{ steps.get-published-packages.outputs.package-names }}
+          ref: v${{ needs.create-qa-release.outputs.version }}
+          package-names: ${{ needs.create-qa-release.outputs.packageNames }}
           change-method: "merge"
           branch-name: "proto/${{ github.event.repository.name }}-${{ github.event.issue.number }}"
           only: ${{ inputs.only }}
@@ -108,11 +106,11 @@ jobs:
           package-json-path: ${{ inputs.package-json-path }}
       - name: Post results to original PR
         uses: planningcenter/pco-release-action/reporting@km/lerna
-        if: ${{ needs.create-qa-release.outputs.releases }}
+        if: ${{ needs.create-qa-release.outputs.version }}
         with:
           pr-number: ${{ github.event.issue.number }}
           results-json: ${{ env.results_json }}
-          version-tag: ${{ steps.get-published-packages.outputs.release-tag }}
+          version-tag: v${{ needs.create-qa-release.outputs.version }}
           actor: ${{ github.actor }}
           proto-tag: "${{ github.event.repository.name }}-${{ github.event.issue.number }}"
           release-type: "QA"

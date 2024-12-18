@@ -51,7 +51,7 @@ jobs:
             const packages = JSON.parse(process.env.PACKAGES)
             const version = process.env.VERSION
             const packageNames = packages.filter((pkg) => pkg.version === version).map(pkg => pkg.name).join(',')
-            core.setOuptut('package-names', packageNames)
+            core.setOutput('package-names', packageNames)
         env:
           PACKAGES: ${{ steps.packages.outputs.packages }}
           VERSION: ${{ steps.find-version.outputs.version }}

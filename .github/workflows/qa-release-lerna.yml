@@ -87,8 +87,10 @@ jobs:
       - name: Pull version and package names from published packages
         id: get-published-packages
         run: |
-          echo "release-tag=$(echo ${{ needs.create-qa-release.outputs.releases }} | jq -r '.[0].version')" >> $GITHUB_OUTPUT
-          echo "package-names=$(echo ${{ needs.create-qa-release.outputs.releases }} | jq -r '.[].packageName')" >> $GITHUB_OUTPUT
+          $release-tag=$(echo "${{ needs.create-qa-release.outputs.releases }}" | jq -r '.[0].version')
+          $package-names=$(echo "${{ needs.create-qa-release.outputs.releases }}" | jq -r '.[].packageName')
+          echo "release-tag=$release-tag" >> $GITHUB_OUTPUT
+          echo "package-names=$package-names" >> $GITHUB_OUTPUT
       - name: Push to protonova branch for Consumers
         uses: planningcenter/pco-release-action/deploy@km/lerna
         if: ${{ !contains(github.event.comment.body, '--no-deploy') }}

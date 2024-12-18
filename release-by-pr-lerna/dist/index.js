@@ -58557,6 +58557,7 @@ async function createPullRequest({ labelPendingId, repoId, releaseBranch, mainBr
         createPullRequest(input: { repositoryId: $repoId, baseRefName: $baseRefName, headRefName: $headRefName, body: $body, title: $title}) {
           pullRequest {
             id
+            number
           }
         }
       }`, {

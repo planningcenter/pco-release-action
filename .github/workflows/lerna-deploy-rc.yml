@@ -41,7 +41,9 @@ jobs:
       - id: find-version
         run: echo "version=$(jq -r .version lerna.json)" >> $GITHUB_OUTPUT
       - id: packages
-        run: echo "packages=\"$(./node_modules/.bin/lerna list --json)\"" >> $GITHUB_OUTPUT
+        run: |
+          packages=$(./node_modules/.bin/lerna list --json)
+          echo "packages=$packages" >> $GITHUB_OUTPUT
       - uses: actions/github-script@v7
         id: find-package-names
         with:
@@ -49,7 +51,7 @@ jobs:
             const packages = JSON.parse(process.env.PACKAGES)
             const version = process.env.VERSION
             const packageNames = packages.filter((pkg) => pkg.version === version).map(pkg => pkg.name).join(',')
-            console.log(`$package-names=${packageNames} >> $GITHUB_OUTPUT`)
+            core.setOuptut('package-names', packageNames)
         env:
           PACKAGES: ${{ steps.packages.outputs.packages }}
           VERSION: ${{ steps.find-version.outputs.version }}

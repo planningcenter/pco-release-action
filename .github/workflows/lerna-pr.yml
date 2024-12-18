@@ -32,6 +32,7 @@ jobs:
           fi
       - run: git rebase origin/main --strategy-option=theirs
       - run: git push -f --set-upstream origin pco-release--internal-rc
+      - run: ./node_modules/.bin/lerna run build
       - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag=next --summary-file -y
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

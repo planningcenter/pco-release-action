@@ -72,13 +72,14 @@ jobs:
       - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid=qa${{ github.event.issue.number }} --dist-tag=qa --summary-file -y
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: echo packages=$(cat ./lerna-publish-summary.json) >> $GITHUB_OUTPUT
+      - run: echo releases=$(cat ./lerna-publish-summary.json) >> $GITHUB_OUTPUT
         id: published_packages
     outputs:
-      releases: ${{ steps.published_packages.outputs.packages }}
+      releases: ${{ steps.published_packages.outputs.releases }}
   deploy-to-proto-for-consumers:
-    needs: [create-qa-release]
+    needs: create-qa-release
     runs-on: ubuntu-latest
+    if: ${{ needs.create-qa-release.outputs.releases }}
     permissions:
       contents: write
       pull-requests: write
@@ -88,8 +89,6 @@ jobs:
         run: |
           echo "release-tag=$(echo ${{ needs.create-qa-release.outputs.releases }} | jq -r '.[0].version')" >> $GITHUB_OUTPUT
           echo "package-names=$(echo ${{ needs.create-qa-release.outputs.releases }} | jq -r '.[].packageName')" >> $GITHUB_OUTPUT
-        env:
-          RELEASES: ${{ needs.create-qa-release.outputs.releases }}
       - name: Push to protonova branch for Consumers
         uses: planningcenter/pco-release-action/deploy@km/lerna
         if: ${{ !contains(github.event.comment.body, '--no-deploy') }}
@@ -107,6 +106,7 @@ jobs:
           package-json-path: ${{ inputs.package-json-path }}
       - name: Post results to original PR
         uses: planningcenter/pco-release-action/reporting@km/lerna
+        if: ${{ needs.create-qa-release.outputs.releases }}
         with:
           pr-number: ${{ github.event.issue.number }}
           results-json: ${{ env.results_json }}
@@ -114,3 +114,26 @@ jobs:
           actor: ${{ github.actor }}
           proto-tag: "${{ github.event.repository.name }}-${{ github.event.issue.number }}"
           release-type: "QA"
+  report-previous-version:
+    needs: create-qa-release
+    if: ${{ !needs.create-qa-release.outputs.releases }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+        with:
+          script: |
+            if (!process.env.PR_NUMBER) return
+            const header = `## No QA release created`
+            const body = "There are no new changes to release, so please use the previous QA version."
+
+            github.rest.issues.createComment({
+              issue_number: process.env.PR_NUMBER,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${header}\n\n${body}`
+            });

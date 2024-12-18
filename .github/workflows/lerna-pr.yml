@@ -30,7 +30,7 @@ jobs:
             git checkout -b pco-release--internal-rc
             git commit --allow-empty -m "New release branch"
           fi
-      - run: git rebase origin/main --strategy-option=theirs
+      - run: git rebase origin/main -X ours
       - run: git push -f --set-upstream origin pco-release--internal-rc
       - run: ./node_modules/.bin/lerna run build
       - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag=next --summary-file -y

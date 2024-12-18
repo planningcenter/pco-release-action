@@ -54,7 +54,7 @@ jobs:
         with:
           node-version: "20"
           cache: "yarn"
-      - uses: planningcenter/pco-release-action/release-by-pr-lerna@km/lerna
+      - uses: planningcenter/pco-release-action/lerna/release-by-pr@km/lerna
         id: release_by_pr
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -252,8 +252,8 @@ const FOOTER = `## 🚀 PCO-Release
   Merging it will create a new release.
 
   ### Actions
-  - The version bump type is determined via [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). If the version bump is incorrect, you can manually update it by adding **\`pco-release-*\` label** (\`pco-release-patch\`, \`pco-release-minor\`, or \`pco-release-major\`) - Change the release type.
-  - Release candidates are automatically created when this PR is updated. To deploy the release candidate to staging, add a comment \`@pco-release staging\`.
+  - The version bump type is determined via [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+  - Release candidates are automatically created when this PR is updated. To deploy the release candidate to staging, add a comment \`pco deploy staging\`.
   `
 
 async function findOrCreateLabels(

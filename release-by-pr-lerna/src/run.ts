@@ -10,14 +10,9 @@ type PullRequest<Label extends Record<string, any> = { id: string; name: string;
   number: number
   labels: { nodes: Label[] }
 }
-type LabelIds = Record<'labelPendingId' | 'labelPatchId' | 'labelMinorId' | 'labelMajorId', string>
+type LabelIds = Record<'labelPendingId', string>
 
-const LABEL_NAMES = {
-  labelPending: 'pco-release-pending',
-  labelPatch: 'pco-release-patch',
-  labelMinor: 'pco-release-minor',
-  labelMajor: 'pco-release-major',
-}
+const LABEL_NAMES = { labelPending: 'pco-release-pending' }
 
 const FETCH_QUERY = `
   query($owner:String!, $repo:String!, $mainBranch:String!, $releaseBranch:String!, $lastRelease: String!) {
@@ -58,15 +53,6 @@ const FETCH_QUERY = `
         }
       }
       labelPending: label(name: "${LABEL_NAMES.labelPending}") {
-        id
-      }
-      labelPatch: label(name: "${LABEL_NAMES.labelPatch}") {
-        id
-      }
-      labelMinor: label(name: "${LABEL_NAMES.labelMinor}") {
-        id
-      }
-      labelMajor: label(name: "${LABEL_NAMES.labelMajor}") {
         id
       }
     }
@@ -126,15 +112,12 @@ export const run = async (inputs: Inputs): Promise<void> => {
     releaseBranch: RELEASE_BRANCH,
     lastRelease: `v${lastReleaseVersion}`,
   })
-  const { releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } = response.repository
+  const { releaseBranch, id, labelPending, lastRelease } = response.repository
   const pullRequests = releaseBranch?.associatedPullRequests.nodes || []
   let pullRequest: PullRequest
 
   // Find or create labels
-  const { labelPendingId, labelMajorId, labelMinorId, labelPatchId } = await findOrCreateLabels(
-    { labelPending, labelPatch, labelMajor, labelMinor },
-    { octokit, repoId: id },
-  )
+  const { labelPendingId } = await findOrCreateLabels({ labelPending }, { octokit, repoId: id })
 
   // Setup git
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
@@ -229,17 +212,12 @@ export const run = async (inputs: Inputs): Promise<void> => {
     await updatePullRequest({
       pullRequest: pullRequests[0],
       version,
-      releaseType: inputs.releaseType,
-      labelMajorId,
-      labelMinorId,
-      labelPatchId,
       lastReleaseVersion: `v${lastReleaseVersion}`,
       changelog: updatedChangelog,
     })
     pullRequest = pullRequests[0]
   }
 
-  console.log(pullRequest)
   setOutput('pull_request_id', pullRequest.number)
 
   // Request reviews from authors of commits
@@ -343,41 +321,20 @@ function buildBody({
 async function updatePullRequest({
   pullRequest,
   version,
-  releaseType,
-  labelMajorId,
-  labelMinorId,
-  labelPatchId,
   lastReleaseVersion,
   changelog,
 }: {
   pullRequest: PullRequest
   version: string
-  releaseType: ReleaseType
-  labelMajorId: string
-  labelMinorId: string
-  labelPatchId: string
   lastReleaseVersion: string
   changelog: string
 }) {
   return await octokit.graphql(
-    `mutation($prId: ID!, $body: String, $title: String, $labelIds: [ID!]) { updatePullRequest(input: { pullRequestId: $prId, body: $body, title: $title, labelIds:$labelIds}) { clientMutationId} }`,
+    `mutation($prId: ID!, $body: String, $title: String) { updatePullRequest(input: { pullRequestId: $prId, body: $body, title: $title}) { clientMutationId} }`,
     {
       prId: pullRequest.id,
       body: buildBody({ version, lastReleaseVersion, changelog }),
       title: `v${version}`,
-      labelIds: [
-        ...pullRequest.labels.nodes
-          .filter(
-            (label) =>
-              label.name === 'pco-release-pending' ||
-              !Object.values(LABEL_NAMES).includes(label.name) ||
-              (releaseType && label.name === `pco-release-${releaseType}`),
-          )
-          .map((label) => label.id),
-        ...(releaseType
-          ? [releaseType === 'major' ? labelMajorId : releaseType === 'minor' ? labelMinorId : labelPatchId]
-          : []),
-      ],
     },
   )
 }

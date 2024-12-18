@@ -58353,12 +58353,7 @@ var utils = __nccwpck_require__(709);
 
 
 
-const LABEL_NAMES = {
-    labelPending: 'pco-release-pending',
-    labelPatch: 'pco-release-patch',
-    labelMinor: 'pco-release-minor',
-    labelMajor: 'pco-release-major',
-};
+const LABEL_NAMES = { labelPending: 'pco-release-pending' };
 const FETCH_QUERY = `
   query($owner:String!, $repo:String!, $mainBranch:String!, $releaseBranch:String!, $lastRelease: String!) {
     repository(owner: $owner, name: $repo) {
@@ -58398,15 +58393,6 @@ const FETCH_QUERY = `
         }
       }
       labelPending: label(name: "${LABEL_NAMES.labelPending}") {
-        id
-      }
-      labelPatch: label(name: "${LABEL_NAMES.labelPatch}") {
-        id
-      }
-      labelMinor: label(name: "${LABEL_NAMES.labelMinor}") {
-        id
-      }
-      labelMajor: label(name: "${LABEL_NAMES.labelMajor}") {
         id
       }
     }
@@ -58450,11 +58436,11 @@ const run = async (inputs) => {
         releaseBranch: RELEASE_BRANCH,
         lastRelease: `v${lastReleaseVersion}`,
     });
-    const { releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } = response.repository;
+    const { releaseBranch, id, labelPending, lastRelease } = response.repository;
     const pullRequests = releaseBranch?.associatedPullRequests.nodes || [];
     let pullRequest;
     // Find or create labels
-    const { labelPendingId, labelMajorId, labelMinorId, labelPatchId } = await findOrCreateLabels({ labelPending, labelPatch, labelMajor, labelMinor }, { octokit, repoId: id });
+    const { labelPendingId } = await findOrCreateLabels({ labelPending }, { octokit, repoId: id });
     // Setup git
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
@@ -58531,16 +58517,11 @@ const run = async (inputs) => {
         await updatePullRequest({
             pullRequest: pullRequests[0],
             version,
-            releaseType: inputs.releaseType,
-            labelMajorId,
-            labelMinorId,
-            labelPatchId,
             lastReleaseVersion: `v${lastReleaseVersion}`,
             changelog: updatedChangelog,
         });
         pullRequest = pullRequests[0];
     }
-    console.log(pullRequest);
     (0,core.setOutput)('pull_request_id', pullRequest.number);
     // Request reviews from authors of commits
     await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes });
@@ -58594,21 +58575,11 @@ function buildBody({ lastReleaseVersion, changelog, }) {
         return `No changes found\n\n${FOOTER}`;
     return `${changelog}\n\n[Full Changes](https://github.com/${owner}/${repo}/compare/${lastReleaseVersion}...main)\n\n${FOOTER}`;
 }
-async function updatePullRequest({ pullRequest, version, releaseType, labelMajorId, labelMinorId, labelPatchId, lastReleaseVersion, changelog, }) {
-    return await octokit.graphql(`mutation($prId: ID!, $body: String, $title: String, $labelIds: [ID!]) { updatePullRequest(input: { pullRequestId: $prId, body: $body, title: $title, labelIds:$labelIds}) { clientMutationId} }`, {
+async function updatePullRequest({ pullRequest, version, lastReleaseVersion, changelog, }) {
+    return await octokit.graphql(`mutation($prId: ID!, $body: String, $title: String) { updatePullRequest(input: { pullRequestId: $prId, body: $body, title: $title}) { clientMutationId} }`, {
         prId: pullRequest.id,
         body: buildBody({ version, lastReleaseVersion, changelog }),
         title: `v${version}`,
-        labelIds: [
-            ...pullRequest.labels.nodes
-                .filter((label) => label.name === 'pco-release-pending' ||
-                !Object.values(LABEL_NAMES).includes(label.name) ||
-                (releaseType && label.name === `pco-release-${releaseType}`))
-                .map((label) => label.id),
-            ...(releaseType
-                ? [releaseType === 'major' ? labelMajorId : releaseType === 'minor' ? labelMinorId : labelPatchId]
-                : []),
-        ],
     });
 }
 async function requestReviewsFromAuthors({ prId, commits, }) {

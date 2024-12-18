@@ -3,7 +3,7 @@ import { easyExec } from '../../../shared/utils.js'
 import { setOutput } from '@actions/core'
 
 type ReleaseType = 'patch' | 'minor' | 'major' | undefined
-type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
+type Inputs = { releaseType: ReleaseType; installCommand: string }
 type Label = { id: string }
 type PullRequest<Label extends Record<string, any> = { id: string; name: string; number: number }> = {
   id: string
@@ -91,7 +91,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
     return
   }
 
-  await easyExec('yarn install')
+  await easyExec(inputs.installCommand)
 
   // Fetch information needed about the repo
   const response: {
@@ -124,17 +124,11 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git config --global user.name "github-actions[bot]"`)
 
   // Create release branch if it doesn't exist
-  if (!releaseBranch) {
-    await easyExec(`git checkout -b ${RELEASE_BRANCH}`)
-    // await easyExec(`git commit --allow-empty -m "New release branch"`)
-  }
+  if (!releaseBranch) await easyExec(`git checkout -b ${RELEASE_BRANCH}`)
 
   // Update the release branch with the latest main (but keep our release branch changes)
   await easyExec(`git checkout ${RELEASE_BRANCH}`)
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
-
-  // Push the changes to the release branch
-  // await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 
   // Bump the version, editing the last commit (which should be the version bump)
   const specificVersion = inputs.releaseType ? [`${inputs.releaseType}`] : []
@@ -218,6 +212,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
     pullRequest = pullRequests[0]
   }
 
+  // Set the pull request number as an output
   setOutput('pull_request_id', pullRequest.number)
 
   // Request reviews from authors of commits

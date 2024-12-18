@@ -58427,7 +58427,7 @@ const run = async (inputs) => {
       If this happens unexpectedly, make sure there is a release labeled "v${lastReleaseVersion}" and try again.`, e);
         return;
     }
-    await (0,utils.easyExec)('yarn install');
+    await (0,utils.easyExec)(inputs.installCommand);
     // Fetch information needed about the repo
     const response = await octokit.graphql(FETCH_QUERY, {
         owner,
@@ -58445,15 +58445,11 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
     // Create release branch if it doesn't exist
-    if (!releaseBranch) {
+    if (!releaseBranch)
         await (0,utils.easyExec)(`git checkout -b ${RELEASE_BRANCH}`);
-        // await easyExec(`git commit --allow-empty -m "New release branch"`)
-    }
     // Update the release branch with the latest main (but keep our release branch changes)
     await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
     await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
-    // Push the changes to the release branch
-    // await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
     // Bump the version, editing the last commit (which should be the version bump)
     const specificVersion = inputs.releaseType ? [`${inputs.releaseType}`] : [];
     const updateVersionCommandFlags = [...specificVersion, '--no-push', '--json', '-y'];
@@ -58522,6 +58518,7 @@ const run = async (inputs) => {
         });
         pullRequest = pullRequests[0];
     }
+    // Set the pull request number as an output
     (0,core.setOutput)('pull_request_id', pullRequest.number);
     // Request reviews from authors of commits
     await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes });
@@ -58601,8 +58598,7 @@ async function requestReviewsFromAuthors({ prId, commits, }) {
 const main = async () => {
     await run({
         releaseType: core.getInput('release_type', { required: false }),
-        packageJsonPath: core.getInput('package_json_path', { required: true }),
-        versionCommand: core.getInput('version_command', { required: false }),
+        installCommand: core.getInput('install_command', { required: false }),
     });
 };
 main().catch((e) => {

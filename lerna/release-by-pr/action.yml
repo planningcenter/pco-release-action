@@ -7,14 +7,11 @@ inputs:
     required: true
   release_type:
     required: false
-  package_json_path:
-    description: 'The path to the package.json file to version.'
+  install-command:
+    description: 'The script command to use to install the package\'s dependencies'
     required: false
-    default: 'package.json'
-  version_command:
-    description: 'The command to run to bump the version'
-    required: false
-    deprecated: true
+    type: string
+    default: 'yarn install --check-files'
 
 runs:
   using: 'node20'

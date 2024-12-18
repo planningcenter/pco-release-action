@@ -4,8 +4,7 @@ import { run } from './run.js'
 const main = async (): Promise<void> => {
   await run({
     releaseType: core.getInput('release_type', { required: false }) as 'patch' | 'minor' | 'major' | undefined,
-    packageJsonPath: core.getInput('package_json_path', { required: true }),
-    versionCommand: core.getInput('version_command', { required: false }),
+    installCommand: core.getInput('install_command', { required: false }),
   })
 }
 

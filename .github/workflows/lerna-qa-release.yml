@@ -2,6 +2,7 @@ name: PCO-Release - QA Release Automation
 on:
   workflow_call:
     inputs:
+      # Node Specific Inputs
       install-command:
         description: "The script command to use to install the package's dependencies"
         required: false
@@ -17,6 +18,8 @@ on:
         required: false
         type: string
         default: "yarn"
+
+      # Deploy Specific Inputs
       only:
         description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
         required: false
@@ -32,8 +35,8 @@ on:
         required: false
         type: string
         default: ""
-      package-json-path:
-        description: "path to package.json"
+      lerna-json-path:
+        description: "path to lerna.json"
         required: false
         type: string
         default: "lerna.json"
@@ -103,7 +106,7 @@ jobs:
           exclude: ${{ inputs.exclude }}
           include: ${{ inputs.include }}
           allow-major: true
-          package-json-path: ${{ inputs.package-json-path }}
+          package-json-path: ${{ inputs.lerna-json-path }}
           deploy-token: ${{ secrets.LERNA_TMP_DEPLOY }}
       - name: Post results to original PR
         uses: planningcenter/pco-release-action/reporting@km/lerna

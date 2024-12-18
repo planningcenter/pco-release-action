@@ -71,6 +71,7 @@ jobs:
           version: ${{ steps.find-version.outputs.version }}
           package-json-path: lerna.json
           package-names: ${{ steps.find-package-names.outputs.package-names }}
+          deploy-token: ${{ secrets.LERNA_TMP_DEPLOY }}
       - name: Post results to original PR
         uses: planningcenter/pco-release-action/reporting@km/lerna
         with:

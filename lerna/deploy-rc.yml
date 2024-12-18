@@ -1,4 +1,4 @@
-name: PCO-Release - Release Candidate Automation
+name: PCO-Release - Deploy RC to Staging
 on:
   workflow_call:
     inputs:

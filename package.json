@@ -8,6 +8,6 @@
   "workspaces": [
     "release-by-pr",
     "dependabot-automation",
-    "release-by-pr-lerna"
+    "lerna/release-by-pr"
   ]
 }

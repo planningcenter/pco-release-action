@@ -15,7 +15,6 @@ runs:
         NODE_AUTH_TOKEN: ${{ inputs.NODE_AUTH_TOKEN }}
     - run: yarn install
       shell: bash
-    # Create an RC release
     - run: ./node_modules/.bin/lerna publish --canary --conventional-prerelease --conventionalCommits --preid=rc --dist-tag=next --json -y
       shell: bash
       id: lerna_publish

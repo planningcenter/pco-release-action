@@ -1,5 +1,5 @@
 import { Octokit } from '@octokit/action'
-import { easyExec } from '../../shared/utils.js'
+import { easyExec } from '../../../shared/utils.js'
 import { setOutput } from '@actions/core'
 
 type ReleaseType = 'patch' | 'minor' | 'major' | undefined

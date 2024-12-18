@@ -1,4 +1,4 @@
-name: PCO-Release - Lerna Release PR
+name: PCO-Release - Create Release PR and RC
 on:
   workflow_call:
 

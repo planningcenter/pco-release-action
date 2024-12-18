@@ -2,6 +2,23 @@ name: PCO-Release - Deploy RC to Staging
 on:
   workflow_call:
     inputs:
+      node-version:
+        description: "The version of node to use"
+        required: false
+        type: string
+        default: "20"
+      cache:
+        description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
+        required: false
+        type: string
+        default: "yarn"
+      install-command:
+        description: "The script command to use to install the package's dependencies"
+        required: false
+        type: string
+        default: "yarn install --check-files"
+
+      # Deploy Specific Inputs
       only:
         description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
         required: false
@@ -35,9 +52,9 @@ jobs:
           ref: pco-release--internal-rc
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "yarn"
-      - run: yarn install
+          node-version: ${{ inputs.node-version }}
+          cache: ${{ inputs.cache }}
+      - run: ${{ inputs.install-command }}
       - id: find-version
         run: echo "version=$(jq -r .version lerna.json)" >> $GITHUB_OUTPUT
       - id: packages

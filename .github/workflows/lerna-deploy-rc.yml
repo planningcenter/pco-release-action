@@ -42,7 +42,7 @@ jobs:
         run: echo "version=$(jq -r .version lerna.json)" >> $GITHUB_OUTPUT
       - id: packages
         run: |
-          packages=$(./node_modules/.bin/lerna list --json)
+          packages=$(./node_modules/.bin/lerna list --json | jq -c '.')
           echo "packages=$packages" >> $GITHUB_OUTPUT
       - uses: actions/github-script@v7
         id: find-package-names

@@ -104,6 +104,7 @@ jobs:
           include: ${{ inputs.include }}
           allow-major: true
           package-json-path: ${{ inputs.package-json-path }}
+          deploy-token: ${{ secrets.LERNA_TMP_DEPLOY }}
       - name: Post results to original PR
         uses: planningcenter/pco-release-action/reporting@km/lerna
         if: ${{ needs.create-qa-release.outputs.version }}

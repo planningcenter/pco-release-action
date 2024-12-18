@@ -60,7 +60,7 @@ jobs:
       - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --global user.name "github-actions[bot]"
       - run: |
-          if git rev-parse --verify origin/pco-release--internal-rc > /dev/null 2>&1; then
+          if git rev-parse --verify origin/pco-release--internal-qa-${{ github.event.issue.number }} > /dev/null 2>&1; then
             git checkout pco-release--internal-qa-${{ github.event.issue.number }}
           else
             git checkout -b pco-release--internal-qa-${{ github.event.issue.number }}

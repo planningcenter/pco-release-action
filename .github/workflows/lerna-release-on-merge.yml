@@ -7,6 +7,21 @@ on:
         description: "The names of the packages to deploy (will automatically filter if it is not upgraded)"
         required: true
         type: string
+      only:
+        description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
+        required: false
+        type: string
+        default: ""
+      include:
+        description: "repos to include without checking. Comma separated list"
+        required: false
+        type: string
+        default: ""
+      exclude:
+        description: "repos to exclude without checking. Comma separated list"
+        required: false
+        type: string
+        default: ""
 
       # Node specific inputs
       node-version:
@@ -87,8 +102,10 @@ jobs:
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
           ref: ${{ needs.create-release.outputs.release-tag }}
           change-method: "pr"
-          only: test-js-auto-deploy-consumer
+          only: ${{ inputs.only }}
           allow-major: false
+          include: ${{ inputs.include }}
+          exclude: ${{ inputs.exclude }}
           package-json-path: "lerna.json"
           package-names: ${{ inputs.package-names}}
           deploy-token: ${{ secrets.LERNA_TMP_DEPLOY }}

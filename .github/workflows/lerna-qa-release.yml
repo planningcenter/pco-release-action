@@ -7,39 +7,39 @@ on:
         description: "The script command to use to install the package's dependencies"
         required: false
         type: string
-        default: "yarn install --check-files"
+        default: 'yarn install --check-files'
       node-version:
-        description: "The version of node to use"
+        description: 'The version of node to use'
         required: false
         type: string
-        default: "20"
+        default: '20'
       cache:
         description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
         required: false
         type: string
-        default: "yarn"
+        default: 'yarn'
 
       # Deploy Specific Inputs
       only:
         description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
         required: false
         type: string
-        default: ""
+        default: ''
       include:
-        description: "repos to include without checking. Comma separated list"
+        description: 'repos to include without checking. Comma separated list'
         required: false
         type: string
-        default: ""
+        default: ''
       exclude:
-        description: "repos to exclude without checking. Comma separated list"
+        description: 'repos to exclude without checking. Comma separated list'
         required: false
         type: string
-        default: ""
+        default: ''
       lerna-json-path:
-        description: "path to lerna.json"
+        description: 'path to lerna.json'
         required: false
         type: string
-        default: "lerna.json"
+        default: 'lerna.json'
 jobs:
   create-qa-release:
     if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release qa')
@@ -93,15 +93,15 @@ jobs:
       pull-requests: write
     steps:
       - name: Push to protonova branch for Consumers
-        uses: planningcenter/pco-release-action/deploy@v1
+        uses: planningcenter/pco-release-action/deploy@km/lerna
         if: ${{ !contains(github.event.comment.body, '--no-deploy') }}
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
           ref: v${{ needs.create-qa-release.outputs.version }}
           package-names: ${{ needs.create-qa-release.outputs.packageNames }}
-          change-method: "merge"
-          branch-name: "proto/${{ github.event.repository.name }}-${{ github.event.issue.number }}"
+          change-method: 'merge'
+          branch-name: 'proto/${{ github.event.repository.name }}-${{ github.event.issue.number }}'
           only: ${{ inputs.only }}
           exclude: ${{ inputs.exclude }}
           include: ${{ inputs.include }}
@@ -115,8 +115,8 @@ jobs:
           results-json: ${{ env.results_json }}
           version-tag: v${{ needs.create-qa-release.outputs.version }}
           actor: ${{ github.actor }}
-          proto-tag: "${{ github.event.repository.name }}-${{ github.event.issue.number }}"
-          release-type: "QA"
+          proto-tag: '${{ github.event.repository.name }}-${{ github.event.issue.number }}'
+          release-type: 'QA'
   report-previous-version:
     needs: create-qa-release
     if: ${{ !needs.create-qa-release.outputs.releases }}

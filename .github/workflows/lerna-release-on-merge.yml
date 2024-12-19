@@ -7,34 +7,34 @@ on:
         description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
         required: false
         type: string
-        default: ""
+        default: ''
       include:
-        description: "repos to include without checking. Comma separated list"
+        description: 'repos to include without checking. Comma separated list'
         required: false
         type: string
-        default: ""
+        default: ''
       exclude:
-        description: "repos to exclude without checking. Comma separated list"
+        description: 'repos to exclude without checking. Comma separated list'
         required: false
         type: string
-        default: ""
+        default: ''
 
       # Node specific inputs
       node-version:
-        description: "The version of node to use"
+        description: 'The version of node to use'
         required: false
         type: string
-        default: "20"
+        default: '20'
       cache:
         description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
         required: false
         type: string
-        default: "yarn"
+        default: 'yarn'
       install-command:
         description: "The script command to use to install the package's dependencies"
         required: false
         type: string
-        default: "yarn install --check-files"
+        default: 'yarn install --check-files'
 
 jobs:
   create-release:
@@ -51,7 +51,7 @@ jobs:
       - run: git push --tags
       - uses: planningcenter/pco-release-action/create-release-on-merge@v1
         with:
-          package_json_path: "lerna.json"
+          package_json_path: 'lerna.json'
     outputs:
       release-tag: v${{ env.version }}
       version: ${{ env.version }}
@@ -116,17 +116,17 @@ jobs:
           VERSION: ${{ needs.create-release.outputs.version }}
       - name: Push to Consumers
         id: push-to-consumers
-        uses: planningcenter/pco-release-action/deploy@v1
+        uses: planningcenter/pco-release-action/deploy@km/lerna
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
           ref: ${{ needs.create-release.outputs.release-tag }}
-          change-method: "pr"
+          change-method: 'pr'
           only: ${{ inputs.only }}
           allow-major: false
           include: ${{ inputs.include }}
           exclude: ${{ inputs.exclude }}
-          package-json-path: "lerna.json"
+          package-json-path: 'lerna.json'
           package-names: ${{ steps.find-package-names.outputs.package-names }}
       - name: Post results to original PR
         uses: actions/github-script@v7

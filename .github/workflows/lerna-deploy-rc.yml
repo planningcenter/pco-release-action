@@ -1,0 +1,98 @@
+name: PCO-Release - Deploy RC to Staging
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: "The version of node to use"
+        required: false
+        type: string
+        default: "20"
+      cache:
+        description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
+        required: false
+        type: string
+        default: "yarn"
+      install-command:
+        description: "The script command to use to install the package's dependencies"
+        required: false
+        type: string
+        default: "yarn install --check-files"
+
+      # Deploy Specific Inputs
+      only:
+        description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
+        required: false
+        type: string
+        default: ""
+      include:
+        description: "repos to include without checking. Comma separated list"
+        required: false
+        type: string
+        default: ""
+      exclude:
+        description: "repos to exclude without checking. Comma separated list"
+        required: false
+        type: string
+        default: ""
+      upgrade-commands:
+        description: "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory."
+        required: false
+        type: string
+        default: "{}"
+jobs:
+  deploy-to-staging-for-consumers:
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release deploy')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: pco-release--internal-rc
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: ${{ inputs.cache }}
+      - run: ${{ inputs.install-command }}
+      - id: find-version
+        run: echo "version=$(jq -r .version lerna.json)" >> $GITHUB_OUTPUT
+      - id: packages
+        run: |
+          packages=$(./node_modules/.bin/lerna list --json | jq -c '.')
+          echo "packages=$packages" >> $GITHUB_OUTPUT
+      - uses: actions/github-script@v7
+        id: find-package-names
+        with:
+          script: |
+            const packages = JSON.parse(process.env.PACKAGES)
+            const version = process.env.VERSION
+            const packageNames = packages.filter((pkg) => pkg.version === version).map(pkg => pkg.name).join(',')
+            core.setOutput('package-names', packageNames)
+        env:
+          PACKAGES: ${{ steps.packages.outputs.packages }}
+          VERSION: ${{ steps.find-version.outputs.version }}
+      - name: Push to `staging` for Consumers
+        uses: planningcenter/pco-release-action/deploy@v1
+        with:
+          app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+          private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
+          ref: v${{ steps.find-version.outputs.version }}
+          change-method: "merge"
+          branch-name: "staging"
+          only: ${{ inputs.only }}
+          exclude: ${{ inputs.exclude }}
+          include: ${{ inputs.include }}
+          upgrade-commands: ${{ inputs.upgrade-commands }}
+          allow-major: true
+          version: ${{ steps.find-version.outputs.version }}
+          package-json-path: lerna.json
+          package-names: ${{ steps.find-package-names.outputs.package-names }}
+      - name: Post results to original PR
+        uses: planningcenter/pco-release-action/reporting@v1
+        with:
+          pr-number: ${{ github.event.issue.number }}
+          results-json: ${{ env.results_json }}
+          version-tag: ${{ steps.find-version.outputs.version }}
+          actor: ${{ github.actor }}
+          release-type: "RC"

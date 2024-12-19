@@ -1,0 +1,102 @@
+name: PCO-Release - Create Release PR and RC
+on:
+  workflow_call:
+    inputs:
+      # Node Specific Inputs
+      install-command:
+        description: "The script command to use to install the package's dependencies"
+        required: false
+        type: string
+        default: "yarn install --check-files"
+      node-version:
+        description: "The version of node to use"
+        required: false
+        type: string
+        default: "20"
+      cache:
+        description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
+        required: false
+        type: string
+        default: "yarn"
+jobs:
+  create-rc-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: ${{ inputs.cache }}
+      - run: echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
+      - run: ${{ inputs.install-command }}
+      - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - run: git config --global user.name "github-actions[bot]"
+      - run: |
+          if git rev-parse --verify origin/pco-release--internal-rc > /dev/null 2>&1; then
+            git checkout pco-release--internal-rc
+          else
+            git checkout -b pco-release--internal-rc
+            git commit --allow-empty -m "New release branch"
+          fi
+      - run: git rebase origin/main -X ours
+      - run: git push -f --set-upstream origin pco-release--internal-rc
+      - run: ./node_modules/.bin/lerna run build
+      - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag=next --summary-file -y
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: echo packages=$(cat ./lerna-publish-summary.json) >> $GITHUB_OUTPUT
+        id: published_packages
+    outputs:
+      releases: ${{ steps.published_packages.outputs.packages }}
+  setup-release-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: ${{ inputs.cache }}
+      - uses: planningcenter/pco-release-action/lerna/release-by-pr@v1
+        id: release_by_pr
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      pull_request_id: ${{ steps.release_by_pr.outputs.pull_request_id }}
+  report-rc-info:
+    needs: [setup-release-pr, create-rc-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ needs.setup-release-pr.outputs.pull_request_id }}
+          RELEASES: ${{ needs.create-rc-release.outputs.releases }}
+        with:
+          script: |
+            if (!process.env.RELEASES || !process.env.PR_NUMBER) return
+            const header = `## Release Candidate(s) successfully created`
+            const releases = JSON.parse(process.env.RELEASES)
+            const body = releases.map(release => `- \`${release.packageName}\` @ [${release.version}](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/v${release.version})`).join("\n")
+
+            github.rest.issues.createComment({
+              issue_number: process.env.PR_NUMBER,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${header}\n\n${body}`
+            });

@@ -3,8 +3,8 @@ class Deployer
     def initialize( # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
       github_token:,
       owner:,
-      package_name:,
       version:,
+      package_names:,
       change_method: "pr",
       branch_name: "main",
       automerge: false,
@@ -16,7 +16,6 @@ class Deployer
     )
       @github_token = github_token
       @owner = owner
-      @package_name = package_name
       @version = version
       @automerge = automerge
       @only = only
@@ -26,11 +25,12 @@ class Deployer
       @branch_name = branch_name
       @change_method = change_method
       @allow_major = allow_major
+      @package_names = package_names
     end
 
     attr_reader :github_token,
                 :owner,
-                :package_name,
+                :package_names,
                 :version,
                 :automerge,
                 :branch_name,

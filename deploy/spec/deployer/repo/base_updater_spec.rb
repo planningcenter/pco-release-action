@@ -6,9 +6,10 @@ describe Deployer::Repo::BaseUpdater do
           instance_double(
             Deployer::Config,
             version: "1.0.1",
-            package_name: "test"
+            package_names: ["test"]
           )
-        updater = described_class.new("test", config: config)
+        updater =
+          described_class.new("repo", config: config, package_name: "test")
         allow(File).to receive(:exist?).and_return(true)
         allow(YAML).to receive(:load_file).and_return(
           "upgrade_command" =>
@@ -27,11 +28,12 @@ describe Deployer::Repo::BaseUpdater do
           instance_double(
             Deployer::Config,
             version: "1.0.1",
-            package_name: "test",
+            package_names: ["test"],
             upgrade_commands: {
             }
           )
-        updater = described_class.new("test", config: config)
+        updater =
+          described_class.new("repo", config: config, package_name: "test")
         allow(File).to receive(:exist?).and_return(true)
         allow(YAML).to receive(:load_file).and_return({})
 
@@ -45,12 +47,13 @@ describe Deployer::Repo::BaseUpdater do
           instance_double(
             Deployer::Config,
             version: "1.0.1",
-            package_name: "test",
+            package_names: ["test"],
             upgrade_commands: {
-              "test" => "some other upgrade"
+              "repo" => "some other upgrade"
             }
           )
-        updater = described_class.new("test", config: config)
+        updater =
+          described_class.new("repo", config: config, package_name: "test")
         allow(File).to receive(:exist?).and_return(false)
 
         expect(updater.send(:upgrade_command)).to eq(
@@ -65,12 +68,13 @@ describe Deployer::Repo::BaseUpdater do
           instance_double(
             Deployer::Config,
             version: "1.0.1",
-            package_name: "test",
+            package_names: ["test"],
             upgrade_commands: {
               "other" => "some other upgrade"
             }
           )
-        updater = described_class.new("test", config: config)
+        updater =
+          described_class.new("repo", config: config, package_name: "test")
         allow(File).to receive(:exist?).and_return(false)
 
         expect(updater.send(:upgrade_command)).to eq("yarn upgrade test@1.0.1")

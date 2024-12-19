@@ -92,7 +92,8 @@ describe Deployer do
           Dependabot::NpmAndYarn::UpdateChecker,
           requirements_unlocked_or_can_be?: true,
           can_update?: true,
-          updated_dependencies: [instance_double(Dependabot::Dependency)]
+          updated_dependencies: [instance_double(Dependabot::Dependency)],
+          latest_resolvable_version: "1.0.1"
         )
       )
       stub_find_repos("topbar")
@@ -126,7 +127,7 @@ describe Deployer do
         Deployer::Config.new(
           github_token: "",
           owner: "planningcenter",
-          package_name: "@planningcenter/tapestry-react",
+          package_names: ["@planningcenter/tapestry-react"],
           version: "1.0.1",
           allow_major: true
         )
@@ -153,7 +154,7 @@ describe Deployer do
           Deployer::Config.new(
             github_token: "",
             owner: "planningcenter",
-            package_name: "@planningcenter/tapestry-react",
+            package_names: ["@planningcenter/tapestry-react"],
             version: "1.0.1",
             change_method: "merge",
             branch_name: "staging", # Unique branch name
@@ -173,7 +174,7 @@ describe Deployer do
         Deployer::Config.new(
           github_token: "",
           owner: "planningcenter",
-          package_name: "@planningcenter/tapestry-react",
+          package_names: ["@planningcenter/tapestry-react"],
           version: "1.0.1"
         )
       expect(described_class.new(config).repos.map(&:name)).to eq(%w[test-repo])

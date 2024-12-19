@@ -56,6 +56,9 @@ inputs:
     description: "path to package.json"
     required: false
     default: "package.json"
+  package-names:
+    description: "The names of the packages to update"
+    required: false
 outputs:
   json:
     description: "The json output of the upgrade prs."
@@ -72,6 +75,7 @@ runs:
     - uses: actions/checkout@v4
       with:
         ref: ${{ inputs.ref }}
+        fetch-depth: 0
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
@@ -89,6 +93,7 @@ runs:
         fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
     - name: Find package_name
+      if: ${{ !inputs.package-names }}
       id: find-package-name
       shell: bash
       run: |
@@ -113,6 +118,7 @@ runs:
       run: bundle exec ruby ${{ github.action_path }}/run.rb
       env:
         GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+        PACKAGE_NAMES: ${{ inputs.package-names }}
         PACKAGE_NAME: ${{ steps.find-package-name.outputs.package-name }}
         PACKAGE_VERSION: ${{ steps.find-version.outputs.version }}
         OWNER: ${{ inputs.owner }}

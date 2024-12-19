@@ -42,11 +42,13 @@ class Deployer
   def report_results
     return unless failed_repos.any?
 
-    raise "[PCO-Release]: Failed in the following repos:\n- #{failed_repos.map(&:name).join("\n- ")}"
+    failed_repos_list =
+      failed_repos.map { |r| "#{r.name}: #{r.package_name}" }.join("\n- ")
+    raise "[PCO-Release]: Failed in the following repos:\n- #{failed_repos_list}"
   end
 
-  def package_name
-    config.package_name
+  def package_names
+    config.package_names
   end
 
   def version
@@ -58,18 +60,22 @@ class Deployer
   end
 
   def log_deployer_start
-    log "Updating #{package_name} to #{version} in the following repositories: #{repos.map(&:name).join(", ")}"
+    log "Updating #{package_names.join(", ")} to #{version} in the following repositories: #{repo_names.join(", ")}"
   end
 
   def log_repo_start(repo)
-    log "updating #{package_name} in #{repo.name}"
+    log "updating #{repo.package_name} in #{repo.name}"
   end
 
   def log_result(repo)
     if repo.success?
       log repo.success_message
     else
-      log "Failed to update #{package_name} in #{repo.name}: #{repo.error_message}"
+      log "Failed to update #{repo.package_name} in #{repo.name}: #{repo.error_message}"
     end
+  end
+
+  def repo_names
+    repos.map(&:name).uniq
   end
 end

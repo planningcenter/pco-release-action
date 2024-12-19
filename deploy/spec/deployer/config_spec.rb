@@ -4,13 +4,13 @@ describe Deployer::Config do
       Deployer::Config.new(
         github_token: "",
         owner: "planningcenter",
-        package_name: "@planningcenter/tapestry-react",
+        package_names: ["@planningcenter/tapestry-react"],
         version: "1.0.1"
       )
 
     expect(config.github_token).to eq("")
     expect(config.owner).to eq("planningcenter")
-    expect(config.package_name).to eq("@planningcenter/tapestry-react")
+    expect(config.package_names).to eq(["@planningcenter/tapestry-react"])
     expect(config.version).to eq("1.0.1")
     expect(config.automerge).to eq(false)
     expect(config.only).to eq([])

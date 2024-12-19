@@ -1,8 +1,9 @@
 class Deployer
   class Repo
-    def initialize(name, config:, updater: nil)
+    def initialize(name, package_name:, config:, updater: nil)
       @name = name
       @config = config
+      @package_name = package_name
       @updater = updater || default_updater
     end
 
@@ -35,7 +36,7 @@ class Deployer
       !success?
     end
 
-    attr_reader :name, :error_message
+    attr_reader :name, :error_message, :package_name
 
     private
 
@@ -44,7 +45,7 @@ class Deployer
     attr_writer :error_message
 
     def default_updater
-      updater_class.new(name, config: config)
+      updater_class.new(name, config: config, package_name: package_name)
     end
 
     def updater_class
@@ -56,10 +57,6 @@ class Deployer
       else
         DependabotPullRequestUpdater
       end
-    end
-
-    def package_name
-      config.package_name
     end
 
     def version

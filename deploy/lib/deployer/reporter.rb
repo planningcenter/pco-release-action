@@ -9,6 +9,10 @@ class Deployer
     attr_reader :repos
 
     def to_json(_opts = {})
+      as_json.to_json
+    end
+
+    def as_json(_opts = {})
       {
         failed_repos:
           failed_repos.map do |repo|
@@ -18,7 +22,7 @@ class Deployer
           successful_repos.map do |repo|
             { name: repo.name, pr_number: repo.pr_number, pr_url: repo.pr_url }
           end
-      }.to_json
+      }
     end
 
     def output_to_github

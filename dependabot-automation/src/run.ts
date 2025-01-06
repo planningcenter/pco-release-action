@@ -11,7 +11,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const changelogLocation = path.join(GITHUB_WORKSPACE as string, inputs.changelogPath)
   const changelog = await readFileContent(changelogLocation)
   const updatedChangelog = updateChangelog({ changelog, message: commitMessage.replace(/^.*?:\s*/, '') })
-  saveFileContent(changelogLocation, updatedChangelog)
+  await saveFileContent(changelogLocation, updatedChangelog)
 
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)

@@ -2,7 +2,7 @@
   "name": "pco-release",
   "private": true,
   "scripts": {
-    "build": "yarn workspace release-by-pr build && yarn workspace dependabot-automation build",
+    "build": "yarn workspace release-by-pr build && yarn workspace dependabot-automation build && yarn workspace release-by-pr-lerna build",
     "da": "yarn workspace dependabot-automation",
     "format": "prettier --write **/*.ts",
     "lint": "eslint ."

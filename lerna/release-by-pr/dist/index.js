@@ -58595,8 +58595,8 @@ async function requestReviewsFromAuthors({ prId, commits, }) {
 
 const main = async () => {
     await run({
-        releaseType: core.getInput('release_type', { required: false }),
-        installCommand: core.getInput('install_command', { required: false }),
+        releaseType: core.getInput('release-type', { required: false }),
+        installCommand: core.getInput('install-command', { required: false }),
     });
 };
 main().catch((e) => {

@@ -3,8 +3,8 @@ import { run } from './run.js'
 
 const main = async (): Promise<void> => {
   await run({
-    releaseType: core.getInput('release_type', { required: false }) as 'patch' | 'minor' | 'major' | undefined,
-    installCommand: core.getInput('install_command', { required: false }),
+    releaseType: core.getInput('release-type', { required: false }) as 'patch' | 'minor' | 'major' | undefined,
+    installCommand: core.getInput('install-command', { required: false }),
   })
 }
 

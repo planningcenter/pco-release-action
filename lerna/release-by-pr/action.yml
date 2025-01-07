@@ -5,10 +5,10 @@ inputs:
   GITHUB_TOKEN:
     description: token for access
     required: true
-  release_type:
+  release-type:
     required: false
   install-command:
-    description: 'The script command to use to install the package\'s dependencies'
+    description: "The script command to use to install the package's dependencies"
     required: false
     type: string
     default: 'yarn install --check-files'

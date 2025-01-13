@@ -21,7 +21,7 @@ def run_for_packages
 end
 
 def package_names
-  return ENV["PACKAGE_NAMES"].split(",") if ENV["PACKAGE_NAMES"]
+  return ENV["PACKAGE_NAMES"].split(",") unless ENV["PACKAGE_NAMES"]&.empty?
 
   [ENV["PACKAGE_NAME"]]
 end

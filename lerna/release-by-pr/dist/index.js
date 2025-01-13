@@ -58401,7 +58401,8 @@ if (!GITHUB_REPOSITORY)
     throw new Error('GITHUB_REPOSITORY is not set');
 const [owner, repo] = GITHUB_REPOSITORY.split('/');
 const octokit = new dist_node.Octokit();
-const LERNA = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna`;
+const LERNA = 'yarn';
+// const LERNA = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna`
 const run = async (inputs) => {
     const MAIN_BRANCH = 'main';
     const RELEASE_BRANCH = 'pco-release--internal';

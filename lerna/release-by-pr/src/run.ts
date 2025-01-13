@@ -63,7 +63,8 @@ const { GITHUB_REPOSITORY, GITHUB_WORKSPACE } = process.env
 if (!GITHUB_REPOSITORY) throw new Error('GITHUB_REPOSITORY is not set')
 const [owner, repo] = GITHUB_REPOSITORY.split('/')
 const octokit = new Octokit()
-const LERNA = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna`
+const LERNA = 'yarn'
+// const LERNA = `${GITHUB_WORKSPACE}/node_modules/.bin/lerna`
 
 export const run = async (inputs: Inputs): Promise<void> => {
   const MAIN_BRANCH = 'main'

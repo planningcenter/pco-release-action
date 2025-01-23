@@ -6,63 +6,72 @@ on:
         description: "The script command to use to install the package's dependencies"
         required: false
         type: string
-        default: "yarn install --check-files"
+        default: 'yarn install --check-files'
       build-command:
-        description: "The script command to use to build the package"
+        description: 'The script command to use to build the package'
         required: false
         type: string
-        default: "yarn build"
+        default: 'yarn build'
       test-command:
-        description: "The script command to use to test the package"
+        description: 'The script command to use to test the package'
         required: false
         type: string
-        default: "yarn test"
+        default: 'yarn test'
       prepublish-command:
-        description: "The command to run to publish a prerelease version of the package to NPM"
+        description: 'The command to run to publish a prerelease version of the package to NPM'
         required: false
         type: string
-        default: "npm publish --tag next"
+        default: 'npm publish --tag next'
       cache:
         description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
         required: false
         type: string
-        default: "yarn"
+        default: 'yarn'
       build-directory:
-        description: "The build output directory"
+        description: 'The build output directory'
         required: false
         type: string
-        default: "dist"
+        default: 'dist'
       only:
         description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
         required: false
         type: string
-        default: ""
+        default: ''
       include:
-        description: "repos to include without checking. Comma separated list"
+        description: 'repos to include without checking. Comma separated list'
         required: false
         type: string
-        default: ""
+        default: ''
       exclude:
-        description: "repos to exclude without checking. Comma separated list"
+        description: 'repos to exclude without checking. Comma separated list'
         required: false
         type: string
-        default: ""
+        default: ''
       upgrade-commands:
-        description: "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory."
+        description: 'JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory.'
         required: false
         type: string
-        default: "{}"
+        default: '{}'
       package-json-path:
-        description: "path to package.json"
+        description: 'path to package.json'
         required: false
         type: string
-        default: "package.json"
+        default: 'package.json'
       yarn-version-command:
-        description: "command to run to update version"
+        description: 'command to run to update version'
         required: false
         type: string
-        default: "yarn version"
+        default: 'yarn version'
 jobs:
+  react-to-comment:
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release rc')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add reactions
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{github.event.comment.id}}
+          reactions: '+1'
   create-rc-release:
     if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release rc')
     runs-on: ubuntu-latest
@@ -106,8 +115,8 @@ jobs:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
           ref: ${{ needs.create-rc-release.outputs.release-tag }}
-          change-method: "merge"
-          branch-name: "staging"
+          change-method: 'merge'
+          branch-name: 'staging'
           only: ${{ inputs.only }}
           exclude: ${{ inputs.exclude }}
           include: ${{ inputs.include }}
@@ -121,4 +130,4 @@ jobs:
           results-json: ${{ env.results_json }}
           version-tag: ${{ needs.create-rc-release.outputs.release-tag }}
           actor: ${{ github.actor }}
-          release-type: "RC"
+          release-type: 'RC'

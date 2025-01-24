@@ -49,7 +49,7 @@ class Deployer
     attr_writer :error_message
 
     def default_updater
-      updater_class.new(name, config: config, package_name: package_name)
+      updater_class.new(name, config: config, package_name: package_name, repo: self)
     end
 
     def updater_class

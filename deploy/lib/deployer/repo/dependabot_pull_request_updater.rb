@@ -16,48 +16,24 @@ class Deployer
 
       attr_writer :pr_url
 
-      def source
-        @source ||=
-          Dependabot::Source.new(
-            provider: "github",
-            repo: "#{config.owner}/#{name}",
-            directory: "/",
-            branch: "main"
-          )
+      def dependabot_proxy
+        repo.dependabot_proxy
       end
 
-      def package_manager
-        "npm_and_yarn"
+      def source
+        dependabot_proxy.source
       end
 
       def fetcher
-        @fetcher ||=
-          begin
-            fetcher =
-              Dependabot::FileFetchers.for_package_manager(package_manager).new(
-                source: source,
-                credentials: credentials
-              )
-            sanitize_yarnrc_yml(fetcher)
-            fetcher
-          end
-      end
-
-      def parser
-        @parser ||=
-          Dependabot::FileParsers.for_package_manager(package_manager).new(
-            dependency_files: fetcher.files,
-            source: source,
-            credentials: credentials
-          )
+        dependabot_proxy.fetcher
       end
 
       def dependency
-        @dependency ||=
-          parser
-            .parse
-            .select(&:top_level?)
-            .find { |dep| dep.name == package_name }
+        dependabot_proxy.dependency
+      end
+
+      def checker
+        dependabot_proxy.checker
       end
 
       def setup_runner
@@ -67,15 +43,6 @@ class Deployer
             error_class: AutoMergeFailure
           )
         end
-      end
-
-      def checker
-        @checker ||=
-          Dependabot::UpdateCheckers.for_package_manager(package_manager).new(
-            dependency: dependency,
-            dependency_files: fetcher.files,
-            credentials: credentials
-          )
       end
 
       def create_pr
@@ -111,6 +78,15 @@ class Deployer
         end
       end
 
+      def updater
+        @updater ||=
+          Dependabot::FileUpdaters.for_package_manager(dependabot_proxy.package_manager).new(
+            dependencies: updated_dependencies,
+            dependency_files: fetcher.files,
+            credentials: credentials
+          )
+      end
+
       def updated_dependencies
         @updated_dependencies ||=
           checker
@@ -129,15 +105,6 @@ class Deployer
                 true
               end
             end
-      end
-
-      def updater
-        @updater ||=
-          Dependabot::FileUpdaters.for_package_manager(package_manager).new(
-            dependencies: updated_dependencies,
-            dependency_files: fetcher.files,
-            credentials: credentials
-          )
       end
 
       def updated_files
@@ -173,31 +140,7 @@ class Deployer
       end
 
       def credentials
-        [
-          {
-            "type" => "git_source",
-            "host" => "github.com",
-            "username" => "x-access-token",
-            "password" => config.github_token
-          },
-          {
-            "type" => "npm_registry",
-            "registry" => "npm.pkg.github.com",
-            "token" => config.github_token,
-            "replaces_base" => true
-          }
-        ].map { |creds| Dependabot::Credential.new(creds) }
-      end
-
-      def sanitize_yarnrc_yml(fetcher)
-        # publishing uses the yarnrc.yml file to set the yarnPath
-        # but this behavior is broken in dependabot:
-        # https://github.com/dependabot/dependabot-core/issues/10632
-        yarnrc_yml_file = fetcher.files.find { |f| f.name == ".yarnrc.yml" }
-        return if yarnrc_yml_file.nil?
-
-        yarnrc_yml_file.content =
-          yarnrc_yml_file.content.gsub("yarnPath:", "# yarnPath:")
+        dependabot_proxy.credentials
       end
 
       def verify_upgrade_satisfies

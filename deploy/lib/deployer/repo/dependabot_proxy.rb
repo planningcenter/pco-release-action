@@ -73,13 +73,13 @@ class Deployer
         ].map { |creds| Dependabot::Credential.new(creds) }
       end
 
-      private
-
-      attr_reader :config, :name, :package_name
-
       def package_manager
         "npm_and_yarn"
       end
+
+      private
+
+      attr_reader :config, :name, :package_name
 
       def sanitize_yarnrc_yml(fetcher)
         # publishing uses the yarnrc.yml file to set the yarnPath

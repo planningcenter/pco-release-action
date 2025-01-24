@@ -16,6 +16,13 @@ class Deployer
       self.success = false
     end
 
+    def attempt_to_update?
+      return false if config.only.any? && !config.only.include?(name)
+      return false if config.exclude.include?(name)
+
+      !dependabot_proxy.dependency.nil?
+    end
+
     def success_message
       "Successfully updated #{package_name} to #{version} in #{name}"
     end

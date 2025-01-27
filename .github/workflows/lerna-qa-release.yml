@@ -73,8 +73,8 @@ jobs:
           result-encoding: string
       - uses: actions/checkout@v4
         with:
-          ref: main
-          fetch-depth: 0
+          ref: ${{ steps.get-pr-ref.outputs.result }}
+          fetch-tags: true
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version}}

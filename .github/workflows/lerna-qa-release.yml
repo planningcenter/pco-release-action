@@ -85,6 +85,28 @@ jobs:
       - run: ${{ inputs.install-command }}
       - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --global user.name "github-actions[bot]"
+      - name: Get last QA version
+        id: get-last-qa-version
+        run: |
+          git fetch --tags
+          LAST_VERSION=$(git tag -l "*-qa-${{ github.event.issue.number }}*" --sort=-v:refname | head -n 1)
+          echo "last_version=$LAST_VERSION" >> $GITHUB_OUTPUT
+      - name: Run checks to see if we should run
+        if: steps.get-last-qa-version.outputs.last_version
+        id: check-if-should-run
+        run: |
+          if [ -z "${{ steps.get-last-qa-version.outputs.last_version }}" ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          LAST_VERSION_SHA=$(git rev-list -n 1 --skip=1 ${{ steps.get-last-qa-version.outputs.last_version }})
+          CURRENT_SHA=$(git rev-parse HEAD)
+          if [ "$LAST_VERSION_SHA" != "$CURRENT_SHA" ]; then
+            echo "amend_commit=true" >> $GITHUB_OUTPUT
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
       - run: |
           if git rev-parse --verify origin/pco-release--internal-qa > /dev/null 2>&1; then
             git checkout pco-release--internal-qa

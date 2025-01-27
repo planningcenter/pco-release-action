@@ -107,6 +107,13 @@ jobs:
           else
             echo "should_run=false" >> $GITHUB_OUTPUT
           fi
+      - if: steps.check-if-should-run.outputs.should_run == 'true'
+        name: Update lerna.json version for next release
+        run: |
+          new_version="${{ steps.get-last-qa-version.outputs.last_version }}"
+          jq --arg new_version "$new_version" '.version = $new_version' lerna.json > lerna.tmp.json && mv lerna.tmp.json lerna.json
+          git add lerna.json
+          git commit -m "QA Release"
       - run: |
           if git rev-parse --verify origin/pco-release--internal-qa > /dev/null 2>&1; then
             git checkout pco-release--internal-qa

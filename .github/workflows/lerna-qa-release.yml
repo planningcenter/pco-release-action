@@ -57,10 +57,24 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: Get PR head ref
+        id: get-pr-ref
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueUrl = context.payload.issue.pull_request.url;
+            const prNumber = issueUrl.split('/').pop();
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            return pr.data.head.ref;
+          result-encoding: string
       - uses: actions/checkout@v4
         with:
-          ref: main
-          fetch-depth: 0
+          ref: ${{ steps.get-pr-ref.outputs.result }}
+          fetch-tags: true
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version}}
@@ -71,20 +85,49 @@ jobs:
       - run: ${{ inputs.install-command }}
       - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --global user.name "github-actions[bot]"
-      - run: |
-          if git rev-parse --verify origin/pco-release--internal-qa > /dev/null 2>&1; then
-            git checkout pco-release--internal-qa
-          else
-            git checkout -b pco-release--internal-qa
-            git commit --allow-empty -m "New release branch"
+      - name: Get last QA version
+        id: get-last-qa-version
+        run: |
+          git fetch --tags
+          LAST_VERSION=$(git tag -l "*-qa-${{ github.event.issue.number }}*" --sort=-v:refname | head -n 1)
+          echo "last_version=$LAST_VERSION" >> $GITHUB_OUTPUT
+      - name: Run checks to see if we should run
+        if: steps.get-last-qa-version.outputs.last_version
+        id: check-if-should-run
+        run: |
+          if [ -z "${{ steps.get-last-qa-version.outputs.last_version }}" ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            exit 0
           fi
-      - run: git rebase origin/main --strategy-option=theirs
-      - run: git push -f --set-upstream origin pco-release--internal-qa
-      - run: ./node_modules/.bin/lerna run build
-      - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid="qa-${{ github.event.issue.number }}" --dist-tag=qa --summary-file -y
+          LAST_VERSION_SHA=$(git rev-list -n 1 --skip=1 ${{ steps.get-last-qa-version.outputs.last_version }})
+          CURRENT_SHA=$(git rev-parse HEAD)
+          if [ "$LAST_VERSION_SHA" != "$CURRENT_SHA" ]; then
+            echo "amend_commit=true" >> $GITHUB_OUTPUT
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
+      - if: steps.check-if-should-run.outputs.should_run == 'true'
+        name: Update lerna.json version for next release
+        run: |
+          new_version="${{ steps.get-last-qa-version.outputs.last_version }}"
+          jq --arg new_version "$new_version" '.version = $new_version' lerna.json > lerna.tmp.json && mv lerna.tmp.json lerna.json
+          git add lerna.json
+          git commit -m "QA Release"
+      - name: Run lerna build
+        if: steps.check-if-should-run.outputs.should_run == 'true'
+        run: ./node_modules/.bin/lerna run build
+      - if: steps.check-if-should-run.outputs.should_run == 'true'
+        name: Run lerna publish
+        run: |
+          possible_amend_command=$(if [ "${{ steps.check-if-should-run.outputs.amend_commit }}" == "true" ]; then echo "--amend"; fi)
+          ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid="qa-${{ github.event.issue.number }}" --dist-tag=qa --summary-file -y --no-push $possible_amend_command
+          git push origin --tags
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
+      - name: Set results to output
+        if: steps.check-if-should-run.outputs.should_run == 'true'
+        run: |
           echo releases=$(cat ./lerna-publish-summary.json) >> $GITHUB_OUTPUT
           echo version=$(cat ./lerna-publish-summary.json | jq -r '.[0].version') >> $GITHUB_OUTPUT
           echo packageNames=$(cat ./lerna-publish-summary.json | jq -r '.[].packageName') >> $GITHUB_OUTPUT

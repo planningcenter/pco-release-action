@@ -28,6 +28,7 @@ runs:
         ACTOR: ${{ inputs.actor }}
         VERSION_TAG: ${{ inputs.version-tag }}
         RELEASE_TYPE: ${{ inputs.release-type }}
+        PROTO_TAG: ${{ inputs.proto-tag }}
       with:
         script: |
           function getBody() {

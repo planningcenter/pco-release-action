@@ -5,11 +5,12 @@ class Deployer
     end
 
     def find
+      repos = find_repos
       package_names.flat_map do |package_name|
-        find_repos(package_name).map do |repo|
+        repos.map do |repo|
           Repo.new(repo["name"], package_name: package_name, config: config)
         end
-      end
+      end.select(&:attempt_to_update?)
     end
 
     private
@@ -32,31 +33,14 @@ class Deployer
       config.client
     end
 
-    def find_repos(package_name)
-      repos = client.org_repos(owner)
-      return repos.select { |repo| only.include?(repo.name) } if only.any?
-
-      select_packages_that_consume_package(repos, package_name)
+    def find_repos
+      client.org_repos(owner).reject { |repo| repo["archived"] }
     end
 
-    def select_packages_that_consume_package(repos, package_name)
-      repos.select do |repo|
-        next false if repo["archived"]
-        next true if config.include.include?(repo["name"])
-        next false if config.exclude.include?(repo["name"])
-
-        consumer_of_package?(repo, package_name)
-      end
-    end
-
-    def consumer_of_package?(repo, package_name)
-      response =
-        client.contents("#{owner}/#{repo["name"]}", path: "package.json")
-      contents = JSON.parse(Base64.decode64(response.content))
-      contents["dependencies"]&.key?(package_name) ||
-        contents["devDependencies"]&.key?(package_name)
-    rescue Octokit::NotFound
-      false
+    def filter_repos(repos)
+      result = repos.select { |repo| only.include?(repo.name) } if only.any?
+      result = result.reject { |repo| repo["archived"] }
+      result.reject { |repo| config.exclude.include?(repo["name"]) }
     end
   end
 end

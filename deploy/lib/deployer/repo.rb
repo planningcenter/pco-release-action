@@ -16,6 +16,13 @@ class Deployer
       self.success = false
     end
 
+    def attempt_to_update?
+      return false if config.only.any? && !config.only.include?(name)
+      return false if config.exclude.include?(name)
+
+      !dependabot_proxy.dependency.nil?
+    end
+
     def success_message
       "Successfully updated #{package_name} to #{version} in #{name}"
     end
@@ -36,6 +43,10 @@ class Deployer
       !success?
     end
 
+    def dependabot_proxy
+      @dependabot_proxy ||= Deployer::Repo::DependabotProxy.new(name, config: config, package_name: package_name)
+    end
+
     attr_reader :name, :error_message, :package_name
 
     private
@@ -45,7 +56,7 @@ class Deployer
     attr_writer :error_message
 
     def default_updater
-      updater_class.new(name, config: config, package_name: package_name)
+      updater_class.new(name, config: config, package_name: package_name, repo: self)
     end
 
     def updater_class

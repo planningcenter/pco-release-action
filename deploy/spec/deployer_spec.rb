@@ -24,6 +24,25 @@ describe Deployer do
     )
   end
 
+  def stub_fetch_repo_contents(repo_name)
+    sha = "sha"
+    stub_request(:get, "https://api.github.com/repos/planningcenter/#{repo_name}/git/refs/heads/main").to_return(
+      body: { object: { sha: sha } }.to_json, headers: json_headers
+    )
+    stub_request(:get, "https://api.github.com/repos/planningcenter/#{repo_name}/contents/package.json?ref=#{sha}").to_return(
+      body: {
+        content:
+          Base64.encode64(
+            '{"dependencies": {"@planningcenter/tapestry-react": "1.0.0"}}'
+          )
+      }.to_json,
+      headers: json_headers
+    )
+    stub_request(:get, "https://api.github.com/repos/planningcenter/#{repo_name}/contents/?ref=#{sha}").to_return(
+      body: [].to_json, headers: json_headers
+    )
+  end
+
   def stub_clone_repo(suffix = "")
     allow(Open3).to receive(:capture3).with(
       "git clone https://oauth2:@github.com/planningcenter/topbar.git#{suffix}"
@@ -141,6 +160,7 @@ describe Deployer do
 
     context "when specifying a merge" do
       it "uses the specified branch name" do
+        stub_fetch_repo_contents("topbar")
         stub_find_repos("topbar")
         stub_read_package_json("topbar")
         stub_clone_repo
@@ -167,6 +187,7 @@ describe Deployer do
 
   describe "#repos" do
     it "returns a list of repos that contain the package name" do
+      stub_fetch_repo_contents("test-repo")
       stub_find_repos("test-repo")
       stub_read_package_json("test-repo")
 

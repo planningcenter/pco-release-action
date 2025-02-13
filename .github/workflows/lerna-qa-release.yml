@@ -92,7 +92,6 @@ jobs:
           LAST_VERSION=$(git tag -l "*-qa-${{ github.event.issue.number }}*" --sort=-v:refname | head -n 1)
           echo "last_version=$LAST_VERSION" >> $GITHUB_OUTPUT
       - name: Run checks to see if we should run
-        if: steps.get-last-qa-version.outputs.last_version
         id: check-if-should-run
         run: |
           if [ -z "${{ steps.get-last-qa-version.outputs.last_version }}" ]; then

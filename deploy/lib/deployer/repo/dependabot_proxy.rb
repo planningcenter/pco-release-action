@@ -5,6 +5,19 @@ class Deployer
         @config = config
         @name = name
         @package_name = package_name
+        self.class.setup(config)
+      end
+
+      def self.setup(config)
+        return if @setup_run
+
+        Dir.chdir(Dependabot::NpmAndYarn::NativeHelpers.native_helpers_root) do
+          CommandLine.new(config).execute(
+            "npm install --silent",
+            error_class: AutoMergeFailure
+          )
+        end
+        @setup_run = true
       end
 
       def source

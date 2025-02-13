@@ -4,7 +4,6 @@ class Deployer
   class Repo
     class DependabotPullRequestUpdater < PullRequestUpdater
       def run
-        setup_runner
         verify_upgrade_satisfies
         create_pr
         automerge_pr if config.automerge
@@ -34,15 +33,6 @@ class Deployer
 
       def checker
         dependabot_proxy.checker
-      end
-
-      def setup_runner
-        Dir.chdir(Dependabot::NpmAndYarn::NativeHelpers.native_helpers_root) do
-          CommandLine.new(config).execute(
-            "npm install --silent",
-            error_class: AutoMergeFailure
-          )
-        end
       end
 
       def create_pr

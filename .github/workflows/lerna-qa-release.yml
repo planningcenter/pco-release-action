@@ -96,6 +96,7 @@ jobs:
         run: |
           if [ -z "${{ steps.get-last-qa-version.outputs.last_version }}" ]; then
             echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "skip_manual_lerna_update=true" >> $GITHUB_OUTPUT
             exit 0
           fi
           LAST_VERSION_SHA=$(git rev-list -n 1 --skip=1 ${{ steps.get-last-qa-version.outputs.last_version }})
@@ -106,7 +107,7 @@ jobs:
           else
             echo "should_run=false" >> $GITHUB_OUTPUT
           fi
-      - if: steps.check-if-should-run.outputs.should_run == 'true'
+      - if: steps.check-if-should-run.outputs.should_run == 'true' && steps.check-if-should-run.outputs.skip_manual_lerna_update != 'true'
         name: Update lerna.json version for next release
         run: |
           new_version="${{ steps.get-last-qa-version.outputs.last_version }}"

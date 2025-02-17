@@ -20,6 +20,7 @@ class Deployer
       return false if config.only.any? && !config.only.include?(name)
       return false if config.exclude.include?(name)
 
+      config.log("Checking if dependency exists #{name} (#{package_name})")
       !dependabot_proxy.dependency.nil?
     end
 

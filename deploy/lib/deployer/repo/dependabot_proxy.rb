@@ -58,6 +58,8 @@ class Deployer
             .parse
             .select(&:top_level?)
             .find { |dep| dep.name == package_name }
+      rescue Dependabot::DependencyFileNotFound, Dependabot::BranchNotFound
+        nil
       end
 
       def checker

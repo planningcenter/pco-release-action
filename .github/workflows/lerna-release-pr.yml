@@ -47,12 +47,27 @@ jobs:
             git commit --allow-empty -m "New release branch"
           fi
       - run: git rebase origin/main -X ours
-      - run: git push -f --set-upstream origin pco-release--internal-rc
-      - run: ./node_modules/.bin/lerna run build
-      - run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag=next --summary-file -y
+      - id: check-changes
+        name: Check for changes
+        run: |
+          PREV_VERSION=$(jq -r '.version' lerna.json)
+          CHANGED_PACKAGES=$(./node_modules/.bin/lerna list --since v$PREV_VERSION)
+          if [[ -z "$CHANGED_PACKAGES" || "$CHANGED_PACKAGES" == "[]" ]]; then
+            echo "No new publishable changes detected. Skipping RC release."
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          fi
+      - if: ${{ steps.check-changes.outputs.should_publish == 'true' }}
+        run: git push -f --set-upstream origin pco-release--internal-rc
+      - if: ${{ steps.check-changes.outputs.should_publish == 'true' }}
+        run: ./node_modules/.bin/lerna run build
+      - if: ${{ steps.check-changes.outputs.should_publish == 'true' }}
+        run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag=next --summary-file -y
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: echo packages=$(cat ./lerna-publish-summary.json) >> $GITHUB_OUTPUT
+      - if: ${{ steps.check-changes.outputs.should_publish == 'true' }}
+        run: echo packages=$(cat ./lerna-publish-summary.json) >> $GITHUB_OUTPUT
         id: published_packages
     outputs:
       releases: ${{ steps.published_packages.outputs.packages }}

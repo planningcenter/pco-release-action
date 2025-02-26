@@ -63,6 +63,11 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
           cache: ${{ inputs.cache }}
+      - name: Cache node_modules
+        uses: planningcenter/pco-release-action/node-cache@v1
+        with:
+          cache: ${{ inputs.cache}}
+          node-version: ${{ inputs.node-version }}
       - run: ${{ inputs.install-command }}
       - id: find-version
         run: echo "version=$(jq -r .version lerna.json)" >> $GITHUB_OUTPUT

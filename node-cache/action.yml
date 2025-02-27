@@ -21,4 +21,3 @@ runs:
       with:
         path: node_modules
         key: node-modules-${{ runner.os }}-node-${{ inputs.node-version }}-${{ inputs.cache }}-${{ hashFiles('yarn.lock', 'package-lock.json', 'pnpm-lock.yaml') }}
-        restore-keys: node-modules-${{ runner.os }}-node-${{ inputs.node-version }}-${{ inputs.cache }}-

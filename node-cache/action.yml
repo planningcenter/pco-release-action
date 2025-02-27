@@ -1,0 +1,24 @@
+name: yarn-cache
+description: Automates the caching of node_modules to speed up builds.
+
+inputs:
+  cache:
+    description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
+    required: false
+    type: string
+    default: 'yarn'
+  node-version:
+    description: 'The version of node to use'
+    required: false
+    type: string
+    default: '20'
+runs:
+  using: 'composite'
+  steps:
+    - name: Cache node_modules
+      if: ${{ inputs.cache != '' }}
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: node-modules-${{ runner.os }}-node-${{ inputs.node-version }}-${{ inputs.cache }}-${{ hashFiles('yarn.lock', 'package-lock.json', 'pnpm-lock.yaml') }}
+        restore-keys: node-modules-${{ runner.os }}-node-${{ inputs.node-version }}-${{ inputs.cache }}-

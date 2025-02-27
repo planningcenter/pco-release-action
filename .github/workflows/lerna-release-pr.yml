@@ -85,6 +85,11 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
           cache: ${{ inputs.cache }}
+      - name: Cache node_modules
+        uses: planningcenter/pco-release-action/node-cache@v1
+        with:
+          cache: ${{ inputs.cache}}
+          node-version: ${{ inputs.node-version }}
       - uses: planningcenter/pco-release-action/lerna/release-by-pr@v1
         id: release_by_pr
         with:

@@ -40,6 +40,11 @@ on:
         required: false
         type: string
         default: 'lerna.json'
+      upgrade-commands:
+        description: 'JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory.'
+        required: false
+        type: string
+        default: '{}'
 jobs:
   react-to-comment:
     if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release qa')
@@ -162,6 +167,7 @@ jobs:
           only: ${{ inputs.only }}
           exclude: ${{ inputs.exclude }}
           include: ${{ inputs.include }}
+          upgrade-commands: ${{ inputs.upgrade-commands }}
           allow-major: true
           package-json-path: ${{ inputs.lerna-json-path }}
       - name: Post results to original PR

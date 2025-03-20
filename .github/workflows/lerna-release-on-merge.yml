@@ -35,6 +35,11 @@ on:
         required: false
         type: string
         default: "yarn install --check-files"
+      upgrade-commands:
+        description: "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory."
+        required: false
+        type: string
+        default: "{}"
 
 jobs:
   create-release:
@@ -131,6 +136,7 @@ jobs:
           allow-major: false
           include: ${{ inputs.include }}
           exclude: ${{ inputs.exclude }}
+          upgrade-commands: ${{ inputs.upgrade-commands }}
           package-json-path: "lerna.json"
           package-names: ${{ steps.find-package-names.outputs.package-names }}
       - name: Post results to original PR

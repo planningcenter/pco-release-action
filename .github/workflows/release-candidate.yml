@@ -121,7 +121,7 @@ jobs:
           exclude: ${{ inputs.exclude }}
           include: ${{ inputs.include }}
           upgrade-commands: ${{ inputs.upgrade-commands }}
-          allow-major: true
+          allow-major: false
           package-json-path: ${{ inputs.package-json-path }}
       - name: Post results to original PR
         uses: planningcenter/pco-release-action/reporting@v1

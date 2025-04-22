@@ -10,9 +10,9 @@ type PullRequest<Label extends Record<string, any> = { id: string; name: string;
   number: number
   labels: { nodes: Label[] }
 }
-type LabelIds = Record<'labelPendingId', string>
+type LabelIds = Record<'labelPendingId' | 'labelMajorId', string>
 
-const LABEL_NAMES = { labelPending: 'pco-release-pending' }
+const LABEL_NAMES = { labelPending: 'pco-release-pending', labelMajor: 'pco-release-major' }
 
 const FETCH_QUERY = `
   query($owner:String!, $repo:String!, $mainBranch:String!, $releaseBranch:String!, $lastRelease: String!) {
@@ -53,6 +53,9 @@ const FETCH_QUERY = `
         }
       }
       labelPending: label(name: "${LABEL_NAMES.labelPending}") {
+        id
+      }
+      labelMajor: label(name: "${LABEL_NAMES.labelMajor}") {
         id
       }
     }
@@ -112,12 +115,15 @@ export const run = async (inputs: Inputs): Promise<void> => {
     releaseBranch: RELEASE_BRANCH,
     lastRelease: `v${lastReleaseVersion}`,
   })
-  const { releaseBranch, id, labelPending, lastRelease } = response.repository
+  const { releaseBranch, id, labelPending, lastRelease, labelMajor } = response.repository
   const pullRequests = releaseBranch?.associatedPullRequests.nodes || []
   let pullRequest: PullRequest
 
   // Find or create labels
-  const { labelPendingId } = await findOrCreateLabels({ labelPending }, { octokit, repoId: id })
+  const { labelPendingId, labelMajorId } = await findOrCreateLabels(
+    { labelPending, labelMajor },
+    { octokit, repoId: id },
+  )
 
   // Setup git
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
@@ -131,6 +137,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
 
   // Bump the version, editing the last commit (which should be the version bump)
+  const forceMajor = pullRequests.length > 0 && pullRequests[0].labels.nodes.find((label) => label.id === labelMajorId)
+  if (forceMajor) inputs.releaseType = 'major'
   const specificVersion = inputs.releaseType ? [`${inputs.releaseType}`] : []
   const updateVersionCommandFlags = [...specificVersion, '--no-push', '--json', '-y']
   const updateVersionCommand = `${LERNA} version ${updateVersionCommandFlags.join(' ')}`

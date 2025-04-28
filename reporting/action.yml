@@ -37,7 +37,7 @@ runs:
             const successfulRepoList = results.successful_repos.map(repo => `- \`${repo.name}\``).join("\n")
             const failedRepoList = results.failed_repos.map(repo => `- \`${repo.name}\`: ${repo.message}`).join("\n")
             return `
-            ${process.env.PROTO_TAG ? "You can access the proto release at: https://${process.env.PROTO_TAG}.login.planningcenter.ninja/" : ""}
+            ${process.env.PROTO_TAG ? `You can access the proto release at: https://${process.env.PROTO_TAG}.login.planningcenter.ninja/` : ""}
 
             ${results.successful_repos.length > 0 ? "### Deployed Successfully to the following repos:" : ""}
 

@@ -1,77 +1,74 @@
-name: "PCO Release Deploy"
-description: "Deploys updates of a new release to all planningcenter repos that have a package as its dependency"
+name: 'PCO Release Deploy'
+description: 'Deploys updates of a new release to all planningcenter repos that have a package as its dependency'
 inputs:
   owner:
-    description: "Owner of the repositories"
+    description: 'Owner of the repositories'
     required: false
-    default: "planningcenter"
+    default: 'planningcenter'
   automerge:
-    description: "Do you want to automerge the PRs?  This should be dynamic based on if it is a major release"
+    description: 'Do you want to automerge the PRs?  This should be dynamic based on if it is a major release'
     required: false
   only:
     description: "Only run on specific repos. This is a comma separated list of repo names (ie 'people,services,groups')"
     required: false
-    default: ""
+    default: ''
   package-name:
-    description: "The name of the package to update"
+    description: 'The name of the package to update'
     required: false
   version:
-    description: "The version to update the package to"
+    description: 'The version to update the package to'
     required: false
   upgrade-commands:
-    description: "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory."
+    description: 'JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory.'
     required: false
-    default: "{}"
+    default: '{}'
   change-method:
     description: "The method to use to create the changes. Options are 'pr' or 'merge'."
     required: false
-    default: "pr"
+    default: 'pr'
   branch-name:
-    description: "When `merge` is used as the change-method, this is the branch where the changes will be merged."
+    description: 'When `merge` is used as the change-method, this is the branch where the changes will be merged.'
     required: false
-    default: "staging"
+    default: 'staging'
   include:
-    description: "repos to include without checking. Comma separated list"
+    description: 'repos to include without checking. Comma separated list'
     required: false
-    default: ""
+    default: ''
   exclude:
-    description: "repos to exclude without checking. Comma separated list"
+    description: 'repos to exclude without checking. Comma separated list'
     required: false
-    default: ""
+    default: ''
   ref:
-    description: "The ref to use for the release"
+    description: 'The ref to use for the release'
     required: false
-    default: ""
-  app-id:
-    description: "The app id for the github app"
-    required: true
-  private-key:
-    description: "The private key for the github app"
+    default: ''
+  key:
+    description: 'The private key for the github app'
     required: true
   allow-major:
-    description: "Allow major version updates"
+    description: 'Allow major version updates'
     required: false
     default: false
   package-json-path:
-    description: "path to package.json"
+    description: 'path to package.json'
     required: false
-    default: "package.json"
+    default: 'package.json'
   package-names:
-    description: "The names of the packages to update"
+    description: 'The names of the packages to update'
     required: false
 outputs:
   json:
-    description: "The json output of the upgrade prs."
+    description: 'The json output of the upgrade prs.'
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
-    - name: Generate a token
-      id: generate-token
-      uses: actions/create-github-app-token@v1
-      with:
-        app-id: ${{ inputs.app-id }}
-        private-key: ${{ inputs.private-key }}
-        owner: ${{ github.repository_owner }}
+    # - name: Generate a token
+    #   id: generate-token
+    #   uses: actions/create-github-app-token@v1
+    #   with:
+    #     app-id: ${{ inputs.app-id }}
+    #     private-key: ${{ inputs.private-key }}
+    #     owner: ${{ github.repository_owner }}
     - uses: actions/checkout@v4
       with:
         ref: ${{ inputs.ref }}
@@ -79,7 +76,7 @@ runs:
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
-        node-version: "18"
+        node-version: '18'
     - name: Enable Corepack
       shell: bash
       run: export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && corepack enable
@@ -109,7 +106,7 @@ runs:
         git config --global user.name "pco-release-bot[bot]"
     - uses: ruby/setup-ruby@v1
       with:
-        ruby-version: "3.3"
+        ruby-version: '3.3'
         bundler-cache: true
         working-directory: ${{ github.action_path}}
     - name: Setup Upgrade PRs
@@ -117,7 +114,7 @@ runs:
       id: setup-upgrade-prs
       run: bundle exec ruby ${{ github.action_path }}/run.rb
       env:
-        GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+        GITHUB_TOKEN: ${{ inputs.key }}
         PACKAGE_NAMES: ${{ inputs.package-names }}
         PACKAGE_NAME: ${{ steps.find-package-name.outputs.package-name }}
         PACKAGE_VERSION: ${{ steps.find-version.outputs.version }}

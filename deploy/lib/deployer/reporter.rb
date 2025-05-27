@@ -26,17 +26,18 @@ class Deployer
     end
 
     def output_to_github
-      output_messages.each do |message|
-        # I have tried for hours to get this to go to the output, but it never works.  Using env instead.
-        system("echo #{Shellwords.escape(message)} >> $GITHUB_ENV")
+      json_data = to_json
+
+      # Use GitHub Actions multiline environment variable format
+      # This avoids issues with special characters
+      File.open(ENV['GITHUB_ENV'], 'a') do |file|
+        file.puts "results_json<<EOF"
+        file.puts json_data
+        file.puts "EOF"
       end
     end
 
     private
-
-    def output_messages
-      ["results_json=#{to_json}"]
-    end
 
     def failed_repos
       repos.select(&:failure?)

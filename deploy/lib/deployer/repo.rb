@@ -8,6 +8,7 @@ class Deployer
     end
 
     def update_package
+      raise "Testing backticks `hey'"
       updater.run
 
       self.success = true

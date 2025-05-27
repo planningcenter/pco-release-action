@@ -38,13 +38,43 @@ describe Deployer::Reporter do
     end
   end
 
-  describe "#output_messages" do
-    it "returns the code to set up the proper outputs" do
+  describe "#output_to_github" do
+    let(:temp_file) { Tempfile.new('github_env') }
+
+    before do
+      ENV['GITHUB_ENV'] = temp_file.path
+    end
+
+    after do
+      temp_file.close
+      temp_file.unlink
+    end
+
+    it "writes JSON data to GITHUB_ENV using multiline format" do
       report = described_class.new([failed_repo, successful_repo])
 
-      expect(report.send(:output_messages)).to eq(
-        ["results_json=#{report.to_json}"]
+      report.output_to_github
+
+      env_content = File.read(temp_file.path)
+      expect(env_content).to eq("results_json<<EOF\n#{report.to_json}\nEOF\n")
+    end
+
+    it "handles JSON with special characters" do
+      special_repo = instance_double(
+        Deployer::Repo,
+        name: "test-with-`backticks`-and-'quotes'",
+        error_message: "Error with `backticks` and \"quotes\"",
+        failure?: true,
+        success?: false
       )
+
+      report = described_class.new([special_repo])
+
+      expect { report.output_to_github }.not_to raise_error
+
+      env_content = File.read(temp_file.path)
+      expect(env_content).to include(special_repo.name)
+      expect(env_content).to include("Error with `backticks` and \\\"quotes\\\"")
     end
   end
 end

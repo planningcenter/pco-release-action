@@ -83,6 +83,11 @@ runs:
     - name: Enable Corepack
       shell: bash
       run: export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && corepack enable
+    - name: Install Bun
+      shell: bash
+      run: |
+        curl -fsSL https://bun.sh/install | bash
+        echo "$HOME/.bun/bin" >> $GITHUB_PATH
     - name: Find new version
       id: find-version
       shell: bash

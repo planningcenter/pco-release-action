@@ -9,6 +9,7 @@ It searches all repos of an owner and creates PRs to update to the new version o
 
 - Auto-merge capability to automatically update a new release in all repos that depend on the library
 - Clear failure reports tell which repos failed to update and why.
+- Support consumer repositories that use Bun as their package manager (via `upgrade_command` property in `.pco-release.config.yml`)
 
 ## Usage
 
@@ -48,3 +49,12 @@ upgrade_command: "yarn tr upgrade"
 In this case, whenever upgrading, it will use the new upgrade command.
 
 This file is not necessary, but allows for customization.
+
+#### Bun
+
+Bun is a supported package manger. A consumer application that uses Bun as its package manager can be configured using the `upgrade_command`:
+
+```yml
+# `./.pco-release.config.yml`
+upgrade_command: "bun upgrade"
+```

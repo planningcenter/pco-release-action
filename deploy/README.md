@@ -9,6 +9,7 @@ It searches all repos of an owner and creates PRs to update to the new version o
 
 - Auto-merge capability to automatically update a new release in all repos that depend on the library
 - Clear failure reports tell which repos failed to update and why.
+- Support consumer repositories that use NPM, Yarn, or Bun as their package manager
 
 ## Usage
 

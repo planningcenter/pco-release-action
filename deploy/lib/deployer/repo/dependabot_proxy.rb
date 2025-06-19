@@ -101,7 +101,7 @@ class Deployer
 
       def npm_and_yarn_fetcher
         @npm_and_yarn_fetcher ||= begin
-          fetcher = Dependabot::FileFetchers.for_package_manager(package_manager).new(
+          fetcher = Dependabot::FileFetchers.for_package_manager("npm_and_yarn").new(
             source: source,
             credentials: credentials
           )

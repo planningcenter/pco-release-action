@@ -5,6 +5,7 @@ class Deployer
         @config = config
         @name = name
         @package_name = package_name
+
         self.class.setup(config)
       end
 
@@ -31,16 +32,7 @@ class Deployer
       end
 
       def fetcher
-        @fetcher ||=
-          begin
-            fetcher =
-              Dependabot::FileFetchers.for_package_manager(package_manager).new(
-                source: source,
-                credentials: credentials
-              )
-            sanitize_yarnrc_yml(fetcher)
-            fetcher
-          end
+        @fetcher ||= bun? ? bun_fetcher : npm_and_yarn_fetcher
       end
 
       def parser
@@ -89,12 +81,34 @@ class Deployer
       end
 
       def package_manager
-        "npm_and_yarn"
+        @package_manager ||= bun? ? "bun" : "npm_and_yarn"
       end
 
       private
 
       attr_reader :config, :name, :package_name
+
+      def bun?
+        bun_fetcher.ecosystem_versions[:package_managers].include? "bun"
+      end
+
+      def bun_fetcher
+        @bun_fetcher ||= Dependabot::FileFetchers.for_package_manager("bun").new(
+          source: source,
+          credentials: credentials
+        )
+      end
+
+      def npm_and_yarn_fetcher
+        @npm_and_yarn_fetcher ||= begin
+          fetcher = Dependabot::FileFetchers.for_package_manager("npm_and_yarn").new(
+            source: source,
+            credentials: credentials
+          )
+          sanitize_yarnrc_yml(fetcher)
+          fetcher
+        end
+      end
 
       def sanitize_yarnrc_yml(fetcher)
         # publishing uses the yarnrc.yml file to set the yarnPath

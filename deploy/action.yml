@@ -5,6 +5,10 @@ inputs:
     description: "Owner of the repositories"
     required: false
     default: "planningcenter"
+  urgent:
+    description: 'Is this a urgent release? If so, we will ensure all repos receive a PR for this release'
+    required: false
+    default: false
   automerge:
     description: "Do you want to automerge the PRs?  This should be dynamic based on if it is a major release"
     required: false

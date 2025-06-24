@@ -80,6 +80,12 @@ describe Deployer do
     ).and_return(["", "", double(success?: true)])
   end
 
+  def stub_npm_install
+    allow(Open3).to receive(:capture3).with(
+      "npm install --silent"
+    ).and_return(["", "", double(success?: true)])
+  end
+
   def stub_create_pr
     stub_request(
       :post,
@@ -89,9 +95,10 @@ describe Deployer do
 
   describe "#run" do
     it "updates the package in the specified repositories" do
-      allow(Open3).to receive(:capture3).with(
-        "npm install --silent"
-      ).and_return(["", "", double(success?: true)])
+      stub_fetch_repo_contents("topbar")
+      stub_find_repos("topbar")
+      stub_read_package_json("topbar")
+      stub_npm_install
 
       mock_file_parser = instance_double(Dependabot::NpmAndYarn::FileParser)
       allow(Dependabot::NpmAndYarn::FileParser).to receive(:new).and_return(
@@ -164,6 +171,7 @@ describe Deployer do
         stub_find_repos("topbar")
         stub_read_package_json("topbar")
         stub_clone_repo
+        stub_npm_install
 
         stub_checkout_branch("staging") # Unique branch name
         stub_upgrade

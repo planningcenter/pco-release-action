@@ -12,7 +12,8 @@ class Deployer
       upgrade_commands: {},
       include: [],
       exclude: [],
-      allow_major: false
+      allow_major: false,
+      urgent: false
     )
       @github_token = github_token
       @owner = owner
@@ -26,6 +27,7 @@ class Deployer
       @change_method = change_method
       @allow_major = allow_major
       @package_names = package_names
+      @urgent = urgent
     end
 
     attr_reader :github_token,
@@ -39,7 +41,8 @@ class Deployer
                 :include,
                 :exclude,
                 :change_method,
-                :allow_major
+                :allow_major,
+                :urgent
 
     def client
       @client ||=

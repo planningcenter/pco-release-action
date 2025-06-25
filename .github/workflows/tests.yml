@@ -1,0 +1,25 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!main'
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: deploy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3
+          bundler-cache: true
+          working-directory: deploy
+      - name: Run deploy specs
+        run: bundle exec rspec

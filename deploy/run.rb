@@ -11,7 +11,8 @@ COMMON_CONFIG = {
   change_method: ENV["CHANGE_METHOD"],
   include: ENV["INCLUDE"].split(","),
   exclude: ENV["EXCLUDE"].split(","),
-  allow_major: ENV["ALLOW_MAJOR"] == "true"
+  allow_major: ENV["ALLOW_MAJOR"] == "true",
+  urgent: ENV["URGENT"] == "true"
 }
 
 def run_for_packages

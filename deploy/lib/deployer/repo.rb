@@ -1,10 +1,11 @@
 class Deployer
   class Repo
-    def initialize(name, package_name:, config:, updater: nil)
+    def initialize(name, package_name:, config:, updater: nil, config_file: ConfigFile.new(name, config: config))
       @name = name
       @config = config
       @package_name = package_name
       @updater = updater || default_updater
+      @config_file = config_file
     end
 
     def update_package
@@ -19,6 +20,7 @@ class Deployer
     def attempt_to_update?
       return false if config.only.any? && !config.only.include?(name)
       return false if config.exclude.include?(name)
+      return false unless pr_level_reached?
 
       config.log("Checking if dependency exists #{name} (#{package_name})")
       !dependabot_proxy.dependency.nil?
@@ -52,7 +54,7 @@ class Deployer
 
     private
 
-    attr_reader :config, :updater
+    attr_reader :config, :updater, :config_file
     attr_accessor :success
     attr_writer :error_message
 
@@ -73,6 +75,12 @@ class Deployer
 
     def version
       config.version
+    end
+
+    def pr_level_reached?
+      return true if config.urgent
+
+      config_file.pr_level != "urgent"
     end
   end
 end

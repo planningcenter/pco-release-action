@@ -80,6 +80,12 @@ describe Deployer do
     ).and_return(["", "", double(success?: true)])
   end
 
+  def stub_npm_install
+    allow(Open3).to receive(:capture3).with(
+      "npm install --silent"
+    ).and_return(["", "", double(success?: true)])
+  end
+
   def stub_create_pr
     stub_request(
       :post,
@@ -87,11 +93,18 @@ describe Deployer do
     ).to_return(body: { number: 1 }.to_json, headers: json_headers)
   end
 
+  def stub_config_file(repo_name)
+    stub_request(:get, "https://api.github.com/repos/planningcenter/#{repo_name}/contents/.pco-release.config.yml?ref=main")
+      .to_return(status: 404, headers: json_headers)
+  end
+
   describe "#run" do
     it "updates the package in the specified repositories" do
-      allow(Open3).to receive(:capture3).with(
-        "npm install --silent"
-      ).and_return(["", "", double(success?: true)])
+      stub_config_file("topbar")
+      stub_fetch_repo_contents("topbar")
+      stub_find_repos("topbar")
+      stub_read_package_json("topbar")
+      stub_npm_install
 
       mock_file_parser = instance_double(Dependabot::NpmAndYarn::FileParser)
       allow(Dependabot::NpmAndYarn::FileParser).to receive(:new).and_return(
@@ -160,10 +173,12 @@ describe Deployer do
 
     context "when specifying a merge" do
       it "uses the specified branch name" do
+        stub_config_file("topbar")
         stub_fetch_repo_contents("topbar")
         stub_find_repos("topbar")
         stub_read_package_json("topbar")
         stub_clone_repo
+        stub_npm_install
 
         stub_checkout_branch("staging") # Unique branch name
         stub_upgrade
@@ -190,6 +205,7 @@ describe Deployer do
       stub_fetch_repo_contents("test-repo")
       stub_find_repos("test-repo")
       stub_read_package_json("test-repo")
+      stub_config_file("test-repo")
 
       config =
         Deployer::Config.new(

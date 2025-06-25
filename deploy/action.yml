@@ -79,7 +79,7 @@ runs:
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
-        node-version: "18"
+        node-version: '20'
     - name: Enable Corepack
       shell: bash
       run: export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && corepack enable

@@ -1,9 +1,10 @@
 describe Deployer::Repo do
   let(:config) do
-    instance_double(
-      Deployer::Config,
+    Deployer::Config.new(
+      github_token: "",
+      owner: "planningcenter",
       package_names: ["test-pkg"],
-      version: "1.2.7"
+      version: "1.2.7",
     )
   end
 
@@ -159,6 +160,72 @@ describe Deployer::Repo do
         )
 
       expect(repo.pr_url).to eq "http://github.com/org/repo/pull/123"
+    end
+  end
+
+  describe "#attempt_to_update?" do
+    def stub_dependency(dependency = instance_double(Dependabot::Dependency, name: "test-pkg"))
+      allow(Deployer::Repo::DependabotProxy).to receive(:new).with(
+        "test",
+        config: anything,
+        package_name: "test-pkg"
+      ).and_return(instance_double(Deployer::Repo::DependabotProxy, dependency: dependency))
+    end
+
+    it "returns true if urgent" do
+      allow(config).to receive(:urgent).and_return(true)
+
+      stub_dependency
+
+      repo = described_class.new(
+        "test",
+        config: config,
+        package_name: "test-pkg",
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all")
+      )
+
+      expect(repo.attempt_to_update?).to be true
+    end
+
+    it "returns true if the PR level is not urgent" do
+      stub_dependency
+
+      repo = described_class.new(
+        "test",
+        config: config,
+        package_name: "test-pkg",
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all")
+      )
+
+      expect(repo.attempt_to_update?).to be true
+    end
+
+    it "returns false if the PR level is not urgent but the config file pr_level is urgent" do
+      stub_dependency
+
+      repo = described_class.new(
+        "test",
+        config: config,
+        package_name: "test-pkg",
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "urgent")
+      )
+
+      expect(repo.attempt_to_update?).to be false
+    end
+
+    it "returns true if the PR level is urgent but the config file pr_level is urgent" do
+      allow(config).to receive(:urgent).and_return(true)
+
+      stub_dependency
+
+      repo = described_class.new(
+        "test",
+        config: config,
+        package_name: "test-pkg",
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "urgent")
+      )
+
+      expect(repo.attempt_to_update?).to be true
     end
   end
 end

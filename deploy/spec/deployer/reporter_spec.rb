@@ -20,10 +20,20 @@ describe Deployer::Reporter do
       skipped?: false
     )
   end
+  let(:skipped_repo) do
+    instance_double(
+      Deployer::Repo,
+      name: "test3",
+      message: "Skipped because because repo manages non-urgent updates",
+      failure?: false,
+      success?: false,
+      skipped?: true
+    )
+  end
 
   describe "#to_json" do
     it "returns a json representation of the report" do
-      report = described_class.new([failed_repo, successful_repo])
+      report = described_class.new([failed_repo, successful_repo, skipped_repo])
 
       expect(report.to_json).to eq(
         {
@@ -35,7 +45,9 @@ describe Deployer::Reporter do
               pr_url: "http://github.com/org/repo/pull/127"
             }
           ],
-          skipped_repos: []
+          skipped_repos: [
+            { name: "test3", message: "Skipped because because repo manages non-urgent updates" }
+          ]
         }.to_json
       )
     end

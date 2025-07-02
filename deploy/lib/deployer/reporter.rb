@@ -24,7 +24,7 @@ class Deployer
           end,
         skipped_repos:
           skipped_repos.map do |repo|
-            { name: repo.name }
+            { name: repo.name, message: repo.message }
           end
       }
     end

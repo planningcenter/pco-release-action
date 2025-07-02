@@ -10,7 +10,7 @@ class Deployer
         repos.map do |repo|
           Repo.new(repo["name"], package_name: package_name, config: config)
         end
-      end.select(&:attempt_to_update?)
+      end.reject(&:exclude_from_reporting?)
     end
 
     private

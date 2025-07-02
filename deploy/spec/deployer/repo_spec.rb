@@ -8,12 +8,12 @@ describe Deployer::Repo do
     )
   end
 
-  def stub_dependency(dependency = instance_double(Dependabot::Dependency, name: "test-pkg"))
-    allow(Deployer::Repo::DependabotProxy).to receive(:new).with(
-      "test",
-      config: anything,
-      package_name: "test-pkg"
-    ).and_return(instance_double(Deployer::Repo::DependabotProxy, dependency: dependency))
+  def config_file(pr_level: "all")
+    instance_double(Deployer::Repo::ConfigFile, pr_level: pr_level)
+  end
+
+  def dependabot_proxy(dependency = instance_double(Dependabot::Dependency, name: "test-pkg"))
+    instance_double(Deployer::Repo::DependabotProxy, dependency: dependency)
   end
 
   describe "#failure?" do
@@ -24,7 +24,9 @@ describe Deployer::Repo do
           "test",
           config: config,
           updater: updater,
-          package_name: "test-pkg"
+          package_name: "test-pkg",
+          config_file: config_file,
+          dependabot_proxy: dependabot_proxy
         )
 
       repo.update_package
@@ -40,7 +42,9 @@ describe Deployer::Repo do
           "test",
           config: config,
           updater: updater,
-          package_name: "test-pkg"
+          package_name: "test-pkg",
+          config_file: config_file,
+          dependabot_proxy: dependabot_proxy
         )
 
       repo.update_package
@@ -57,7 +61,9 @@ describe Deployer::Repo do
           "test",
           config: config,
           updater: updater,
-          package_name: "test-pkg"
+          package_name: "test-pkg",
+          config_file: config_file,
+          dependabot_proxy: dependabot_proxy
         )
 
       repo.update_package
@@ -73,7 +79,9 @@ describe Deployer::Repo do
           "test",
           config: config,
           updater: updater,
-          package_name: "test-pkg"
+          package_name: "test-pkg",
+          config_file: config_file,
+          dependabot_proxy: dependabot_proxy
         )
 
       repo.update_package
@@ -90,7 +98,9 @@ describe Deployer::Repo do
           "test",
           config: config,
           updater: updater,
-          package_name: "test-pkg"
+          package_name: "test-pkg",
+          config_file: config_file,
+          dependabot_proxy: dependabot_proxy
         )
 
       repo.update_package
@@ -105,7 +115,9 @@ describe Deployer::Repo do
           "test",
           config: config,
           updater: updater,
-          package_name: "test-pkg"
+          package_name: "test-pkg",
+          config_file: config_file,
+          dependabot_proxy: dependabot_proxy
         )
       allow(updater).to receive(:run).and_raise(
         Deployer::PushBranchFailure,
@@ -175,39 +187,36 @@ describe Deployer::Repo do
     it "returns true if urgent" do
       allow(config).to receive(:urgent).and_return(true)
 
-      stub_dependency
-
       repo = described_class.new(
         "test",
         config: config,
         package_name: "test-pkg",
-        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all")
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all"),
+        dependabot_proxy: dependabot_proxy
       )
 
       expect(repo.attempt_to_update?).to be true
     end
 
     it "returns true if the PR level is not urgent" do
-      stub_dependency
-
       repo = described_class.new(
         "test",
         config: config,
         package_name: "test-pkg",
-        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all")
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all"),
+        dependabot_proxy: dependabot_proxy
       )
 
       expect(repo.attempt_to_update?).to be true
     end
 
     it "returns false if the PR level is not urgent but the config file pr_level is urgent" do
-      stub_dependency
-
       repo = described_class.new(
         "test",
         config: config,
         package_name: "test-pkg",
-        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "urgent")
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "urgent"),
+        dependabot_proxy: dependabot_proxy
       )
 
       expect(repo.attempt_to_update?).to be false
@@ -216,13 +225,12 @@ describe Deployer::Repo do
     it "returns true if the PR level is urgent but the config file pr_level is urgent" do
       allow(config).to receive(:urgent).and_return(true)
 
-      stub_dependency
-
       repo = described_class.new(
         "test",
         config: config,
         package_name: "test-pkg",
-        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "urgent")
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "urgent"),
+        dependabot_proxy: dependabot_proxy
       )
 
       expect(repo.attempt_to_update?).to be true
@@ -253,26 +261,24 @@ describe Deployer::Repo do
     end
 
     it "returns true if the repo is excluded by no dependency" do
-      stub_dependency(nil)
-
       repo = described_class.new(
         "test",
         config: config,
         package_name: "test-pkg",
-        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all")
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all"),
+        dependabot_proxy: dependabot_proxy(nil)
       )
 
       expect(repo.exclude_from_reporting?).to be true
     end
 
     it "returns false if the repo has the dependency" do
-      stub_dependency
-
       repo = described_class.new(
         "test",
         config: config,
         package_name: "test-pkg",
-        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all")
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all"),
+        dependabot_proxy: dependabot_proxy
       )
 
       expect(repo.exclude_from_reporting?).to be false

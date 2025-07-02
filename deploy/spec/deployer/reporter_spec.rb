@@ -5,7 +5,8 @@ describe Deployer::Reporter do
       name: "test",
       error_message: "Missing permissions.",
       failure?: true,
-      success?: false
+      success?: false,
+      skipped?: false
     )
   end
   let(:successful_repo) do
@@ -15,7 +16,8 @@ describe Deployer::Reporter do
       pr_number: 127,
       pr_url: "http://github.com/org/repo/pull/127",
       failure?: false,
-      success?: true
+      success?: true,
+      skipped?: false
     )
   end
 
@@ -32,7 +34,8 @@ describe Deployer::Reporter do
               pr_number: 127,
               pr_url: "http://github.com/org/repo/pull/127"
             }
-          ]
+          ],
+          skipped_repos: []
         }.to_json
       )
     end
@@ -65,7 +68,8 @@ describe Deployer::Reporter do
         name: "test-with-`backticks`-and-'quotes'",
         error_message: "Error with `backticks` and \"quotes\"",
         failure?: true,
-        success?: false
+        success?: false,
+        skipped?: false
       )
 
       report = described_class.new([special_repo])

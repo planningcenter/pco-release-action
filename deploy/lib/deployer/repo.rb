@@ -45,6 +45,10 @@ class Deployer
       !success?
     end
 
+    def skipped?
+      false
+    end
+
     def dependabot_proxy
       @dependabot_proxy ||= Deployer::Repo::DependabotProxy.new(name, config: config, package_name: package_name)
     end

@@ -15,6 +15,12 @@ class Deployer
       return skipped! unless attempt_to_update?
       updater.run
 
+      if updater.skipped
+        self.status = :skipped
+        @repo_upgrade_status = :version_bump_not_possible
+        return
+      end
+
       self.status = :success
       self.success = true
     rescue StandardError => e
@@ -86,6 +92,8 @@ class Deployer
         "Skipped #{name} because repo manages non-urgent updates"
       when :excluded_no_dependency
         "Skipped #{name} because it does not have the dependency"
+      when :version_bump_not_possible
+        "Skipped #{name} because the version bump is not possible (usually because of a major version bump)"
       end
     end
 

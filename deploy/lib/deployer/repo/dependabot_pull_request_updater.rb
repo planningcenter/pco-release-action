@@ -9,11 +9,11 @@ class Deployer
         automerge_pr if config.automerge
       end
 
-      attr_reader :pr_url
+      attr_reader :pr_url, :skipped
 
       private
 
-      attr_writer :pr_url
+      attr_writer :pr_url, :skipped
 
       def dependabot_proxy
         repo.dependabot_proxy
@@ -40,7 +40,11 @@ class Deployer
           return log "Update not possible for #{dependency.name}"
         end
 
-        return log "No valid updates" if updated_dependencies.none?
+        if updated_dependencies.none?
+          log "No valid updates"
+          self.skipped = true
+          return
+        end
 
         log "Creating PR"
         pr = pr_creator.create
@@ -118,6 +122,7 @@ class Deployer
       end
 
       def automerge_pr
+        return if skipped
         return unless automerge
 
         log "Merging PR #{pr_number}"

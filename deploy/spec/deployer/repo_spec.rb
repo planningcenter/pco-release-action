@@ -18,7 +18,7 @@ describe Deployer::Repo do
 
   describe "#failure?" do
     it "returns false if the repo update is successful" do
-      updater = instance_double(Deployer::Repo::MergeUpdater, run: nil)
+      updater = instance_double(Deployer::Repo::MergeUpdater, run: nil, skipped: false)
       repo =
         described_class.new(
           "test",
@@ -55,7 +55,7 @@ describe Deployer::Repo do
 
   describe "#success?" do
     it "returns true if the repo update is successful" do
-      updater = instance_double(Deployer::Repo::MergeUpdater, run: nil)
+      updater = instance_double(Deployer::Repo::MergeUpdater, run: nil, skipped: false)
       repo =
         described_class.new(
           "test",
@@ -72,7 +72,7 @@ describe Deployer::Repo do
     end
 
     it "returns false when updater raises an error" do
-      updater = instance_double(Deployer::Repo::MergeUpdater)
+      updater = instance_double(Deployer::Repo::MergeUpdater, skipped: false)
       allow(updater).to receive(:run).and_raise(StandardError)
       repo =
         described_class.new(
@@ -92,7 +92,7 @@ describe Deployer::Repo do
 
   describe "#error_message" do
     it "returns nothing when successful" do
-      updater = instance_double(Deployer::Repo::MergeUpdater, run: true)
+      updater = instance_double(Deployer::Repo::MergeUpdater, run: true, skipped: false)
       repo =
         described_class.new(
           "test",
@@ -282,6 +282,25 @@ describe Deployer::Repo do
       )
 
       expect(repo.exclude_from_reporting?).to be false
+    end
+  end
+
+  describe "update_package" do
+    it "returns a skipped repo if the updater is skipped" do
+      updater = instance_double(Deployer::Repo::MergeUpdater, run: nil, skipped: true)
+      repo = described_class.new(
+        "test",
+        config: config,
+        updater: updater,
+        package_name: "test-pkg",
+        config_file: config_file,
+        dependabot_proxy: dependabot_proxy
+      )
+
+      repo.update_package
+
+      expect(repo.skipped?).to be true
+      expect(repo.message).to eq "Skipped test because the version bump is not possible (usually because of a major version bump)"
     end
   end
 end

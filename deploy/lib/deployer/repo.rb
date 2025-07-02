@@ -17,13 +17,12 @@ class Deployer
       self.success = false
     end
 
-    def attempt_to_update?
-      return false if config.only.any? && !config.only.include?(name)
-      return false if config.exclude.include?(name)
-      return false unless pr_level_reached?
+    def exclude_from_reporting?
+      [:excluded_explicitly, :excluded_no_dependency].include?(repo_upgrade_status)
+    end
 
-      config.log("Checking if dependency exists #{name} (#{package_name})")
-      !dependabot_proxy.dependency.nil?
+    def attempt_to_update?
+      repo_upgrade_status == :attempt_to_upgrade
     end
 
     def success_message
@@ -57,6 +56,19 @@ class Deployer
     attr_reader :config, :updater, :config_file
     attr_accessor :success
     attr_writer :error_message
+
+    def repo_upgrade_status
+      @repo_upgrade_status ||= begin
+        return :excluded_explicitly if config.only.any? && !config.only.include?(name)
+        return :excluded_explicitly if config.exclude.include?(name)
+        return :excluded_by_pr_level unless pr_level_reached?
+
+        config.log("Checking if dependency exists #{name} (#{package_name})")
+        return :excluded_no_dependency if dependabot_proxy.dependency.nil?
+
+        :attempt_to_upgrade
+      end
+    end
 
     def default_updater
       updater_class.new(name, config: config, package_name: package_name, repo: self)

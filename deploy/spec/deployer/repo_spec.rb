@@ -8,6 +8,14 @@ describe Deployer::Repo do
     )
   end
 
+  def stub_dependency(dependency = instance_double(Dependabot::Dependency, name: "test-pkg"))
+    allow(Deployer::Repo::DependabotProxy).to receive(:new).with(
+      "test",
+      config: anything,
+      package_name: "test-pkg"
+    ).and_return(instance_double(Deployer::Repo::DependabotProxy, dependency: dependency))
+  end
+
   describe "#failure?" do
     it "returns false if the repo update is successful" do
       updater = instance_double(Deployer::Repo::MergeUpdater, run: nil)
@@ -164,14 +172,6 @@ describe Deployer::Repo do
   end
 
   describe "#attempt_to_update?" do
-    def stub_dependency(dependency = instance_double(Dependabot::Dependency, name: "test-pkg"))
-      allow(Deployer::Repo::DependabotProxy).to receive(:new).with(
-        "test",
-        config: anything,
-        package_name: "test-pkg"
-      ).and_return(instance_double(Deployer::Repo::DependabotProxy, dependency: dependency))
-    end
-
     it "returns true if urgent" do
       allow(config).to receive(:urgent).and_return(true)
 
@@ -226,6 +226,56 @@ describe Deployer::Repo do
       )
 
       expect(repo.attempt_to_update?).to be true
+    end
+  end
+
+  describe "#exclude_from_reporting?" do
+    it "returns true if the repo is excluded explicitly" do
+      allow(config).to receive(:only).and_return(["other-repo"])
+      repo = described_class.new(
+        "test",
+        config: config,
+        package_name: "test-pkg",
+      )
+
+      expect(repo.exclude_from_reporting?).to be true
+    end
+
+    it "returns false if the repo is excluded by PR level" do
+      repo = described_class.new(
+        "test",
+        config: config,
+        package_name: "test-pkg",
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "urgent")
+      )
+
+      expect(repo.exclude_from_reporting?).to be false
+    end
+
+    it "returns true if the repo is excluded by no dependency" do
+      stub_dependency(nil)
+
+      repo = described_class.new(
+        "test",
+        config: config,
+        package_name: "test-pkg",
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all")
+      )
+
+      expect(repo.exclude_from_reporting?).to be true
+    end
+
+    it "returns false if the repo has the dependency" do
+      stub_dependency
+
+      repo = described_class.new(
+        "test",
+        config: config,
+        package_name: "test-pkg",
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "all")
+      )
+
+      expect(repo.exclude_from_reporting?).to be false
     end
   end
 end

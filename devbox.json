@@ -1,19 +1,16 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.7/.schema/devbox.schema.json",
-  "packages": [
-    "ruby_3_3@latest",
-    "nodejs_20@latest",
-    "libyaml@latest",
-    "bundler@latest"
-  ],
+  "packages": ["ruby_3_3@latest", "nodejs_20@latest", "libyaml", "bundler@latest", "pkg-config@latest"],
   "shell": {
     "init_hook": [
-      "echo 'Welcome to devbox!' > /dev/null"
+      "echo 'Welcome to devbox!' > /dev/null",
+      "export PATH=${DEVBOX_PACKAGES_ROOT}/ruby_3_3/bin:$PATH",
+      "export BUNDLE_BUILD__PSYCH=\"--with-opt-dir=${DEVBOX_PACKAGES_ROOT}/libyaml\"",
+      "export CFLAGS=\"-I${DEVBOX_PACKAGES_ROOT}/libyaml/include\"",
+      "export LDFLAGS=\"-L${DEVBOX_PACKAGES_ROOT}/libyaml/lib\""
     ],
     "scripts": {
-      "test": [
-        "echo \"Error: no test specified\" && exit 1"
-      ]
+      "test": ["echo \"Error: no test specified\" && exit 1"]
     }
   }
 }

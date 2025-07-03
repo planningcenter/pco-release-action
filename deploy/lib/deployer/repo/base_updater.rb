@@ -28,6 +28,10 @@ class Deployer
         "https://github.com/#{owner}/#{name}/pull/#{pr_number}"
       end
 
+      def skipped
+        false
+      end
+
       protected
 
       attr_reader :name, :config, :package_name, :repo

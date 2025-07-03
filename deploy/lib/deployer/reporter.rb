@@ -21,6 +21,10 @@ class Deployer
         successful_repos:
           successful_repos.map do |repo|
             { name: repo.name, pr_number: repo.pr_number, pr_url: repo.pr_url }
+          end,
+        skipped_repos:
+          skipped_repos.map do |repo|
+            { name: repo.name, message: repo.message }
           end
       }
     end
@@ -45,6 +49,10 @@ class Deployer
 
     def successful_repos
       repos.select(&:success?)
+    end
+
+    def skipped_repos
+      repos.select(&:skipped?)
     end
   end
 end

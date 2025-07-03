@@ -10,7 +10,7 @@ class Deployer
         repos.map do |repo|
           Repo.new(repo["name"], package_name: package_name, config: config)
         end
-      end.select(&:attempt_to_update?)
+      end.reject(&:exclude_from_reporting?)
     end
 
     private
@@ -35,12 +35,6 @@ class Deployer
 
     def find_repos
       client.org_repos(owner).reject { |repo| repo["archived"] }
-    end
-
-    def filter_repos(repos)
-      result = repos.select { |repo| only.include?(repo.name) } if only.any?
-      result = result.reject { |repo| repo["archived"] }
-      result.reject { |repo| config.exclude.include?(repo["name"]) }
     end
   end
 end

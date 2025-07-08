@@ -1,3 +1,4 @@
+\
 require_relative "base_updater"
 
 class Deployer
@@ -57,7 +58,10 @@ class Deployer
       end
 
       def pr_body
-        "This is an automated PR that updates #{package_name} to version #{version}. Please ensure that all checks pass."
+        message = "This is an automated PR that updates #{package_name} to version #{version}. Please ensure that all checks pass."
+        return "[URGENT] This release has been marked as urgent, meaning that it's deployment should be prioritized.\n\n#{message}" if config.urgent
+
+        message
       end
 
       def client

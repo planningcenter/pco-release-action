@@ -8,7 +8,7 @@ describe Deployer::Repo do
     )
   end
   let(:updater) do
-    instance_double(Deployer::Repo::MergeUpdater, run: nil, skipped: false)
+    instance_double(Deployer::Repo::MergeUpdater, run: nil, skipped: false, ignore_pr_level?: true)
   end
 
   def config_file(pr_level: "all")
@@ -214,6 +214,20 @@ describe Deployer::Repo do
       )
 
       expect(repo.attempt_to_update?).to be false
+    end
+
+    it "returns true if it would skip based on PR level but the config file uses 'merge'" do
+      allow(config).to receive(:change_method).and_return("merge")
+
+      repo = described_class.new(
+        "test",
+        config: config,
+        package_name: "test-pkg",
+        config_file: config_file(pr_level: "urgent"),
+        dependabot_proxy: dependabot_proxy
+      )
+
+      expect(repo.attempt_to_update?).to be true
     end
 
     it "returns true if the PR level is urgent but the config file pr_level is urgent" do

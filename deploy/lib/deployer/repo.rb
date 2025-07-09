@@ -131,6 +131,7 @@ class Deployer
 
     def pr_level_reached?
       return true if config.urgent
+      return true if updater.ignore_pr_level?
 
       config_file.pr_level != "urgent"
     end

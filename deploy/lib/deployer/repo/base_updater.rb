@@ -32,6 +32,10 @@ class Deployer
         false
       end
 
+      def ignore_pr_level?
+        true
+      end
+
       protected
 
       attr_reader :name, :config, :package_name, :repo

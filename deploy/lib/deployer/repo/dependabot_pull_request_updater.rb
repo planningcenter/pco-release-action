@@ -11,6 +11,10 @@ class Deployer
 
       attr_reader :pr_url, :skipped
 
+      def ignore_pr_level?
+        false
+      end
+
       private
 
       attr_writer :pr_url, :skipped

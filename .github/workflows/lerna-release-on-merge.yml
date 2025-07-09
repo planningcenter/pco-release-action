@@ -154,6 +154,10 @@ jobs:
 
             ${results.failed_repos.map(repo => "- " + repo.name + ": " + repo.message).join("\n")}
 
+            ${results.skipped_repos && results.skipped_repos.length > 0 ? "### Repos skipped" : ""}
+
+            ${results.skipped_repos && results.skipped_repos.map(repo => "- " + repo.name + ": " + repo.message).join("\n")}
+
             ### Next steps
 
             Run the following command to approve all the PRs:

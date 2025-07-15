@@ -7,6 +7,9 @@ describe Deployer::Repo do
       version: "1.2.7",
     )
   end
+  let(:updater) do
+    instance_double(Deployer::Repo::MergeUpdater, run: nil, skipped: false, ignore_pr_level?: true)
+  end
 
   def config_file(pr_level: "all")
     instance_double(Deployer::Repo::ConfigFile, pr_level: pr_level)
@@ -18,7 +21,6 @@ describe Deployer::Repo do
 
   describe "#failure?" do
     it "returns false if the repo update is successful" do
-      updater = instance_double(Deployer::Repo::MergeUpdater, run: nil, skipped: false)
       repo =
         described_class.new(
           "test",
@@ -35,7 +37,6 @@ describe Deployer::Repo do
     end
 
     it "returns true when updater raises an error" do
-      updater = instance_double(Deployer::Repo::MergeUpdater)
       allow(updater).to receive(:run).and_raise(StandardError)
       repo =
         described_class.new(
@@ -55,7 +56,6 @@ describe Deployer::Repo do
 
   describe "#success?" do
     it "returns true if the repo update is successful" do
-      updater = instance_double(Deployer::Repo::MergeUpdater, run: nil, skipped: false)
       repo =
         described_class.new(
           "test",
@@ -72,7 +72,6 @@ describe Deployer::Repo do
     end
 
     it "returns false when updater raises an error" do
-      updater = instance_double(Deployer::Repo::MergeUpdater, skipped: false)
       allow(updater).to receive(:run).and_raise(StandardError)
       repo =
         described_class.new(
@@ -92,7 +91,7 @@ describe Deployer::Repo do
 
   describe "#error_message" do
     it "returns nothing when successful" do
-      updater = instance_double(Deployer::Repo::MergeUpdater, run: true, skipped: false)
+      allow(updater).to receive(:run).and_return(true)
       repo =
         described_class.new(
           "test",
@@ -109,7 +108,6 @@ describe Deployer::Repo do
     end
 
     it "returns the error message when failed" do
-      updater = instance_double(Deployer::Repo::MergeUpdater, run: false)
       repo =
         described_class.new(
           "test",
@@ -134,7 +132,6 @@ describe Deployer::Repo do
 
   describe "#success_message" do
     it "returns a success message" do
-      updater = instance_double(Deployer::Repo::MergeUpdater)
       repo =
         described_class.new(
           "test",
@@ -151,7 +148,7 @@ describe Deployer::Repo do
 
   describe "#pr_number" do
     it "returns the PR number" do
-      updater = instance_double(Deployer::Repo::MergeUpdater, pr_number: 123)
+      allow(updater).to receive(:pr_number).and_return(123)
       repo =
         described_class.new(
           "test",
@@ -166,11 +163,8 @@ describe Deployer::Repo do
 
   describe "#pr_url" do
     it "returns the PR URL" do
-      updater =
-        instance_double(
-          Deployer::Repo::MergeUpdater,
-          pr_url: "http://github.com/org/repo/pull/123"
-        )
+      allow(updater).to receive(:pr_url)
+        .and_return("http://github.com/org/repo/pull/123")
       repo =
         described_class.new(
           "test",
@@ -220,6 +214,20 @@ describe Deployer::Repo do
       )
 
       expect(repo.attempt_to_update?).to be false
+    end
+
+    it "returns true if it would skip based on PR level but the config file uses 'merge'" do
+      allow(config).to receive(:change_method).and_return("merge")
+
+      repo = described_class.new(
+        "test",
+        config: config,
+        package_name: "test-pkg",
+        config_file: config_file(pr_level: "urgent"),
+        dependabot_proxy: dependabot_proxy
+      )
+
+      expect(repo.attempt_to_update?).to be true
     end
 
     it "returns true if the PR level is urgent but the config file pr_level is urgent" do
@@ -287,7 +295,7 @@ describe Deployer::Repo do
 
   describe "update_package" do
     it "returns a skipped repo if the updater is skipped" do
-      updater = instance_double(Deployer::Repo::MergeUpdater, run: nil, skipped: true)
+      allow(updater).to receive(:skipped).and_return(true)
       repo = described_class.new(
         "test",
         config: config,

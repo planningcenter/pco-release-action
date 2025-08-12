@@ -20,6 +20,7 @@ require_relative "deployer/repo/merge_updater"
 require_relative "deployer/repo/pull_request_updater"
 require_relative "deployer/repo/version_compare"
 require_relative "deployer/reporter"
+require_relative "deployer/skipped_repo"
 require_relative "deployer/repos"
 
 class Deployer

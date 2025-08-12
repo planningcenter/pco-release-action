@@ -5,6 +5,12 @@ inputs:
   GITHUB_TOKEN:
     description: token for access
     required: false
+  app-id:
+    description: 'The app id for the github app'
+    required: false
+  private-key:
+    description: 'The private key for the github app'
+    required: false
   release_type:
     required: false
     default: nochange
@@ -25,8 +31,8 @@ runs:
       id: generate-token
       uses: actions/create-github-app-token@v1
       with:
-        app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
-        private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.private-key }}
         owner: ${{ github.repository_owner }}
     - name: Setup Node
       uses: actions/setup-node@v4

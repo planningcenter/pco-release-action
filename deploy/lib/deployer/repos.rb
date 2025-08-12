@@ -38,7 +38,9 @@ class Deployer
     end
 
     def repos_without_permissions(repos)
-      (config.include + only).select { |o| !repos.any? { |repo| repo["name"] == o } }.map { |o| SkippedRepo.new(o) }
+      repo_names = repos.map { |r| r["name"] }
+      repos_missing_permissions = (config.include + only).select { |o| !repo_names.include?(o) }
+      repos_missing_permissions.map { |o| SkippedRepo.new(o) }
     end
   end
 end

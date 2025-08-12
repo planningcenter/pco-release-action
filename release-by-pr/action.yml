@@ -4,7 +4,7 @@ description: A tool for creating and managing releases for PCO projects through 
 inputs:
   GITHUB_TOKEN:
     description: token for access
-    required: true
+    required: false
   release_type:
     required: false
     default: nochange
@@ -18,5 +18,28 @@ inputs:
     default: 'yarn version'
 
 runs:
-  using: 'node20'
-  main: 'dist/index.js'
+  using: 'composite'
+  steps:
+    - name: Generate a token
+      if: ${{ !inputs.GITHUB_TOKEN }}
+      id: generate-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ secrets.RELEASE_ACTION_BOT_CLIENT_ID }}
+        private-key: ${{ secrets.RELEASE_ACTION_BOT_PRIVATE_KEY }}
+        owner: ${{ github.repository_owner }}
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Enable Corepack
+      shell: bash
+      run: export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && corepack enable
+    - name: Run release by PR
+      shell: bash
+      run: node ${{ github.action_path }}/dist/index.js
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN || steps.generate-token.outputs.token }}
+        INPUT_RELEASE_TYPE: ${{ inputs.release_type }}
+        INPUT_PACKAGE_JSON_PATH: ${{ inputs.package_json_path }}
+        INPUT_VERSION_COMMAND: ${{ inputs.version_command }}

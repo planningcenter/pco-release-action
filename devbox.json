@@ -10,7 +10,11 @@
       "export LDFLAGS=\"-L${DEVBOX_PACKAGES_ROOT}/libyaml/lib\""
     ],
     "scripts": {
-      "test": ["echo \"Error: no test specified\" && exit 1"]
+      "test": ["echo \"Error: no test specified\" && exit 1"],
+      "deploy": ["cd deploy && bundle exec ruby run.rb"],
+      "deploy-install": ["cd deploy && bundle install"],
+      "deploy-console": ["cd deploy && bundle exec irb -r ./lib/deployer.rb"],
+      "deploy-test": ["cd deploy && bundle exec rspec"]
     }
   }
 }

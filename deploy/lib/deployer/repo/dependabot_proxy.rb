@@ -105,6 +105,8 @@ class Deployer
 
         yarnrc_yml_file.content =
           yarnrc_yml_file.content.gsub("yarnPath:", "# yarnPath:")
+                                 .gsub("- path:", "# - path:")
+                                 .gsub("spec: ", "# spec: ")
       end
     end
   end

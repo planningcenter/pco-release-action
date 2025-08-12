@@ -91,7 +91,10 @@ runs:
       shell: bash
       run: |
         curl -fsSL https://bun.sh/install | bash
-        echo "$HOME/.bun/bin" >> $GITHUB_PATH
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: 'latest'
     - name: Find new version
       id: find-version
       shell: bash

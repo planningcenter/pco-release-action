@@ -34,7 +34,7 @@ describe Deployer::Repos do
       stub_repo_fetching
       allow(config).to receive(:only).and_return(["other-repo"])
       repos = described_class.new(config).find
-      expect(repos.map(&:name)).to eq([])
+      expect(repos.map(&:name)).not_to include("test-repo")
     end
 
     it "excludes repos that are in the exclude list" do

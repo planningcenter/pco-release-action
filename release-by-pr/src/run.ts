@@ -203,7 +203,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
             console.log(`Successfully triggered workflow: ${workflow.name} on branch ${RELEASE_BRANCH}`)
           } catch (workflowError) {
             // This is expected for workflows without workflow_dispatch trigger
-            console.log(`Workflow ${workflow.name} doesn't support workflow_dispatch`)
+            console.log(`Workflow ${workflow.name} doesn't support workflow_dispatch`, workflowError)
           }
         }
       }

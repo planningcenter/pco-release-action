@@ -169,15 +169,33 @@ export const run = async (inputs: Inputs): Promise<void> => {
   // Configure Git to use the GitHub token for authentication
   const { GITHUB_TOKEN } = process.env
   if (GITHUB_TOKEN) {
-    console.log('token is here')
-    await easyExec(
-      `git config --global url.https://x-access-token:${GITHUB_TOKEN}@github.com/.insteadOf https://github.com/`,
-    )
+    console.log('Configuring Git with token for workflow triggering')
+    // Check if this is a GitHub App token (they usually start with 'ghs_' or have different patterns)
+    const isAppToken = GITHUB_TOKEN.startsWith('ghs_') || GITHUB_TOKEN.includes('_')
+    console.log(`Using ${isAppToken ? 'GitHub App' : 'standard'} token`)
   }
 
   await easyExec(`git add .`)
   await easyExec(`git commit -m v${version}`)
-  await easyExec(`git push origin ${RELEASE_BRANCH} --force`)
+  
+  // Use token directly in the push URL for better reliability
+  if (GITHUB_TOKEN) {
+    const pushUrl = `https://x-access-token:${GITHUB_TOKEN}@github.com/${owner}/${repo}.git`
+    try {
+      await easyExec(`git push ${pushUrl} ${RELEASE_BRANCH}`)
+    } catch (error) {
+      console.log('Regular push failed, trying force push')
+      await easyExec(`git push ${pushUrl} ${RELEASE_BRANCH} --force`)
+    }
+  } else {
+    // Fallback to origin if no token
+    try {
+      await easyExec(`git push origin ${RELEASE_BRANCH}`)
+    } catch (error) {
+      console.log('Regular push failed, trying force push')
+      await easyExec(`git push origin ${RELEASE_BRANCH} --force`)
+    }
+  }
 
   // Create or update pull request
   if (pullRequests.length === 0) {

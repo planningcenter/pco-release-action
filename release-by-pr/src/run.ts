@@ -178,6 +178,25 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const { GITHUB_TOKEN } = process.env
   if (GITHUB_TOKEN) {
     try {
+      console.log(`Debugging token access...`)
+
+      // Simple check: list repositories the token has access to
+      try {
+        const repos = await octokit.rest.repos.listForAuthenticatedUser({
+          sort: 'updated',
+          affiliation: 'owner,collaborator,organization_member',
+        })
+        console.log(`Token has access to ${repos.data.length}+ repositories:`)
+        repos.data.forEach((repo) => {
+          console.log(
+            `  - ${repo.full_name} (${repo.permissions?.admin ? 'admin' : repo.permissions?.push ? 'write' : 'read'})`,
+          )
+        })
+      } catch (repoError) {
+        const errorMessage = repoError instanceof Error ? repoError.message : 'Unknown error'
+        console.log('Could not list repositories:', errorMessage)
+      }
+
       console.log(`Triggering workflows on branch: ${RELEASE_BRANCH}`)
 
       // Get list of workflows that support workflow_dispatch

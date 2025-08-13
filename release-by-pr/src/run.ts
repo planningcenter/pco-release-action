@@ -166,64 +166,51 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
 
-  // Configure Git to use the GitHub token for authentication
-  const { GITHUB_TOKEN } = process.env
-  if (GITHUB_TOKEN) {
-    console.log('Configuring Git with token for workflow triggering')
-    // Check if this is a GitHub App token (they usually start with 'ghs_' or have different patterns)
-    const isAppToken = GITHUB_TOKEN.startsWith('ghs_') || GITHUB_TOKEN.includes('_')
-    console.log(`Using ${isAppToken ? 'GitHub App' : 'standard'} token`)
-  }
+  await easyExec(
+    `git config --global url."https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"`,
+  )
 
   await easyExec(`git add .`)
   await easyExec(`git commit -m v${version}`)
+  await easyExec(`git push origin ${RELEASE_BRANCH} --force`)
 
-  // Use token directly in the push URL for better reliability
+  // Trigger workflows on the release branch using workflow_dispatch
+  const { GITHUB_TOKEN } = process.env
   if (GITHUB_TOKEN) {
-    const pushUrl = `https://x-access-token:${GITHUB_TOKEN}@github.com/${owner}/${repo}.git`
-    await easyExec(`git push ${pushUrl} ${RELEASE_BRANCH} --force`)
-    
-    // Explicitly trigger workflows by dispatching a repository_dispatch event
     try {
-      console.log('Attempting to trigger workflows via repository dispatch...')
-      await octokit.rest.repos.createDispatchEvent({
+      console.log(`Triggering workflows on branch: ${RELEASE_BRANCH}`)
+      
+      // Get list of workflows that support workflow_dispatch
+      const workflows = await octokit.rest.actions.listRepoWorkflows({
         owner,
-        repo,
-        event_type: 'pco-release-push',
-        client_payload: {
-          branch: RELEASE_BRANCH,
-          version: version,
-          triggered_by: 'pco-release-action',
-          ref: RELEASE_BRANCH
-        }
+        repo
       })
-      console.log('Repository dispatch event sent successfully')
-    } catch (dispatchError) {
-      const errorMessage = dispatchError instanceof Error ? dispatchError.message : 'Unknown error'
-      console.log('Could not send repository dispatch event:', errorMessage)
-    }
-    
-    // Also try workflow dispatch as backup
-    try {
-      console.log('Attempting to trigger workflows via workflow dispatch...')
-      await octokit.rest.actions.createWorkflowDispatch({
-        owner,
-        repo,
-        workflow_id: 'main.yml', // Adjust this to your actual workflow file name
-        ref: RELEASE_BRANCH,
-        inputs: {
-          triggered_by: 'pco-release-action',
-          branch: RELEASE_BRANCH,
-          version: version
+      
+      for (const workflow of workflows.data.workflows) {
+        if (workflow.state === 'active') {
+          try {
+            await octokit.rest.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id: workflow.id,
+              ref: RELEASE_BRANCH, // This makes it run on the specific branch
+              inputs: {
+                triggered_by: 'pco-release-action',
+                branch: RELEASE_BRANCH,
+                version: version
+              }
+            })
+            console.log(`Successfully triggered workflow: ${workflow.name} on branch ${RELEASE_BRANCH}`)
+          } catch (workflowError) {
+            // This is expected for workflows without workflow_dispatch trigger
+            console.log(`Workflow ${workflow.name} doesn't support workflow_dispatch`)
+          }
         }
-      })
-      console.log('Workflow dispatch triggered successfully')
-    } catch (dispatchError) {
-      const errorMessage = dispatchError instanceof Error ? dispatchError.message : 'Unknown error'
-      console.log('Could not trigger workflow dispatch (this is normal if no workflow_dispatch trigger exists):', errorMessage)
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.log('Error triggering workflows:', errorMessage)
     }
-  } else {
-    await easyExec(`git push origin ${RELEASE_BRANCH} --force`)
   }
 
   // Create or update pull request

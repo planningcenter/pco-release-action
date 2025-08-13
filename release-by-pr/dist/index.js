@@ -59473,7 +59473,9 @@ const run = async (inputs) => {
     await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
-    await (0,utils.easyExec)(`git config --global url."https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"`);
+    // await easyExec(
+    //   `git config --global url."https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"`,
+    // )
     await (0,utils.easyExec)(`git add .`);
     await (0,utils.easyExec)(`git commit -m v${version}`);
     await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --force`);
@@ -59485,7 +59487,7 @@ const run = async (inputs) => {
             // Get list of workflows that support workflow_dispatch
             const workflows = await octokit.rest.actions.listRepoWorkflows({
                 owner,
-                repo
+                repo,
             });
             for (const workflow of workflows.data.workflows) {
                 if (workflow.state === 'active') {
@@ -59498,8 +59500,8 @@ const run = async (inputs) => {
                             inputs: {
                                 triggered_by: 'pco-release-action',
                                 branch: RELEASE_BRANCH,
-                                version: version
-                            }
+                                version: version,
+                            },
                         });
                         console.log(`Successfully triggered workflow: ${workflow.name} on branch ${RELEASE_BRANCH}`);
                     }

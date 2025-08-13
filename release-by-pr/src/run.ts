@@ -166,9 +166,9 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
 
-  await easyExec(
-    `git config --global url."https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"`,
-  )
+  // await easyExec(
+  //   `git config --global url."https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"`,
+  // )
 
   await easyExec(`git add .`)
   await easyExec(`git commit -m v${version}`)
@@ -179,13 +179,13 @@ export const run = async (inputs: Inputs): Promise<void> => {
   if (GITHUB_TOKEN) {
     try {
       console.log(`Triggering workflows on branch: ${RELEASE_BRANCH}`)
-      
+
       // Get list of workflows that support workflow_dispatch
       const workflows = await octokit.rest.actions.listRepoWorkflows({
         owner,
-        repo
+        repo,
       })
-      
+
       for (const workflow of workflows.data.workflows) {
         if (workflow.state === 'active') {
           try {
@@ -197,8 +197,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
               inputs: {
                 triggered_by: 'pco-release-action',
                 branch: RELEASE_BRANCH,
-                version: version
-              }
+                version: version,
+              },
             })
             console.log(`Successfully triggered workflow: ${workflow.name} on branch ${RELEASE_BRANCH}`)
           } catch (workflowError) {

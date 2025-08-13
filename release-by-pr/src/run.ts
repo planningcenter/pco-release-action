@@ -174,136 +174,48 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git commit -m v${version}`)
   await easyExec(`git push origin ${RELEASE_BRANCH} --force`)
 
-  // Trigger workflows on the release branch using workflow_dispatch
-  const { GITHUB_TOKEN } = process.env
-  if (GITHUB_TOKEN) {
-    try {
-      console.log(`=== Token Analysis ===`)
-      console.log(`Token length: ${GITHUB_TOKEN.length}`)
-      console.log(`Token prefix: ${GITHUB_TOKEN.substring(0, 4)}`)
+  // Test repository access
+  try {
+    const repoInfo = await octokit.rest.repos.get({
+      owner,
+      repo,
+    })
+    console.log(`Current repo access: ${repoInfo.data.full_name}`)
+    console.log(`Repo permissions:`, JSON.stringify(repoInfo.data.permissions, null, 2))
+  } catch (repoError) {
+    const errorMessage = repoError instanceof Error ? repoError.message : 'Unknown error'
+    console.log('Could not access current repository:', errorMessage)
+  }
 
-      // GitHub App tokens typically start with "ghs_" and are longer
-      // Personal Access Tokens typically start with "ghp_" or "github_pat_"
-      const tokenType = GITHUB_TOKEN.startsWith('ghs_')
-        ? 'GitHub App'
-        : GITHUB_TOKEN.startsWith('ghp_')
-          ? 'Personal Access Token (classic)'
-          : GITHUB_TOKEN.startsWith('github_pat_')
-            ? 'Personal Access Token (fine-grained)'
-            : 'Unknown token type'
-      console.log(`Detected token type: ${tokenType}`)
+  console.log(`Triggering workflows on branch: ${RELEASE_BRANCH}`)
 
-      // Check if this is a GitHub App token by trying to get app info
+  // Get list of workflows that support workflow_dispatch
+  const workflows = await octokit.rest.actions.listRepoWorkflows({
+    owner,
+    repo,
+  })
+
+  console.log(workflows)
+
+  for (const workflow of workflows.data.workflows) {
+    if (workflow.state === 'active') {
       try {
-        const appInfo = await octokit.rest.apps.getAuthenticated()
-        console.log(`✅ Confirmed GitHub App: ${appInfo.data.name} (ID: ${appInfo.data.id})`)
-        console.log(`App permissions:`, JSON.stringify(appInfo.data.permissions, null, 2))
-      } catch (appError) {
-        console.log(
-          `❌ Not a GitHub App token. Error: ${appError instanceof Error ? appError.message : 'Unknown error'}`,
-        )
-
-        // Try to get user info for PAT tokens
-        try {
-          const user = await octokit.rest.users.getAuthenticated()
-          console.log(`✅ Personal Access Token for user: ${user.data.login}`)
-        } catch (userError) {
-          console.log(`❌ Could not authenticate with token`)
-        }
-      }
-    } catch (e) {
-      console.log(`❌ Error occurred while analyzing token: ${e instanceof Error ? e.message : 'Unknown error'}`)
-    }
-
-    try {
-      console.log(`Debugging token permissions...`)
-
-      // Check if this is a GitHub App token or PAT
-      try {
-        const appInfo = await octokit.rest.apps.getAuthenticated()
-        console.log(`GitHub App: ${appInfo.data.name} (ID: ${appInfo.data.id})`)
-        console.log(`App permissions:`, JSON.stringify(appInfo.data.permissions, null, 2))
-
-        // For GitHub App tokens, list installations
-        try {
-          const installations = await octokit.rest.apps.listInstallations()
-          console.log(`App has ${installations.data.length} installations`)
-
-          for (const installation of installations.data) {
-            try {
-              const repos = await octokit.rest.apps.listInstallationReposForAuthenticatedUser({
-                installation_id: installation.id,
-              })
-              console.log(`Installation ${installation.id} has access to ${repos.data.total_count} repositories`)
-              repos.data.repositories.slice(0, 5).forEach((repo: { full_name: string }) => {
-                console.log(`  - ${repo.full_name}`)
-              })
-            } catch (repoError) {
-              console.log(`Could not list repos for installation ${installation.id}`)
-            }
-          }
-        } catch (installError) {
-          console.log('Could not list installations')
-        }
-      } catch (appError) {
-        console.log('Not a GitHub App token (likely a PAT)')
-
-        // For PAT tokens, try to get user info
-        try {
-          const user = await octokit.rest.users.getAuthenticated()
-          console.log(`Authenticated as: ${user.data.login}`)
-          console.log(`User type: ${user.data.type}`)
-        } catch (userError) {
-          const errorMessage = userError instanceof Error ? userError.message : 'Unknown error'
-          console.log('Could not get user info:', errorMessage)
-        }
-      }
-
-      // Test repository access
-      try {
-        const repoInfo = await octokit.rest.repos.get({
+        await octokit.rest.actions.createWorkflowDispatch({
           owner,
           repo,
+          workflow_id: workflow.id,
+          ref: RELEASE_BRANCH, // This makes it run on the specific branch
+          inputs: {
+            triggered_by: 'pco-release-action',
+            branch: RELEASE_BRANCH,
+            version: version,
+          },
         })
-        console.log(`Current repo access: ${repoInfo.data.full_name}`)
-        console.log(`Repo permissions:`, JSON.stringify(repoInfo.data.permissions, null, 2))
-      } catch (repoError) {
-        const errorMessage = repoError instanceof Error ? repoError.message : 'Unknown error'
-        console.log('Could not access current repository:', errorMessage)
+        console.log(`Successfully triggered workflow: ${workflow.name} on branch ${RELEASE_BRANCH}`)
+      } catch (workflowError) {
+        // This is expected for workflows without workflow_dispatch trigger
+        console.log(`Workflow ${workflow.name} doesn't support workflow_dispatch`, workflowError)
       }
-
-      console.log(`Triggering workflows on branch: ${RELEASE_BRANCH}`)
-
-      // Get list of workflows that support workflow_dispatch
-      const workflows = await octokit.rest.actions.listRepoWorkflows({
-        owner,
-        repo,
-      })
-
-      for (const workflow of workflows.data.workflows) {
-        if (workflow.state === 'active') {
-          try {
-            await octokit.rest.actions.createWorkflowDispatch({
-              owner,
-              repo,
-              workflow_id: workflow.id,
-              ref: RELEASE_BRANCH, // This makes it run on the specific branch
-              inputs: {
-                triggered_by: 'pco-release-action',
-                branch: RELEASE_BRANCH,
-                version: version,
-              },
-            })
-            console.log(`Successfully triggered workflow: ${workflow.name} on branch ${RELEASE_BRANCH}`)
-          } catch (workflowError) {
-            // This is expected for workflows without workflow_dispatch trigger
-            console.log(`Workflow ${workflow.name} doesn't support workflow_dispatch`, workflowError)
-          }
-        }
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      console.log('Error triggering workflows:', errorMessage)
     }
   }
 

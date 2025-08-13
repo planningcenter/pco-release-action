@@ -22,10 +22,6 @@ inputs:
     description: 'The command to run to bump the version'
     required: false
     default: 'yarn version'
-  use-corepack:
-    description: 'Whether to use corepack for package management'
-    required: false
-    default: false
 
 runs:
   using: 'composite'
@@ -38,14 +34,6 @@ runs:
         app-id: ${{ inputs.app-id }}
         private-key: ${{ inputs.private-key }}
         owner: ${{ github.repository_owner }}
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-    - name: Enable Corepack
-      if: ${{ inputs.use-corepack == 'true' }}
-      shell: bash
-      run: export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && corepack enable
     - name: Run release by PR
       shell: bash
       run: node ${{ github.action_path }}/dist/index.js

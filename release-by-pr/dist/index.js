@@ -59474,6 +59474,7 @@ const run = async (inputs) => {
     await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
+    await (0,utils.easyExec)(`git config --global url."https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"`);
     await (0,utils.easyExec)(`git add .`);
     await (0,utils.easyExec)(`git commit -m v${version}`);
     await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --force`);

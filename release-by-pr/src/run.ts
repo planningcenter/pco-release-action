@@ -166,6 +166,11 @@ export const run = async (inputs: Inputs): Promise<void> => {
   )
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
+
+  await easyExec(
+    `git config --global url."https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"`,
+  )
+
   await easyExec(`git add .`)
   await easyExec(`git commit -m v${version}`)
   await easyExec(`git push origin ${RELEASE_BRANCH} --force`)

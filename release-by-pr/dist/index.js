@@ -59437,7 +59437,6 @@ const run = async (inputs) => {
         lastRelease: `v${lastReleaseVersion}`,
     });
     const { mainBranch, releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } = response.repository;
-    console.log(response);
     // Find or create labels
     const { labelPendingId, labelMajorId, labelMinorId, labelPatchId } = await findOrCreateLabels({ labelPending, labelPatch, labelMajor, labelMinor }, { octokit, repoId: id });
     // Create release branch if it doesn't exist
@@ -59474,7 +59473,12 @@ const run = async (inputs) => {
     await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
     await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
-    await (0,utils.easyExec)(`git config --global url."https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"`);
+    // Configure Git to use the GitHub token for authentication
+    const { GITHUB_TOKEN } = process.env;
+    if (GITHUB_TOKEN) {
+        console.log('token is here');
+        await (0,utils.easyExec)(`git config --global url.https://x-access-token:${GITHUB_TOKEN}@github.com/.insteadOf https://github.com/`);
+    }
     await (0,utils.easyExec)(`git add .`);
     await (0,utils.easyExec)(`git commit -m v${version}`);
     await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --force`);
@@ -59502,7 +59506,6 @@ const run = async (inputs) => {
         });
         pullRequest = pullRequests[0];
     }
-    console.log(lastRelease);
     // Request reviews from authors of commits
     await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes });
 };

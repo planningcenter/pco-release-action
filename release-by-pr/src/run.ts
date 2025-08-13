@@ -111,7 +111,6 @@ export const run = async (inputs: Inputs): Promise<void> => {
   })
   const { mainBranch, releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } =
     response.repository
-  console.log(response)
 
   // Find or create labels
   const { labelPendingId, labelMajorId, labelMinorId, labelPatchId } = await findOrCreateLabels(
@@ -167,9 +166,14 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
 
-  await easyExec(
-    `git config --global url."https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"`,
-  )
+  // Configure Git to use the GitHub token for authentication
+  const { GITHUB_TOKEN } = process.env
+  if (GITHUB_TOKEN) {
+    console.log('token is here')
+    await easyExec(
+      `git config --global url.https://x-access-token:${GITHUB_TOKEN}@github.com/.insteadOf https://github.com/`,
+    )
+  }
 
   await easyExec(`git add .`)
   await easyExec(`git commit -m v${version}`)
@@ -199,7 +203,6 @@ export const run = async (inputs: Inputs): Promise<void> => {
     pullRequest = pullRequests[0]
   }
 
-  console.log(lastRelease)
   // Request reviews from authors of commits
   await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
 }

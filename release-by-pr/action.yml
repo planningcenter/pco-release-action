@@ -34,6 +34,8 @@ runs:
         app-id: ${{ inputs.app-id }}
         private-key: ${{ inputs.private-key }}
         owner: ${{ github.repository_owner }}
+        # Explicitly request repositories scope to ensure workflow triggering permissions
+        repositories: ${{ github.event.repository.name }}
     - name: Run release by PR
       shell: bash
       run: node ${{ github.action_path }}/dist/index.js

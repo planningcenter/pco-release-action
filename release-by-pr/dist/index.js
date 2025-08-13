@@ -59487,6 +59487,46 @@ const run = async (inputs) => {
     if (GITHUB_TOKEN) {
         const pushUrl = `https://x-access-token:${GITHUB_TOKEN}@github.com/${owner}/${repo}.git`;
         await (0,utils.easyExec)(`git push ${pushUrl} ${RELEASE_BRANCH} --force`);
+        // Explicitly trigger workflows by dispatching a repository_dispatch event
+        try {
+            console.log('Attempting to trigger workflows via repository dispatch...');
+            await octokit.rest.repos.createDispatchEvent({
+                owner,
+                repo,
+                event_type: 'pco-release-push',
+                client_payload: {
+                    branch: RELEASE_BRANCH,
+                    version: version,
+                    triggered_by: 'pco-release-action',
+                    ref: RELEASE_BRANCH
+                }
+            });
+            console.log('Repository dispatch event sent successfully');
+        }
+        catch (dispatchError) {
+            const errorMessage = dispatchError instanceof Error ? dispatchError.message : 'Unknown error';
+            console.log('Could not send repository dispatch event:', errorMessage);
+        }
+        // Also try workflow dispatch as backup
+        try {
+            console.log('Attempting to trigger workflows via workflow dispatch...');
+            await octokit.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id: 'main.yml', // Adjust this to your actual workflow file name
+                ref: RELEASE_BRANCH,
+                inputs: {
+                    triggered_by: 'pco-release-action',
+                    branch: RELEASE_BRANCH,
+                    version: version
+                }
+            });
+            console.log('Workflow dispatch triggered successfully');
+        }
+        catch (dispatchError) {
+            const errorMessage = dispatchError instanceof Error ? dispatchError.message : 'Unknown error';
+            console.log('Could not trigger workflow dispatch (this is normal if no workflow_dispatch trigger exists):', errorMessage);
+        }
     }
     else {
         await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --force`);

@@ -178,6 +178,44 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const { GITHUB_TOKEN } = process.env
   if (GITHUB_TOKEN) {
     try {
+      console.log(`=== Token Analysis ===`)
+      console.log(`Token length: ${GITHUB_TOKEN.length}`)
+      console.log(`Token prefix: ${GITHUB_TOKEN.substring(0, 4)}`)
+
+      // GitHub App tokens typically start with "ghs_" and are longer
+      // Personal Access Tokens typically start with "ghp_" or "github_pat_"
+      const tokenType = GITHUB_TOKEN.startsWith('ghs_')
+        ? 'GitHub App'
+        : GITHUB_TOKEN.startsWith('ghp_')
+          ? 'Personal Access Token (classic)'
+          : GITHUB_TOKEN.startsWith('github_pat_')
+            ? 'Personal Access Token (fine-grained)'
+            : 'Unknown token type'
+      console.log(`Detected token type: ${tokenType}`)
+
+      // Check if this is a GitHub App token by trying to get app info
+      try {
+        const appInfo = await octokit.rest.apps.getAuthenticated()
+        console.log(`✅ Confirmed GitHub App: ${appInfo.data.name} (ID: ${appInfo.data.id})`)
+        console.log(`App permissions:`, JSON.stringify(appInfo.data.permissions, null, 2))
+      } catch (appError) {
+        console.log(
+          `❌ Not a GitHub App token. Error: ${appError instanceof Error ? appError.message : 'Unknown error'}`,
+        )
+
+        // Try to get user info for PAT tokens
+        try {
+          const user = await octokit.rest.users.getAuthenticated()
+          console.log(`✅ Personal Access Token for user: ${user.data.login}`)
+        } catch (userError) {
+          console.log(`❌ Could not authenticate with token`)
+        }
+      }
+    } catch (e) {
+      console.log(`❌ Error occurred while analyzing token: ${e instanceof Error ? e.message : 'Unknown error'}`)
+    }
+
+    try {
       console.log(`Debugging token permissions...`)
 
       // Check if this is a GitHub App token or PAT

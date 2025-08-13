@@ -111,6 +111,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
   })
   const { mainBranch, releaseBranch, id, labelPending, labelPatch, labelMajor, labelMinor, lastRelease } =
     response.repository
+  console.log(response)
 
   // Find or create labels
   const { labelPendingId, labelMajorId, labelMinorId, labelPatchId } = await findOrCreateLabels(
@@ -193,6 +194,7 @@ export const run = async (inputs: Inputs): Promise<void> => {
     pullRequest = pullRequests[0]
   }
 
+  console.log(lastRelease)
   // Request reviews from authors of commits
   await requestReviewsFromAuthors({ prId: pullRequest.id, commits: lastRelease.tag.compare.commits.nodes })
 }

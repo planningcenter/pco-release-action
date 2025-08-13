@@ -177,24 +177,13 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   await easyExec(`git add .`)
   await easyExec(`git commit -m v${version}`)
-  
+
   // Use token directly in the push URL for better reliability
   if (GITHUB_TOKEN) {
     const pushUrl = `https://x-access-token:${GITHUB_TOKEN}@github.com/${owner}/${repo}.git`
-    try {
-      await easyExec(`git push ${pushUrl} ${RELEASE_BRANCH}`)
-    } catch (error) {
-      console.log('Regular push failed, trying force push')
-      await easyExec(`git push ${pushUrl} ${RELEASE_BRANCH} --force`)
-    }
+    await easyExec(`git push ${pushUrl} ${RELEASE_BRANCH} --force`)
   } else {
-    // Fallback to origin if no token
-    try {
-      await easyExec(`git push origin ${RELEASE_BRANCH}`)
-    } catch (error) {
-      console.log('Regular push failed, trying force push')
-      await easyExec(`git push origin ${RELEASE_BRANCH} --force`)
-    }
+    await easyExec(`git push origin ${RELEASE_BRANCH} --force`)
   }
 
   // Create or update pull request

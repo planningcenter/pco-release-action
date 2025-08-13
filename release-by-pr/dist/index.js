@@ -59486,23 +59486,10 @@ const run = async (inputs) => {
     // Use token directly in the push URL for better reliability
     if (GITHUB_TOKEN) {
         const pushUrl = `https://x-access-token:${GITHUB_TOKEN}@github.com/${owner}/${repo}.git`;
-        try {
-            await (0,utils.easyExec)(`git push ${pushUrl} ${RELEASE_BRANCH}`);
-        }
-        catch (error) {
-            console.log('Regular push failed, trying force push');
-            await (0,utils.easyExec)(`git push ${pushUrl} ${RELEASE_BRANCH} --force`);
-        }
+        await (0,utils.easyExec)(`git push ${pushUrl} ${RELEASE_BRANCH} --force`);
     }
     else {
-        // Fallback to origin if no token
-        try {
-            await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH}`);
-        }
-        catch (error) {
-            console.log('Regular push failed, trying force push');
-            await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --force`);
-        }
+        await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --force`);
     }
     // Create or update pull request
     if (pullRequests.length === 0) {

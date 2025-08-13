@@ -22,6 +22,10 @@ inputs:
     description: 'The command to run to bump the version'
     required: false
     default: 'yarn version'
+  use-corepack:
+    description: 'Whether to use corepack for package management'
+    required: false
+    default: false
 
 runs:
   using: 'composite'
@@ -39,6 +43,7 @@ runs:
       with:
         node-version: '20'
     - name: Enable Corepack
+      if: ${{ inputs.use-corepack == 'true' }}
       shell: bash
       run: export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && corepack enable
     - name: Run release by PR

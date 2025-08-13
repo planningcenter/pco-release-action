@@ -178,23 +178,60 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const { GITHUB_TOKEN } = process.env
   if (GITHUB_TOKEN) {
     try {
-      console.log(`Debugging token access...`)
+      console.log(`Debugging token permissions...`)
 
-      // Simple check: list repositories the token has access to
+      // Check if this is a GitHub App token or PAT
       try {
-        const repos = await octokit.rest.repos.listForAuthenticatedUser({
-          sort: 'updated',
-          affiliation: 'owner,collaborator,organization_member',
+        const appInfo = await octokit.rest.apps.getAuthenticated()
+        console.log(`GitHub App: ${appInfo.data.name} (ID: ${appInfo.data.id})`)
+        console.log(`App permissions:`, JSON.stringify(appInfo.data.permissions, null, 2))
+
+        // For GitHub App tokens, list installations
+        try {
+          const installations = await octokit.rest.apps.listInstallations()
+          console.log(`App has ${installations.data.length} installations`)
+
+          for (const installation of installations.data) {
+            try {
+              const repos = await octokit.rest.apps.listInstallationReposForAuthenticatedUser({
+                installation_id: installation.id,
+              })
+              console.log(`Installation ${installation.id} has access to ${repos.data.total_count} repositories`)
+              repos.data.repositories.slice(0, 5).forEach((repo: { full_name: string }) => {
+                console.log(`  - ${repo.full_name}`)
+              })
+            } catch (repoError) {
+              console.log(`Could not list repos for installation ${installation.id}`)
+            }
+          }
+        } catch (installError) {
+          console.log('Could not list installations')
+        }
+      } catch (appError) {
+        console.log('Not a GitHub App token (likely a PAT)')
+
+        // For PAT tokens, try to get user info
+        try {
+          const user = await octokit.rest.users.getAuthenticated()
+          console.log(`Authenticated as: ${user.data.login}`)
+          console.log(`User type: ${user.data.type}`)
+        } catch (userError) {
+          const errorMessage = userError instanceof Error ? userError.message : 'Unknown error'
+          console.log('Could not get user info:', errorMessage)
+        }
+      }
+
+      // Test repository access
+      try {
+        const repoInfo = await octokit.rest.repos.get({
+          owner,
+          repo,
         })
-        console.log(`Token has access to ${repos.data.length}+ repositories:`)
-        repos.data.forEach((repo) => {
-          console.log(
-            `  - ${repo.full_name} (${repo.permissions?.admin ? 'admin' : repo.permissions?.push ? 'write' : 'read'})`,
-          )
-        })
+        console.log(`Current repo access: ${repoInfo.data.full_name}`)
+        console.log(`Repo permissions:`, JSON.stringify(repoInfo.data.permissions, null, 2))
       } catch (repoError) {
         const errorMessage = repoError instanceof Error ? repoError.message : 'Unknown error'
-        console.log('Could not list repositories:', errorMessage)
+        console.log('Could not access current repository:', errorMessage)
       }
 
       console.log(`Triggering workflows on branch: ${RELEASE_BRANCH}`)

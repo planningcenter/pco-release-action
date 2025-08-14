@@ -9,7 +9,7 @@ class Deployer
       package_names.flat_map do |package_name|
         repos.map do |repo|
           Repo.new(repo["name"], package_name: package_name, config: config)
-        end
+        end + repos_without_permissions(repos)
       end.reject(&:exclude_from_reporting?)
     end
 
@@ -35,6 +35,12 @@ class Deployer
 
     def find_repos
       client.org_repos(owner).reject { |repo| repo["archived"] }
+    end
+
+    def repos_without_permissions(repos)
+      repo_names = repos.map { |r| r["name"] }
+      repos_missing_permissions = (config.include + only).select { |o| !repo_names.include?(o) }
+      repos_missing_permissions.map { |o| SkippedRepo.new(o) }
     end
   end
 end

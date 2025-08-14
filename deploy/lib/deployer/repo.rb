@@ -30,7 +30,9 @@ class Deployer
     end
 
     def exclude_from_reporting?
-      [:excluded_explicitly, :excluded_no_dependency].include?(repo_upgrade_status)
+      with_clean_package_json do
+        [:excluded_explicitly, :excluded_no_dependency].include?(repo_upgrade_status)
+      end
     end
 
     def attempt_to_update?
@@ -134,6 +136,18 @@ class Deployer
       return true if updater.ignore_pr_level?
 
       config_file.pr_level != "urgent"
+    end
+
+    # Dependabot has a weird issue where running its processes can "leak" changes made
+    # to the package.json file for this repo instead of for the repo being updated.
+    # This clears the package.json file when running and resets it after running.
+    def with_clean_package_json(&block)
+      package_json_path = File.expand_path("../../../package.json", __dir__)
+      original_package_json = File.read(package_json_path)
+      File.write(package_json_path, "{}")
+      block.call
+    ensure
+      File.write(package_json_path, original_package_json) if defined?(original_package_json)
     end
   end
 end

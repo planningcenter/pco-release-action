@@ -11,6 +11,8 @@ class Deployer
       def self.setup(config)
         return if @setup_run
 
+        Dependabot::Experiments.register(:enable_beta_ecosystems, true)
+
         Dir.chdir(Dependabot::NpmAndYarn::NativeHelpers.native_helpers_root) do
           CommandLine.new(config).execute(
             "npm install --silent",
@@ -105,6 +107,8 @@ class Deployer
 
         yarnrc_yml_file.content =
           yarnrc_yml_file.content.gsub("yarnPath:", "# yarnPath:")
+                                 .gsub("- path:", "# - path:")
+                                 .gsub("spec: ", "# spec: ")
       end
     end
   end

@@ -1,6 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.7/.schema/devbox.schema.json",
-  "packages": ["ruby_3_3@latest", "nodejs_20@latest", "libyaml", "bundler@latest", "pkg-config@latest"],
+  "packages": [
+    "ruby_3_3@latest",
+    "nodejs_20@latest",
+    "libyaml",
+    "bundler@latest",
+    "pkg-config@latest",
+    "bun@latest"
+  ],
   "shell": {
     "init_hook": [
       "echo 'Welcome to devbox!' > /dev/null",

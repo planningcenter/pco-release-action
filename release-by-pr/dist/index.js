@@ -57263,15 +57263,11 @@ __webpack_unused_export__ = ({ value: true });
 exports.n = void 0;
 const utils_1 = __nccwpck_require__(709);
 async function updateReleaseBranchToMainWithCustomUpdates({ octokit, makeChanges, owner, repo, branchName = 'pco-release--internal', refBranchName = `${branchName}-tmp`, mainBranch = 'main', }) {
-    const result = await (0, utils_1.easyExec)(`git checkout -b ${refBranchName}`);
-    if (result.exitCode !== 0)
+    const checkoutStatus = await (0, utils_1.easyExec)(`git checkout -b ${refBranchName}`);
+    if (checkoutStatus.exitCode !== 0)
         await (0, utils_1.easyExec)(`git checkout ${refBranchName}`);
     await (0, utils_1.easyExec)(`git reset --hard origin/${mainBranch}`);
-    const version = await makeChanges();
-    await (0, utils_1.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
-    await (0, utils_1.easyExec)(`git config --global user.name "github-actions[bot]"`);
-    await (0, utils_1.easyExec)(`git add .`);
-    await (0, utils_1.easyExec)(`git commit -m v${version}`);
+    const result = await makeChanges();
     await (0, utils_1.easyExec)(`git push origin ${refBranchName}:${refBranchName} --force`);
     const currentSha = (await (0, utils_1.easyExec)('git rev-parse HEAD')).output.trim();
     try {
@@ -57292,7 +57288,7 @@ async function updateReleaseBranchToMainWithCustomUpdates({ octokit, makeChanges
         });
     }
     await (0, utils_1.easyExec)(`git push origin :${refBranchName}`);
-    return version;
+    return result;
 }
 exports.n = updateReleaseBranchToMainWithCustomUpdates;
 
@@ -59509,6 +59505,10 @@ const run = async (inputs) => {
             const version = (await (0,utils.easyExec)(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
             const date = new Date().toISOString().split('T')[0];
             await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
+            await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
+            await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
+            await (0,utils.easyExec)(`git add .`);
+            await (0,utils.easyExec)(`git commit -m v${version}`);
             return version;
         },
     });

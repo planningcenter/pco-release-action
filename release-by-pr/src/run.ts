@@ -167,6 +167,10 @@ export const run = async (inputs: Inputs): Promise<void> => {
         '## Unreleased',
         `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`,
       )
+      await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
+      await easyExec(`git config --global user.name "github-actions[bot]"`)
+      await easyExec(`git add .`)
+      await easyExec(`git commit -m v${version}`)
       return version
     },
   })

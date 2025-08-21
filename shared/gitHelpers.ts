@@ -1,7 +1,7 @@
 import { easyExec } from './utils'
 import { Octokit } from '@octokit/action'
 
-export async function updateReleaseBranchToMainWithCustomUpdates({
+export async function updateReleaseBranchToMainWithCustomUpdates<T>({
   octokit,
   makeChanges,
   owner,
@@ -11,23 +11,19 @@ export async function updateReleaseBranchToMainWithCustomUpdates({
   mainBranch = 'main',
 }: {
   octokit: Octokit
-  makeChanges: () => Promise<string>
+  makeChanges: () => Promise<T>
   owner: string
   repo: string
   branchName?: string
   refBranchName?: string
   mainBranch?: string
 }) {
-  const result = await easyExec(`git checkout -b ${refBranchName}`)
-  if (result.exitCode !== 0) await easyExec(`git checkout ${refBranchName}`)
+  const checkoutStatus = await easyExec(`git checkout -b ${refBranchName}`)
+  if (checkoutStatus.exitCode !== 0) await easyExec(`git checkout ${refBranchName}`)
   await easyExec(`git reset --hard origin/${mainBranch}`)
 
-  const version = await makeChanges()
+  const result = await makeChanges()
 
-  await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
-  await easyExec(`git config --global user.name "github-actions[bot]"`)
-  await easyExec(`git add .`)
-  await easyExec(`git commit -m v${version}`)
   await easyExec(`git push origin ${refBranchName}:${refBranchName} --force`)
 
   const currentSha = (await easyExec('git rev-parse HEAD')).output.trim()
@@ -50,5 +46,6 @@ export async function updateReleaseBranchToMainWithCustomUpdates({
   }
 
   await easyExec(`git push origin :${refBranchName}`)
-  return version
+
+  return result
 }

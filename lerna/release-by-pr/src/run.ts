@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/action'
 import { easyExec } from '../../../shared/utils.js'
+import { updateReleaseBranchToMainWithCustomUpdates } from '../../../shared/gitHelpers.js'
 import { setOutput } from '@actions/core'
 
 type ReleaseType = 'patch' | 'minor' | 'major' | undefined
@@ -129,38 +130,45 @@ export const run = async (inputs: Inputs): Promise<void> => {
   await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
   await easyExec(`git config --global user.name "github-actions[bot]"`)
 
-  // Create release branch if it doesn't exist
-  if (!releaseBranch) await easyExec(`git checkout -b ${RELEASE_BRANCH}`)
-
-  // Update the release branch with the latest main (but keep our release branch changes)
-  await easyExec(`git checkout ${RELEASE_BRANCH}`)
-  await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
-
-  // Bump the version, editing the last commit (which should be the version bump)
-  const forceMajor = pullRequests.length > 0 && pullRequests[0].labels.nodes.find((label) => label.id === labelMajorId)
-  if (forceMajor) inputs.releaseType = 'major'
-  const specificVersion = inputs.releaseType ? [`${inputs.releaseType}`] : []
-  const updateVersionCommandFlags = [...specificVersion, '--no-push', '--json', '-y']
-  const updateVersionCommand = `${LERNA} version ${updateVersionCommandFlags.join(' ')}`
-  const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
   let updatedPackages
-
   try {
-    updatedPackages = (
-      JSON.parse(updateVersionOutput) as { newVersion: string; name: string; private: boolean; location: string }[]
-    ).sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1))
+    updatedPackages = await updateReleaseBranchToMainWithCustomUpdates({
+      octokit,
+      repo,
+      owner,
+      makeChanges: async () => {
+        // Bump the version, editing the last commit (which should be the version bump)
+        const forceMajor =
+          pullRequests.length > 0 && pullRequests[0].labels.nodes.find((label) => label.id === labelMajorId)
+        if (forceMajor) inputs.releaseType = 'major'
+        const specificVersion = inputs.releaseType ? [`${inputs.releaseType}`] : []
+        const updateVersionCommandFlags = [...specificVersion, '--no-push', '--json', '-y']
+        const updateVersionCommand = `${LERNA} version ${updateVersionCommandFlags.join(' ')}`
+        const updateVersionOutput = (await easyExec(`${updateVersionCommand}"`)).output
+        let updatedPackages
+        try {
+          updatedPackages = (
+            JSON.parse(updateVersionOutput) as {
+              newVersion: string
+              name: string
+              private: boolean
+              location: string
+            }[]
+          ).sort((a, b) => (a.private === b.private ? 0 : a.private ? 1 : -1))
+        } catch {
+          throw new Error('No changes detected')
+        }
+
+        // See if any of the changes are something that would require a release. If not, let's exit early.
+        if (!updatedPackages || updatedPackages.length === 0) throw new Error('No changes detected')
+
+        return updatedPackages
+      },
+    })
   } catch {
     console.log('No changes detected. Exiting...')
     return
   }
-
-  // See if any of the changes are something that would require a release. If not, let's exit early.
-  if (!updatedPackages || updatedPackages.length === 0) {
-    console.log('No changes detected. Exiting...')
-    return
-  }
-
-  await easyExec(`git push -f --set-upstream origin ${RELEASE_BRANCH}`)
 
   // Track the changelog changes for the PR body before it is reset
   const updatedChangelog = (

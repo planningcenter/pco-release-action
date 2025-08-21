@@ -33,12 +33,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "yarn"
+          node-version: '20'
+          cache: 'yarn'
       - uses: planningcenter/pco-release-action/release-by-pr@v1
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          app-id: ${{ secrets.PCO_RELEASE_CLIENT_ID}}
+          private-key: ${{ secrets.PCO_RELEASE_PRIVATE_KEY}}
 ```
+
+- Ensure that the secrets are available in your repo. If not, reach out to #github-discuss on
+  slack for access.
 
 #### Sync the version bump type via labels on the Release PR
 

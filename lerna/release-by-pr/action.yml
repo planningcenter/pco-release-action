@@ -4,7 +4,13 @@ description: A tool for creating and managing releases for PCO projects through 
 inputs:
   GITHUB_TOKEN:
     description: token for access
-    required: true
+    required: false
+  app-id:
+    description: 'The app id for the github app'
+    required: false
+  private-key:
+    description: 'The private key for the github app'
+    required: false
   release-type:
     required: false
   install-command:
@@ -14,5 +20,20 @@ inputs:
     default: 'yarn install --check-files'
 
 runs:
-  using: 'node20'
-  main: 'dist/index.js'
+  using: 'composite'
+  steps:
+    - name: Generate a token
+      if: ${{ inputs.app-id && inputs.private-key }}
+      id: generate-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.private-key }}
+        owner: ${{ github.repository_owner }}
+    - name: Run release by PR
+      shell: bash
+      run: node ${{ github.action_path }}/dist/index.js
+      env:
+        GITHUB_TOKEN: ${{ steps.generate-token.outputs.token || inputs.GITHUB_TOKEN }}
+        INPUT_RELEASE-TYPE: ${{ inputs.release-type }}
+        INPUT_INSTALL-COMMAND: ${{ inputs.install-command }}

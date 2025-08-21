@@ -59411,6 +59411,7 @@ const octokit = new dist_node.Octokit();
 const run = async (inputs) => {
     const MAIN_BRANCH = 'main';
     const RELEASE_BRANCH = 'pco-release--internal';
+    const RELEASE_BRANCH_REF = `pco-release--internal-tmp`;
     // Find the last release version from main branch
     await (0,utils.easyExec)(`git fetch origin`);
     await (0,utils.easyExec)(`git checkout ${MAIN_BRANCH}`);
@@ -59452,7 +59453,9 @@ const run = async (inputs) => {
         return;
     }
     // Bump version, update changelog, and push to release branch
-    await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
+    const result = await (0,utils.easyExec)(`git checkout -b ${RELEASE_BRANCH_REF}`);
+    if (result.exitCode !== 0)
+        await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH_REF}`);
     await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
     await (0,utils.easyExec)(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }));
     const version = (await (0,utils.easyExec)(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
@@ -59462,7 +59465,26 @@ const run = async (inputs) => {
     await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
     await (0,utils.easyExec)(`git add .`);
     await (0,utils.easyExec)(`git commit -m v${version}`);
-    await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --force`);
+    await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH_REF}:${RELEASE_BRANCH_REF} --force`);
+    const currentSha = (await (0,utils.easyExec)('git rev-parse HEAD')).output.trim();
+    try {
+        await octokit.rest.git.updateRef({
+            owner,
+            repo,
+            ref: `heads/${RELEASE_BRANCH}`,
+            sha: currentSha,
+            force: true,
+        });
+    }
+    catch (updateError) {
+        await octokit.rest.git.createRef({
+            owner,
+            repo,
+            ref: `refs/heads/${RELEASE_BRANCH}`,
+            sha: currentSha,
+        });
+    }
+    await (0,utils.easyExec)(`git push origin :${RELEASE_BRANCH_REF}`);
     // Create or update pull request
     if (pullRequests.length === 0) {
         pullRequest = await createPullRequest({

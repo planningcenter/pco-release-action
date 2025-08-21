@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/action'
 import { easyExec, readFileContent, replaceTextInFile } from '../../shared/utils.js'
+import { updateReleaseBranchToMainWithCustomUpdates } from '../../shared/gitHelpers.js'
 
 type ReleaseType = 'patch' | 'minor' | 'major' | 'nochange'
 type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
@@ -84,7 +85,6 @@ const octokit = new Octokit()
 export const run = async (inputs: Inputs): Promise<void> => {
   const MAIN_BRANCH = 'main'
   const RELEASE_BRANCH = 'pco-release--internal'
-  const RELEASE_BRANCH_REF = `pco-release--internal-tmp`
 
   // Find the last release version from main branch
   await easyExec(`git fetch origin`)
@@ -154,43 +154,22 @@ export const run = async (inputs: Inputs): Promise<void> => {
   }
 
   // Bump version, update changelog, and push to release branch
-  const result = await easyExec(`git checkout -b ${RELEASE_BRANCH_REF}`)
-  if (result.exitCode !== 0) await easyExec(`git checkout ${RELEASE_BRANCH_REF}`)
-  await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
-  await easyExec(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }))
-  const version = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0]
-  const date = new Date().toISOString().split('T')[0]
-  await replaceTextInFile(
-    `${GITHUB_WORKSPACE}/CHANGELOG.md`,
-    '## Unreleased',
-    `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`,
-  )
-  await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
-  await easyExec(`git config --global user.name "github-actions[bot]"`)
-  await easyExec(`git add .`)
-  await easyExec(`git commit -m v${version}`)
-  await easyExec(`git push origin ${RELEASE_BRANCH_REF}:${RELEASE_BRANCH_REF} --force`)
-
-  const currentSha = (await easyExec('git rev-parse HEAD')).output.trim()
-
-  try {
-    await octokit.rest.git.updateRef({
-      owner,
-      repo,
-      ref: `heads/${RELEASE_BRANCH}`,
-      sha: currentSha,
-      force: true,
-    })
-  } catch (updateError) {
-    await octokit.rest.git.createRef({
-      owner,
-      repo,
-      ref: `refs/heads/${RELEASE_BRANCH}`,
-      sha: currentSha,
-    })
-  }
-
-  await easyExec(`git push origin :${RELEASE_BRANCH_REF}`)
+  const version = await updateReleaseBranchToMainWithCustomUpdates({
+    octokit,
+    owner,
+    repo,
+    makeChanges: async () => {
+      await easyExec(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }))
+      const version = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0]
+      const date = new Date().toISOString().split('T')[0]
+      await replaceTextInFile(
+        `${GITHUB_WORKSPACE}/CHANGELOG.md`,
+        '## Unreleased',
+        `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`,
+      )
+      return version
+    },
+  })
 
   // Create or update pull request
   if (pullRequests.length === 0) {

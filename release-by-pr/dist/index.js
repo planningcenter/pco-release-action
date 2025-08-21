@@ -57254,6 +57254,51 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 5640:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+var __webpack_unused_export__;
+
+__webpack_unused_export__ = ({ value: true });
+exports.n = void 0;
+const utils_1 = __nccwpck_require__(709);
+async function updateReleaseBranchToMainWithCustomUpdates({ octokit, makeChanges, owner, repo, branchName = 'pco-release--internal', refBranchName = `${branchName}-tmp`, mainBranch = 'main', }) {
+    const result = await (0, utils_1.easyExec)(`git checkout -b ${refBranchName}`);
+    if (result.exitCode !== 0)
+        await (0, utils_1.easyExec)(`git checkout ${refBranchName}`);
+    await (0, utils_1.easyExec)(`git reset --hard origin/${mainBranch}`);
+    const version = await makeChanges();
+    await (0, utils_1.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
+    await (0, utils_1.easyExec)(`git config --global user.name "github-actions[bot]"`);
+    await (0, utils_1.easyExec)(`git add .`);
+    await (0, utils_1.easyExec)(`git commit -m v${version}`);
+    await (0, utils_1.easyExec)(`git push origin ${refBranchName}:${refBranchName} --force`);
+    const currentSha = (await (0, utils_1.easyExec)('git rev-parse HEAD')).output.trim();
+    try {
+        await octokit.rest.git.updateRef({
+            owner,
+            repo,
+            ref: `heads/${branchName}`,
+            sha: currentSha,
+            force: true,
+        });
+    }
+    catch (updateError) {
+        await octokit.rest.git.createRef({
+            owner,
+            repo,
+            ref: `refs/heads/${branchName}`,
+            sha: currentSha,
+        });
+    }
+    await (0, utils_1.easyExec)(`git push origin :${refBranchName}`);
+    return version;
+}
+exports.n = updateReleaseBranchToMainWithCustomUpdates;
+
+
+/***/ }),
+
 /***/ 709:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -59336,7 +59381,10 @@ var core = __nccwpck_require__(5316);
 var dist_node = __nccwpck_require__(266);
 // EXTERNAL MODULE: ../shared/utils.ts
 var utils = __nccwpck_require__(709);
+// EXTERNAL MODULE: ../shared/gitHelpers.ts
+var gitHelpers = __nccwpck_require__(5640);
 ;// CONCATENATED MODULE: ./src/run.ts
+
 
 
 const LABEL_NAMES = {
@@ -59411,7 +59459,6 @@ const octokit = new dist_node.Octokit();
 const run = async (inputs) => {
     const MAIN_BRANCH = 'main';
     const RELEASE_BRANCH = 'pco-release--internal';
-    const RELEASE_BRANCH_REF = `pco-release--internal-tmp`;
     // Find the last release version from main branch
     await (0,utils.easyExec)(`git fetch origin`);
     await (0,utils.easyExec)(`git checkout ${MAIN_BRANCH}`);
@@ -59453,38 +59500,18 @@ const run = async (inputs) => {
         return;
     }
     // Bump version, update changelog, and push to release branch
-    const result = await (0,utils.easyExec)(`git checkout -b ${RELEASE_BRANCH_REF}`);
-    if (result.exitCode !== 0)
-        await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH_REF}`);
-    await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
-    await (0,utils.easyExec)(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }));
-    const version = (await (0,utils.easyExec)(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
-    const date = new Date().toISOString().split('T')[0];
-    await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
-    await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
-    await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
-    await (0,utils.easyExec)(`git add .`);
-    await (0,utils.easyExec)(`git commit -m v${version}`);
-    await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH_REF}:${RELEASE_BRANCH_REF} --force`);
-    const currentSha = (await (0,utils.easyExec)('git rev-parse HEAD')).output.trim();
-    try {
-        await octokit.rest.git.updateRef({
-            owner,
-            repo,
-            ref: `heads/${RELEASE_BRANCH}`,
-            sha: currentSha,
-            force: true,
-        });
-    }
-    catch (updateError) {
-        await octokit.rest.git.createRef({
-            owner,
-            repo,
-            ref: `refs/heads/${RELEASE_BRANCH}`,
-            sha: currentSha,
-        });
-    }
-    await (0,utils.easyExec)(`git push origin :${RELEASE_BRANCH_REF}`);
+    const version = await (0,gitHelpers/* updateReleaseBranchToMainWithCustomUpdates */.n)({
+        octokit,
+        owner,
+        repo,
+        makeChanges: async () => {
+            await (0,utils.easyExec)(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }));
+            const version = (await (0,utils.easyExec)(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
+            const date = new Date().toISOString().split('T')[0];
+            await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
+            return version;
+        },
+    });
     // Create or update pull request
     if (pullRequests.length === 0) {
         pullRequest = await createPullRequest({

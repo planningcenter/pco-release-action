@@ -98,8 +98,8 @@ jobs:
       - uses: planningcenter/pco-release-action/lerna/release-by-pr@v1
         id: release_by_pr
         with:
-          app-id: ${{ secrets.PCO_RELEASE_CLIENT_ID }}
-          private-key: ${{ secrets.PCO_RELEASE_PRIVATE_KEY }}
+          app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+          private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY}}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
       pull_request_id: ${{ steps.release_by_pr.outputs.pull_request_id }}

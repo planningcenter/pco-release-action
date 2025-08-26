@@ -37,8 +37,8 @@ jobs:
           cache: 'yarn'
       - uses: planningcenter/pco-release-action/release-by-pr@v1
         with:
-          app-id: ${{ secrets.PCO_RELEASE_CLIENT_ID}}
-          private-key: ${{ secrets.PCO_RELEASE_PRIVATE_KEY}}
+          app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+          private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY}}
 ```
 
 - Ensure that the secrets are available in your repo. If not, reach out to #github-discuss on

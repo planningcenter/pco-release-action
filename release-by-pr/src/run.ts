@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/action'
 import { easyExec, readFileContent, replaceTextInFile } from '../../shared/utils.js'
+import { updateReleaseBranchToMainWithCustomUpdates } from '../../shared/gitHelpers.js'
 
 type ReleaseType = 'patch' | 'minor' | 'major' | 'nochange'
 type Inputs = { releaseType: ReleaseType; packageJsonPath: string; versionCommand: string }
@@ -153,21 +154,26 @@ export const run = async (inputs: Inputs): Promise<void> => {
   }
 
   // Bump version, update changelog, and push to release branch
-  await easyExec(`git checkout ${RELEASE_BRANCH}`)
-  await easyExec(`git reset --hard origin/${MAIN_BRANCH}`)
-  await easyExec(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }))
-  const version = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0]
-  const date = new Date().toISOString().split('T')[0]
-  await replaceTextInFile(
-    `${GITHUB_WORKSPACE}/CHANGELOG.md`,
-    '## Unreleased',
-    `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`,
-  )
-  await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
-  await easyExec(`git config --global user.name "github-actions[bot]"`)
-  await easyExec(`git add .`)
-  await easyExec(`git commit -m v${version}`)
-  await easyExec(`git push origin ${RELEASE_BRANCH} --force`)
+  const version = await updateReleaseBranchToMainWithCustomUpdates({
+    octokit,
+    owner,
+    repo,
+    makeChanges: async () => {
+      await easyExec(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }))
+      const version = (await easyExec(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0]
+      const date = new Date().toISOString().split('T')[0]
+      await replaceTextInFile(
+        `${GITHUB_WORKSPACE}/CHANGELOG.md`,
+        '## Unreleased',
+        `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`,
+      )
+      await easyExec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`)
+      await easyExec(`git config --global user.name "github-actions[bot]"`)
+      await easyExec(`git add .`)
+      await easyExec(`git commit -m v${version}`)
+      return version
+    },
+  })
 
   // Create or update pull request
   if (pullRequests.length === 0) {

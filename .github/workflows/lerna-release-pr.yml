@@ -7,17 +7,17 @@ on:
         description: "The script command to use to install the package's dependencies"
         required: false
         type: string
-        default: "yarn install --check-files"
+        default: 'yarn install --check-files'
       node-version:
-        description: "The version of node to use"
+        description: 'The version of node to use'
         required: false
         type: string
-        default: "20"
+        default: '20'
       cache:
         description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
         required: false
         type: string
-        default: "yarn"
+        default: 'yarn'
 jobs:
   create-rc-release:
     runs-on: ubuntu-latest
@@ -98,6 +98,8 @@ jobs:
       - uses: planningcenter/pco-release-action/lerna/release-by-pr@v1
         id: release_by_pr
         with:
+          app-id: ${{ secrets.PCO_RELEASE_CLIENT_ID }}
+          private-key: ${{ secrets.PCO_RELEASE_PRIVATE_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
       pull_request_id: ${{ steps.release_by_pr.outputs.pull_request_id }}

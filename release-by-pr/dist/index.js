@@ -57254,6 +57254,47 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 5640:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+var __webpack_unused_export__;
+
+__webpack_unused_export__ = ({ value: true });
+exports.n = void 0;
+const utils_1 = __nccwpck_require__(709);
+async function updateReleaseBranchToMainWithCustomUpdates({ octokit, makeChanges, owner, repo, branchName = 'pco-release--internal', refBranchName = `${branchName}-tmp`, mainBranch = 'main', }) {
+    const checkoutStatus = await (0, utils_1.easyExec)(`git checkout -b ${refBranchName}`);
+    if (checkoutStatus.exitCode !== 0)
+        await (0, utils_1.easyExec)(`git checkout ${refBranchName}`);
+    await (0, utils_1.easyExec)(`git reset --hard origin/${mainBranch}`);
+    const result = await makeChanges();
+    await (0, utils_1.easyExec)(`git push origin ${refBranchName}:${refBranchName} --force`);
+    const currentSha = (await (0, utils_1.easyExec)('git rev-parse HEAD')).output.trim();
+    try {
+        await octokit.rest.git.updateRef({
+            owner,
+            repo,
+            ref: `heads/${branchName}`,
+            sha: currentSha,
+            force: true,
+        });
+    }
+    catch (updateError) {
+        await octokit.rest.git.createRef({
+            owner,
+            repo,
+            ref: `refs/heads/${branchName}`,
+            sha: currentSha,
+        });
+    }
+    await (0, utils_1.easyExec)(`git push origin :${refBranchName}`);
+    return result;
+}
+exports.n = updateReleaseBranchToMainWithCustomUpdates;
+
+
+/***/ }),
+
 /***/ 709:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -59336,7 +59377,10 @@ var core = __nccwpck_require__(5316);
 var dist_node = __nccwpck_require__(266);
 // EXTERNAL MODULE: ../shared/utils.ts
 var utils = __nccwpck_require__(709);
+// EXTERNAL MODULE: ../shared/gitHelpers.ts
+var gitHelpers = __nccwpck_require__(5640);
 ;// CONCATENATED MODULE: ./src/run.ts
+
 
 
 const LABEL_NAMES = {
@@ -59452,17 +59496,22 @@ const run = async (inputs) => {
         return;
     }
     // Bump version, update changelog, and push to release branch
-    await (0,utils.easyExec)(`git checkout ${RELEASE_BRANCH}`);
-    await (0,utils.easyExec)(`git reset --hard origin/${MAIN_BRANCH}`);
-    await (0,utils.easyExec)(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }));
-    const version = (await (0,utils.easyExec)(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
-    const date = new Date().toISOString().split('T')[0];
-    await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
-    await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
-    await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
-    await (0,utils.easyExec)(`git add .`);
-    await (0,utils.easyExec)(`git commit -m v${version}`);
-    await (0,utils.easyExec)(`git push origin ${RELEASE_BRANCH} --force`);
+    const version = await (0,gitHelpers/* updateReleaseBranchToMainWithCustomUpdates */.n)({
+        octokit,
+        owner,
+        repo,
+        makeChanges: async () => {
+            await (0,utils.easyExec)(normalizeVersionCommand({ versionCommand: inputs.versionCommand, versionBumpType }));
+            const version = (await (0,utils.easyExec)(`jq -r .version ${inputs.packageJsonPath}`)).output.split('\n')[0];
+            const date = new Date().toISOString().split('T')[0];
+            await (0,utils.replaceTextInFile)(`${GITHUB_WORKSPACE}/CHANGELOG.md`, '## Unreleased', `## Unreleased\n\n## [v${version}](https://github.com/${owner}/${repo}/releases/tag/v${version}) - ${date}`);
+            await (0,utils.easyExec)(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`);
+            await (0,utils.easyExec)(`git config --global user.name "github-actions[bot]"`);
+            await (0,utils.easyExec)(`git add .`);
+            await (0,utils.easyExec)(`git commit -m v${version}`);
+            return version;
+        },
+    });
     // Create or update pull request
     if (pullRequests.length === 0) {
         pullRequest = await createPullRequest({

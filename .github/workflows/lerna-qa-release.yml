@@ -135,7 +135,7 @@ jobs:
         run: |
           echo releases=$(cat ./lerna-publish-summary.json) >> $GITHUB_OUTPUT
           echo version=$(cat ./lerna-publish-summary.json | jq -r '.[0].version') >> $GITHUB_OUTPUT
-          echo packageNames=$(cat ./lerna-publish-summary.json | jq -r '.[].packageName') >> $GITHUB_OUTPUT
+          echo packageNames=$(cat ./lerna-publish-summary.json | jq -r '[.[].packageName] | join(",")') >> $GITHUB_OUTPUT
         id: published_packages
     outputs:
       releases: ${{ steps.published_packages.outputs.releases }}

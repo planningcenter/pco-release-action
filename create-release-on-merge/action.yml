@@ -3,12 +3,18 @@ description: Automates the creation of a release when a `PCO-Release` PR is merg
 
 inputs:
   package_json_path:
-    description: "The path to the package.json file to version."
+    description: 'The path to the package.json file to version.'
     required: false
-    default: "package.json"
+    default: 'package.json'
+  app-id:
+    description: 'The app id for the github app'
+    required: false
+  private-key:
+    description: 'The private key for the github app'
+    required: false
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Checkout
       if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
@@ -20,6 +26,14 @@ runs:
     - run: echo "version=$v$(jq -r .version ${{ inputs.package_json_path }})" >> $GITHUB_ENV
       if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
       shell: bash
+    - name: Generate a token
+      if: ${{ inputs.app-id && inputs.private-key }}
+      id: generate-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.private-key }}
+        owner: ${{ github.repository_owner }}
     - name: Create Release
       if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
       uses: ncipollo/release-action@v1
@@ -27,3 +41,4 @@ runs:
         tag: v${{ env.version }}
         commit: main
         generateReleaseNotes: true
+        token: ${{ steps.generate-token.outputs.token || secrets.GITHUB_TOKEN }}

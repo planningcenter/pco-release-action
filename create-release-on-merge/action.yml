@@ -17,6 +17,7 @@ runs:
   using: 'composite'
   steps:
     - name: Checkout
+      id: checkout
       if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
       uses: actions/checkout@v4
       with:
@@ -24,10 +25,11 @@ runs:
         fetch-depth: 0
         fetch-tags: true
     - run: echo "version=$v$(jq -r .version ${{ inputs.package_json_path }})" >> $GITHUB_ENV
-      if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
+      id: get-version
+      if: steps.checkout.outcome == 'success'
       shell: bash
     - name: Generate a token
-      if: ${{ inputs.app-id && inputs.private-key }}
+      if: steps.checkout.outcome == 'success' && inputs.app-id && inputs.private-key
       id: generate-token
       uses: actions/create-github-app-token@v1
       with:
@@ -35,10 +37,10 @@ runs:
         private-key: ${{ inputs.private-key }}
         owner: ${{ github.repository_owner }}
     - name: Create Release
-      if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
       uses: ncipollo/release-action@v1
+      if: steps.checkout.outcome == 'success'
       with:
         tag: v${{ env.version }}
         commit: main
         generateReleaseNotes: true
-        token: ${{ steps.generate-token.outputs.token || secrets.GITHUB_TOKEN }}
+        token: ${{ steps.generate-token.outputs.token || github.token }}

@@ -88,6 +88,10 @@ jobs:
     if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
     steps:
       - uses: planningcenter/pco-release-action/create-release-on-merge@v1
+        with:
+          // optional, but allows triggering other workflows
+          app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+          private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY}}
 ```
 
 #### Require the CHANGELOG.md file to be updated in general PRs (to use human communication about changes)

@@ -62,13 +62,15 @@ jobs:
             echo "should_publish=false" >> $GITHUB_OUTPUT
           else
             echo "should_publish=true" >> $GITHUB_OUTPUT
+            PACKAGES_CSV=$(echo "$CHANGED_PACKAGES" | tr '\n' ',' | sed 's/,$//')
+            echo "packages_to_publish=$PACKAGES_CSV" >> $GITHUB_OUTPUT
           fi
       - if: ${{ steps.check-changes.outputs.should_publish == 'true' }}
         run: git push -f --set-upstream origin pco-release--internal-rc
       - if: ${{ steps.check-changes.outputs.should_publish == 'true' }}
         run: ./node_modules/.bin/lerna run build
       - if: ${{ steps.check-changes.outputs.should_publish == 'true' }}
-        run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag=next --summary-file -y
+        run: ./node_modules/.bin/lerna publish --conventional-prerelease --conventionalCommits --createRelease=github --preid=rc --dist-tag=next --summary-file --force-publish=${{ steps.check-changes.outputs.packages_to_publish }} -y
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - if: ${{ steps.check-changes.outputs.should_publish == 'true' }}

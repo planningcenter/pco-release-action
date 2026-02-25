@@ -1,0 +1,13 @@
+{
+  "name": "test-npm-consumer",
+  "version": "1.0.0",
+  "lockfileVersion": 1,
+  "requires": true,
+  "dependencies": {
+    "@planningcenter/tapestry-react": {
+      "version": "4.4.0",
+      "resolved": "https://registry.npmjs.org/@planningcenter/tapestry-react/-/tapestry-react-4.4.0.tgz",
+      "integrity": "sha512-/Qd1Ot2Us7+rvzYY667bLnTkYOmZf13sHJpv9cZvjsYZnfXKbfrrpEdl4OlwINOgACjJNZa8p1jJTENk2LsK3Q=="
+    }
+  }
+}

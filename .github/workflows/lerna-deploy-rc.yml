@@ -87,7 +87,7 @@ jobs:
           PACKAGES: ${{ steps.packages.outputs.packages }}
           VERSION: ${{ steps.find-version.outputs.version }}
       - name: Push to `staging` for Consumers
-        uses: planningcenter/pco-release-action/deploy@v1
+        uses: planningcenter/pco-release-action/deploy@th/fix/deploy_npm_support
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}

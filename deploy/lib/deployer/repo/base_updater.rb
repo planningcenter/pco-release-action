@@ -119,7 +119,11 @@ class Deployer
         end
 
         if upgrade_commands[name].nil?
-          "yarn upgrade #{package_name}@#{version}"
+          if File.exist?("package-lock.json")
+            "npm install #{package_name}@#{version}"
+          else
+            "yarn upgrade #{package_name}@#{version}"
+          end
         else
           "#{upgrade_commands[name]} #{package_name}@#{version}"
         end

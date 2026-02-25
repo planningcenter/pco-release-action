@@ -41,7 +41,7 @@ on:
         default: '{}'
 jobs:
   react-to-comment:
-    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release deploy')
+    if: ${{ github.event_name != 'workflow_dispatch' && github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release deploy') }}
     runs-on: ubuntu-latest
     steps:
       - name: Add reactions
@@ -50,7 +50,7 @@ jobs:
           comment-id: ${{github.event.comment.id}}
           reactions: '+1'
   deploy-to-staging-for-consumers:
-    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release deploy')
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release deploy')) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write

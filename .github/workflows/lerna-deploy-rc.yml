@@ -41,7 +41,7 @@ on:
         default: '{}'
 jobs:
   react-to-comment:
-    if: ${{ github.event_name != 'workflow_dispatch' && github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release deploy') }}
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release deploy')
     runs-on: ubuntu-latest
     steps:
       - name: Add reactions
@@ -50,7 +50,7 @@ jobs:
           comment-id: ${{github.event.comment.id}}
           reactions: '+1'
   deploy-to-staging-for-consumers:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release deploy')) }}
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release deploy')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -87,7 +87,7 @@ jobs:
           PACKAGES: ${{ steps.packages.outputs.packages }}
           VERSION: ${{ steps.find-version.outputs.version }}
       - name: Push to `staging` for Consumers
-        uses: planningcenter/pco-release-action/deploy@th/fix/deploy_npm_support
+        uses: planningcenter/pco-release-action/deploy@v1
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
           private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}

@@ -94,6 +94,20 @@ describe Deployer::Repo::VersionCompare do
       )
     end
 
+    it "raises error when npm lock file is malformed" do
+      version_compare =
+        described_class.new(
+          package_name: "@planningcenter/tapestry-react",
+          version: "4.6.0",
+          lock_file_path: "spec/fixtures/package-lock-malformed.json"
+        )
+
+      expect { version_compare.major_upgrade? }.to raise_error(
+        Deployer::VersionCompareFailure,
+        "[Deployer::VersionCompareFailure]: Failed to parse package-lock-malformed.json"
+      )
+    end
+
     context "when there is no lock file" do
       it "raises error" do
         version_compare =

@@ -71,6 +71,9 @@ class Deployer
         Gem::Version.new(version_string)
       rescue Errno::ENOENT
         raise_no_lock_file
+      rescue JSON::ParserError
+        raise VersionCompareFailure,
+              "Failed to parse #{File.basename(lock_file_path)}"
       end
 
       def find_current_version_from_yarn

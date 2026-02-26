@@ -7,11 +7,10 @@ class Deployer
         package_name:,
         version:,
         current_version: nil,
-        lock_file_path: nil,
-        yarn_lock_file_path: nil
+        lock_file_path: nil
       )
         @version = Gem::Version.new(version)
-        @lock_file_path = lock_file_path || yarn_lock_file_path
+        @lock_file_path = lock_file_path
         @current_version = current_version
         @package_name = package_name
       end

@@ -22,17 +22,6 @@ describe Deployer::Repo::VersionCompare do
       expect(version_compare.major_upgrade?).to eq(false)
     end
 
-    it "supports the deprecated yarn_lock_file_path parameter" do
-      version_compare =
-        described_class.new(
-          package_name: "@planningcenter/tapestry-react",
-          version: "4.6.0",
-          yarn_lock_file_path: "spec/fixtures/yarn.lock"
-        )
-
-      expect(version_compare.major_upgrade?).to eq(false)
-    end
-
     it "works when detecting an npm package-lock.json (lockfileVersion 3)" do
       version_compare =
         described_class.new(

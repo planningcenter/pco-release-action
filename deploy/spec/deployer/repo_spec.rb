@@ -137,7 +137,9 @@ describe Deployer::Repo do
           "test",
           config: config,
           updater: updater,
-          package_name: "test-pkg"
+          package_name: "test-pkg",
+          config_file: config_file,
+          dependabot_proxy: dependabot_proxy
         )
 
       expect(
@@ -154,7 +156,9 @@ describe Deployer::Repo do
           "test",
           config: config,
           updater: updater,
-          package_name: "test-pkg"
+          package_name: "test-pkg",
+          config_file: config_file,
+          dependabot_proxy: dependabot_proxy
         )
 
       expect(repo.pr_number).to eq 123
@@ -170,7 +174,9 @@ describe Deployer::Repo do
           "test",
           config: config,
           updater: updater,
-          package_name: "test-pkg"
+          package_name: "test-pkg",
+          config_file: config_file,
+          dependabot_proxy: dependabot_proxy
         )
 
       expect(repo.pr_url).to eq "http://github.com/org/repo/pull/123"
@@ -252,6 +258,7 @@ describe Deployer::Repo do
         "test",
         config: config,
         package_name: "test-pkg",
+        dependabot_proxy: dependabot_proxy
       )
 
       expect(repo.exclude_from_reporting?).to be true
@@ -262,7 +269,8 @@ describe Deployer::Repo do
         "test",
         config: config,
         package_name: "test-pkg",
-        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "urgent")
+        config_file: instance_double(Deployer::Repo::ConfigFile, pr_level: "urgent"),
+        dependabot_proxy: dependabot_proxy
       )
 
       expect(repo.exclude_from_reporting?).to be false

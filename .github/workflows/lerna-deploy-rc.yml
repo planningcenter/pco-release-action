@@ -102,6 +102,7 @@ jobs:
           version: ${{ steps.find-version.outputs.version }}
           package-json-path: lerna.json
           package-names: ${{ steps.find-package-names.outputs.package-names }}
+          node-version: ${{ inputs.node-version }}
       - name: Post results to original PR
         uses: planningcenter/pco-release-action/reporting@v1
         with:

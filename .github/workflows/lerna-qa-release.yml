@@ -164,6 +164,7 @@ jobs:
           include: ${{ inputs.include }}
           allow-major: true
           package-json-path: ${{ inputs.lerna-json-path }}
+          node-version: ${{ inputs.node-version }}
       - name: Post results to original PR
         uses: planningcenter/pco-release-action/reporting@v1
         if: ${{ needs.create-qa-release.outputs.version }}

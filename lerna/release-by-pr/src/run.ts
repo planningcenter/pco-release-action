@@ -242,7 +242,7 @@ const FOOTER = `## 🚀 PCO-Release
 
   ### Actions
   - The version bump type is determined via [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
-  - Release candidates are automatically created when this PR is updated. To deploy the release candidate to staging, add a comment \`pco deploy staging\`.
+  - Release candidates are automatically created when this PR is updated. To deploy the release candidate to staging, add a comment \`@pco-release deploy\`.
   `
 
 async function findOrCreateLabels(

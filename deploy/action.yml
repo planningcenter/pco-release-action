@@ -63,6 +63,10 @@ inputs:
   package-names:
     description: "The names of the packages to update"
     required: false
+  node-version:
+    description: "The version of node to use when running upgrade commands in consumer repos"
+    required: false
+    default: "20"
 outputs:
   json:
     description: "The json output of the upgrade prs."
@@ -83,7 +87,7 @@ runs:
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: ${{ inputs.node-version }}
     - name: Enable Corepack
       shell: bash
       run: export COREPACK_ENABLE_DOWNLOAD_PROMPT=0 && corepack enable

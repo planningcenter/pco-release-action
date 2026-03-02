@@ -62,6 +62,11 @@ on:
         required: false
         type: string
         default: 'yarn version'
+      custom-message:
+        description: 'Custom message to display instead of the default protonova URL'
+        required: false
+        type: string
+        default: ''
 jobs:
   react-to-comment:
     if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release qa')
@@ -132,3 +137,4 @@ jobs:
           actor: ${{ github.actor }}
           proto-tag: '${{ github.event.repository.name }}-${{ github.event.issue.number }}'
           release-type: 'QA'
+          custom-message: ${{ inputs.custom-message }}

@@ -18,6 +18,9 @@ inputs:
   proto-tag:
     description: 'The tag of the proto release (if it exists)'
     required: false
+  custom-message:
+    description: 'Custom message to display instead of the default protonova URL'
+    required: false
 runs:
   using: 'composite'
   steps:
@@ -29,6 +32,7 @@ runs:
         VERSION_TAG: ${{ inputs.version-tag }}
         RELEASE_TYPE: ${{ inputs.release-type }}
         PROTO_TAG: ${{ inputs.proto-tag }}
+        CUSTOM_MESSAGE: ${{ inputs.custom-message }}
       with:
         script: |
           function getBody() {
@@ -37,8 +41,9 @@ runs:
             const successfulRepoList = results.successful_repos.map(repo => `- \`${repo.name}\``).join("\n")
             const failedRepoList = results.failed_repos.map(repo => `- \`${repo.name}\`: ${repo.message}`).join("\n")
             const skippedRepoList = results.skipped_repos && results.skipped_repos.map(repo => `- \`${repo.name}\`: ${repo.message}`).join("\n")
+            const protoMessage = process.env.CUSTOM_MESSAGE || (process.env.PROTO_TAG ? `You can access the proto release at: https://${process.env.PROTO_TAG}.login.planningcenter.ninja/` : "")
             return `
-            ${process.env.PROTO_TAG ? `You can access the proto release at: https://${process.env.PROTO_TAG}.login.planningcenter.ninja/` : ""}
+            ${protoMessage}
 
             ${results.successful_repos.length > 0 ? "### Deployed Successfully to the following repos:" : ""}
 

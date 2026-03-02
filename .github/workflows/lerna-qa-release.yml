@@ -40,6 +40,11 @@ on:
         required: false
         type: string
         default: 'lerna.json'
+      branch-name:
+        description: 'The branch name to use for the proto deploy'
+        required: false
+        type: string
+        default: ''
       custom-message:
         description: 'Custom message to display instead of the default protonova URL'
         required: false
@@ -163,7 +168,7 @@ jobs:
           ref: v${{ needs.create-qa-release.outputs.version }}
           package-names: ${{ needs.create-qa-release.outputs.packageNames }}
           change-method: 'merge'
-          branch-name: 'proto/${{ github.event.repository.name }}-${{ github.event.issue.number }}'
+          branch-name: ${{ inputs.branch-name || format('proto/{0}-{1}', github.event.repository.name, github.event.issue.number) }}
           only: ${{ inputs.only }}
           exclude: ${{ inputs.exclude }}
           include: ${{ inputs.include }}

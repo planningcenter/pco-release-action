@@ -85,9 +85,22 @@ class Deployer
       def run_upgrade_command
         log "Running #{upgrade_command}"
         command_line.execute(
-          upgrade_command,
+          with_node_version(upgrade_command),
           error_class: UpgradeCommandFailure
         )
+      end
+
+      def with_node_version(command)
+        node_version = config_file["node_version"]
+        return command unless node_version
+
+        node_version = node_version.to_s.strip
+        unless node_version.match?(/\Av?\d+(\.\d+){0,2}\z/)
+          raise UpgradeCommandFailure, "Invalid node_version in .pco-release.config.yml: #{node_version}"
+        end
+
+        log "Switching to node #{node_version}"
+        "bash -lc '. \"$NVM_DIR/nvm.sh\" && nvm install #{node_version} && nvm use #{node_version} && #{command}'"
       end
 
       def commit_and_push_changes

@@ -64,7 +64,7 @@ inputs:
     description: "The names of the packages to update"
     required: false
   node-version:
-    description: "The version of node to use when running upgrade commands in consumer repos"
+    description: "Fallback node version for running upgrade commands. Overridden by node_version in a consumer repo's .pco-release.config.yml when present."
     required: false
     default: "20"
 outputs:

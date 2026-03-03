@@ -94,8 +94,12 @@ class Deployer
         return command unless File.exist?(".node-version")
 
         node_version = File.read(".node-version").strip
+        unless node_version.match?(/\Av?\d+(\.\d+){0,2}\z/)
+          raise UpgradeCommandFailure, "Invalid .node-version: #{node_version}"
+        end
+
         log "Switching to node #{node_version}"
-        "source $NVM_DIR/nvm.sh && nvm install #{node_version} && nvm use #{node_version} && #{command}"
+        "bash -lc '. \"$NVM_DIR/nvm.sh\" && nvm install #{node_version} && nvm use #{node_version} && #{command}'"
       end
 
       def commit_and_push_changes

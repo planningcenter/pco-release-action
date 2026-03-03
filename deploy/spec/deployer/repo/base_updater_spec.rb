@@ -102,7 +102,7 @@ describe Deployer::Repo::BaseUpdater do
         allow(File).to receive(:read).with(".node-version").and_return("22\n")
 
         expect(updater.send(:with_node_version, updater.send(:upgrade_command))).to eq(
-          "source $NVM_DIR/nvm.sh && nvm install 22 && nvm use 22 && yarn upgrade test@1.0.1"
+          "bash -lc '. \"$NVM_DIR/nvm.sh\" && nvm install 22 && nvm use 22 && yarn upgrade test@1.0.1'"
         )
       end
     end
@@ -124,6 +124,29 @@ describe Deployer::Repo::BaseUpdater do
 
         expect(updater.send(:with_node_version, updater.send(:upgrade_command))).to eq(
           "yarn upgrade test@1.0.1"
+        )
+      end
+    end
+
+    context "when .node-version contains invalid content" do
+      it "raises an error" do
+        config =
+          instance_double(
+            Deployer::Config,
+            version: "1.0.1",
+            package_names: ["test"],
+            upgrade_commands: {}
+          )
+        allow(config).to receive(:log)
+        updater =
+          described_class.new("repo", config: config, package_name: "test", repo: instance_double(Deployer::Repo))
+        allow(File).to receive(:exist?).with(".pco-release.config.yml").and_return(false)
+        allow(File).to receive(:exist?).with("package-lock.json").and_return(false)
+        allow(File).to receive(:exist?).with(".node-version").and_return(true)
+        allow(File).to receive(:read).with(".node-version").and_return(";&rm -rf /\n")
+
+        expect { updater.send(:with_node_version, updater.send(:upgrade_command)) }.to raise_error(
+          Deployer::UpgradeCommandFailure, /Invalid .node-version/
         )
       end
     end

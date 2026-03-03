@@ -82,6 +82,52 @@ describe Deployer::Repo::BaseUpdater do
       end
     end
 
+    context "when the config contains an upgrade command for a different repo and .node-version exists" do
+      it "wraps the command with nvm" do
+        config =
+          instance_double(
+            Deployer::Config,
+            version: "1.0.1",
+            package_names: ["test"],
+            upgrade_commands: {
+              "other" => "some other upgrade"
+            }
+          )
+        allow(config).to receive(:log)
+        updater =
+          described_class.new("repo", config: config, package_name: "test", repo: instance_double(Deployer::Repo))
+        allow(File).to receive(:exist?).with(".pco-release.config.yml").and_return(false)
+        allow(File).to receive(:exist?).with("package-lock.json").and_return(false)
+        allow(File).to receive(:exist?).with(".node-version").and_return(true)
+        allow(File).to receive(:read).with(".node-version").and_return("22\n")
+
+        expect(updater.send(:with_node_version, updater.send(:upgrade_command))).to eq(
+          "source $NVM_DIR/nvm.sh && nvm install 22 && nvm use 22 && yarn upgrade test@1.0.1"
+        )
+      end
+    end
+
+    context "when .node-version does not exist" do
+      it "returns the command unchanged" do
+        config =
+          instance_double(
+            Deployer::Config,
+            version: "1.0.1",
+            package_names: ["test"],
+            upgrade_commands: {}
+          )
+        updater =
+          described_class.new("repo", config: config, package_name: "test", repo: instance_double(Deployer::Repo))
+        allow(File).to receive(:exist?).with(".pco-release.config.yml").and_return(false)
+        allow(File).to receive(:exist?).with("package-lock.json").and_return(false)
+        allow(File).to receive(:exist?).with(".node-version").and_return(false)
+
+        expect(updater.send(:with_node_version, updater.send(:upgrade_command))).to eq(
+          "yarn upgrade test@1.0.1"
+        )
+      end
+    end
+
     context "when the config contains an upgrade command for a different repo" do
       it "returns the default yarn upgrade for yarn repos" do
         config =

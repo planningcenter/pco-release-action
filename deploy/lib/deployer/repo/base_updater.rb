@@ -85,9 +85,17 @@ class Deployer
       def run_upgrade_command
         log "Running #{upgrade_command}"
         command_line.execute(
-          upgrade_command,
+          with_node_version(upgrade_command),
           error_class: UpgradeCommandFailure
         )
+      end
+
+      def with_node_version(command)
+        return command unless File.exist?(".node-version")
+
+        node_version = File.read(".node-version").strip
+        log "Switching to node #{node_version}"
+        "source $NVM_DIR/nvm.sh && nvm install #{node_version} && nvm use #{node_version} && #{command}"
       end
 
       def commit_and_push_changes

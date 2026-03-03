@@ -91,11 +91,12 @@ class Deployer
       end
 
       def with_node_version(command)
-        return command unless File.exist?(".node-version")
+        node_version = config_file["node_version"]
+        return command unless node_version
 
-        node_version = File.read(".node-version").strip
+        node_version = node_version.to_s.strip
         unless node_version.match?(/\Av?\d+(\.\d+){0,2}\z/)
-          raise UpgradeCommandFailure, "Invalid .node-version: #{node_version}"
+          raise UpgradeCommandFailure, "Invalid node_version in .pco-release.config.yml: #{node_version}"
         end
 
         log "Switching to node #{node_version}"

@@ -1,4 +1,4 @@
-import { easyExec } from './utils'
+import { easyExec } from './utils.js'
 import { Octokit } from '@octokit/action'
 
 export async function updateReleaseBranchToMainWithCustomUpdates<T>({

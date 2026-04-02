@@ -66,6 +66,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     steps:
       - name: Get PR head ref
         id: get-pr-ref
@@ -94,9 +95,6 @@ jobs:
         with:
           cache: ${{ inputs.cache}}
           node-version: ${{ inputs.node-version }}
-      - run: echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" >> ~/.npmrc
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
       - run: ${{ inputs.install-command }}
       - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --global user.name "github-actions[bot]"

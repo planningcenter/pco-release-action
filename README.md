@@ -328,6 +328,68 @@ jobs:
       release-tag: ${{ inputs.release-tag }}
 ```
 
+## NPM Authentication via OIDC Trusted Publishing
+
+PCO-Release workflows support [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) using OpenID Connect (OIDC), eliminating the need for long-lived `PLANNINGCENTER_NPM_TOKEN` secrets.
+
+### Prerequisites
+
+- **Lerna v9+** in consuming repos (for lerna-based workflows)
+- **npm CLI v11.5.1+** and **Node v22.14.0+** (for non-lerna workflows)
+
+### Configuring a package on npmjs.com
+
+Each npm package must be configured to trust the GitHub Actions workflow that publishes it.
+
+1. Go to [npmjs.com](https://www.npmjs.com) and navigate to your package's **Settings**
+2. Find the **Trusted Publisher** section
+3. Select **GitHub Actions** as the provider
+4. Fill in the required fields:
+   - **Organization or user**: `planningcenter`
+   - **Repository**: Your repository name (e.g., `tapestry`)
+   - **Workflow filename**: The filename of the *calling* workflow in your repo (e.g., `pco-release-qa.yml`)
+   - **Environment name**: Leave blank unless using GitHub environments
+5. Save the configuration
+
+> **Important:** For reusable workflows (like those in this repo), npm validates the *calling* workflow's filename, not the reusable workflow that contains the `npm publish` command. Make sure the workflow filename matches exactly, including the `.yml` extension.
+
+> **Note:** Each package can only have one trusted publisher configured at a time. npm does not validate the configuration when you save it — errors will only appear when you attempt to publish.
+
+### Configuring your calling workflow
+
+Your calling workflow must include the `id-token: write` permission. This is required on both the calling and reusable workflows for OIDC to function.
+
+```yml
+# Example: .github/workflows/pco-release-qa.yml
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  create-qa-release-and-deploy:
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release qa')
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write  # Required for OIDC trusted publishing
+    uses: planningcenter/pco-release-action/.github/workflows/lerna-qa-release.yml@v1
+    secrets: inherit
+```
+
+### Post-migration security (recommended)
+
+Once trusted publishing is working:
+
+1. Navigate to your package's **Settings** → **Publishing access** on npmjs.com
+2. Select **"Require two-factor authentication and disallow tokens"**
+3. [Revoke any existing automation tokens](https://docs.npmjs.com/revoking-access-tokens) that are no longer needed
+
+### Troubleshooting
+
+- **"Unable to authenticate" (ENEEDAUTH)**: Verify the workflow filename on npmjs.com matches your calling workflow exactly, including the `.yml` extension. All fields are case-sensitive.
+- **Self-hosted runners**: Not currently supported by npm trusted publishing. You must use GitHub-hosted runners.
+- **Private dependencies**: Trusted publishing only applies to `npm publish`. You still need a read-only token for installing private packages via `npm ci`/`npm install`.
+
 ## Working on this Project
 
 - Build before pushing changes with `yarn build`

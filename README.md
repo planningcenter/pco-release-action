@@ -101,6 +101,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/release.yml@v1
     secrets: inherit
     with:
@@ -116,6 +117,8 @@ You'll also want to add the [shared workflows](#shared-workflows) (label syncing
 Creates a GitHub release, publishes to npm and GitHub Package Registry, and deploys to all consuming repos via PRs. This is the main workflow for publishing a release.
 
 **Trigger:** When a release PR (with `pco-release-pending` label) is merged to `main`.
+
+> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your package must be configured on npmjs.com and the calling workflow must include `id-token: write`.
 
 ```yml
 # .github/workflows/pco-release-on-merge.yml
@@ -134,6 +137,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/release.yml@v1
     secrets: inherit
     with:
@@ -177,6 +181,8 @@ Creates an RC prerelease version, publishes to npm with the `@next` tag, and mer
 
 **Trigger:** Comment `@pco-release rc` on a release PR.
 
+> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your package must be configured on npmjs.com and the calling workflow must include `id-token: write`.
+
 ```yml
 # .github/workflows/pco-release-rc.yml
 on:
@@ -192,6 +198,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/release-candidate.yml@v1
     secrets: inherit
 ```
@@ -233,6 +240,8 @@ Creates a QA prerelease version for testing a specific branch, publishes to npm,
 
 **Trigger:** Comment `@pco-release qa` on any PR.
 
+> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your package must be configured on npmjs.com and the calling workflow must include `id-token: write`.
+
 ```yml
 # .github/workflows/pco-release-qa.yml
 on:
@@ -248,6 +257,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/qa-release.yml@v1
     secrets: inherit
 ```
@@ -345,6 +355,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/lerna-release-pr.yml@v1
     secrets: inherit
 ```
@@ -368,6 +379,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/lerna-release-on-merge.yml@v1
     secrets: inherit
 ```
@@ -379,6 +391,8 @@ You'll also want to add the [shared workflows](#shared-workflows) (label syncing
 **Workflow:** `planningcenter/pco-release-action/.github/workflows/lerna-release-pr.yml@v1`
 
 Creates a release PR and publishes RC versions for changed packages when code is pushed to `main`.
+
+> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your packages must be configured on npmjs.com and the calling workflow must include `id-token: write`.
 
 ```yml
 # .github/workflows/pco-release-create-pr.yml
@@ -393,6 +407,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/lerna-release-pr.yml@v1
     secrets: inherit
 ```
@@ -408,6 +423,8 @@ jobs:
 **Workflow:** `planningcenter/pco-release-action/.github/workflows/lerna-release-on-merge.yml@v1`
 
 Publishes all packages and deploys to consumers when the Lerna release PR is merged.
+
+> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your packages must be configured on npmjs.com and the calling workflow must include `id-token: write`.
 
 ```yml
 # .github/workflows/pco-release-on-merge.yml
@@ -426,6 +443,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/lerna-release-on-merge.yml@v1
     secrets: inherit
 ```
@@ -445,6 +463,8 @@ jobs:
 
 Creates QA releases for all changed packages in the monorepo. Triggered by commenting `@pco-release qa` on a PR.
 
+> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your packages must be configured on npmjs.com and the calling workflow must include `id-token: write`.
+
 ```yml
 # .github/workflows/pco-release-qa.yml
 on:
@@ -460,6 +480,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/lerna-qa-release.yml@v1
     secrets: inherit
 ```
@@ -873,7 +894,7 @@ Once trusted publishing is working:
 |---|---|
 | `PCO_DEPENDENCIES_APP_ID` | GitHub App ID for cross-repo operations |
 | `PCO_DEPENDENCIES_PRIVATE_KEY` | GitHub App private key |
-| `PLANNINGCENTER_NPM_TOKEN` | NPM registry token (used by reusable workflows via `secrets: inherit`) |
+| `PLANNINGCENTER_NPM_TOKEN` | NPM registry token -- being replaced by [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing) |
 
 ---
 

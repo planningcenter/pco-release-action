@@ -61,7 +61,6 @@ jobs:
           comment-id: ${{github.event.comment.id}}
           reactions: '+1'
   create-qa-release:
-    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release qa')
     runs-on: ubuntu-latest
     permissions:
       contents: write

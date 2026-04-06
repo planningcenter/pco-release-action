@@ -50,6 +50,11 @@ on:
         required: false
         type: string
         default: ''
+      ref:
+        description: 'The git ref to use for the release. If not provided, it will use the head ref of the PR that triggered the workflow.'
+        required: false
+        type: string
+        default: ''
 jobs:
   react-to-comment:
     if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release qa')
@@ -68,6 +73,7 @@ jobs:
       id-token: write
     steps:
       - name: Get PR head ref
+        if: ${{ inputs.ref == '' }}
         id: get-pr-ref
         uses: actions/github-script@v7
         with:
@@ -83,7 +89,7 @@ jobs:
           result-encoding: string
       - uses: actions/checkout@v4
         with:
-          ref: ${{ steps.get-pr-ref.outputs.result }}
+          ref: ${{ inputs.ref != '' && inputs.ref || steps.get-pr-ref.outputs.result }}
           fetch-tags: true
       - uses: actions/setup-node@v4
         with:

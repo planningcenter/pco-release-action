@@ -50,6 +50,11 @@ on:
         required: false
         type: string
         default: ''
+      use-oidc:
+        description: 'Use OIDC trusted publishing for npm authentication instead of PLANNINGCENTER_NPM_TOKEN'
+        required: false
+        type: boolean
+        default: false
 jobs:
   react-to-comment:
     if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release qa')
@@ -95,6 +100,10 @@ jobs:
         with:
           cache: ${{ inputs.cache}}
           node-version: ${{ inputs.node-version }}
+      - if: ${{ !inputs.use-oidc }}
+        run: echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
       - run: ${{ inputs.install-command }}
       - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --global user.name "github-actions[bot]"

@@ -463,7 +463,7 @@ jobs:
 
 Creates QA releases for all changed packages in the monorepo. Triggered by commenting `@pco-release qa` on a PR.
 
-> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your packages must be configured on npmjs.com and the calling workflow must include `id-token: write`.
+> **Supports [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- set `use-oidc: true` and add `id-token: write` to your calling workflow permissions. OIDC will become the default in a future release.
 
 ```yml
 # .github/workflows/pco-release-qa.yml
@@ -480,9 +480,11 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
-      id-token: write  # Required for OIDC trusted publishing
+      id-token: write  # Required when use-oidc is true
     uses: planningcenter/pco-release-action/.github/workflows/lerna-qa-release.yml@v1
     secrets: inherit
+    with:
+      use-oidc: true
 ```
 
 | Input | Description | Default |
@@ -496,6 +498,7 @@ jobs:
 | `lerna-json-path` | Path to lerna.json | `lerna.json` |
 | `branch-name` | Custom proto deploy branch name | |
 | `custom-message` | Custom deployment message | |
+| `use-oidc` | Use OIDC trusted publishing instead of `PLANNINGCENTER_NPM_TOKEN` | `false` |
 
 ### Deploy RC (Lerna)
 

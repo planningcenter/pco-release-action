@@ -107,7 +107,7 @@ jobs:
         id: get-last-qa-version
         run: |
           git fetch --tags
-          LAST_VERSION=$(git tag -l "*-qa-${{ github.event.issue.number }}*" --sort=-v:refname | head -n 1)
+          LAST_VERSION=$(git tag -l "*-test*" --sort=-v:refname | head -n 1)
           echo "last_version=$LAST_VERSION" >> $GITHUB_OUTPUT
       - name: Run checks to see if we should run
         id: check-if-should-run

@@ -1,20 +1,58 @@
-# 🚀 PCO-Release
+# PCO-Release
 
-## Summary
+PCO-Release automates the release process for Planning Center's JavaScript/TypeScript libraries. It manages version bumping, changelog updates, PR creation, npm publishing, and coordinated deployments across consuming repositories -- all via GitHub Actions.
 
-PCO-Release helps to manage the process of releasing our JavaScript/TypeScript libraries.
-It creates PRs when changes are merged into `main` and help to streamline the process
-for getting the release pushed out. It does this via Github Actions.
+## Table of Contents
 
-## Quickstart
+- [How It Works](#how-it-works)
+- [Standard Repos](#standard-repos)
+  - [Quick Setup](#quick-setup)
+  - [Release (create, publish, deploy)](#release)
+  - [Release Candidate (RC)](#release-candidate-rc)
+  - [QA Release](#qa-release)
+  - [Revert](#revert)
+- [Lerna Monorepos](#lerna-monorepos)
+  - [Quick Setup (Lerna)](#quick-setup-lerna)
+  - [Release on Merge (Lerna)](#release-on-merge-lerna)
+  - [QA Release (Lerna)](#qa-release-lerna)
+  - [Deploy RC (Lerna)](#deploy-rc-lerna)
+- [Shared Workflows](#shared-workflows)
+  - [Sync Version via Labels](#sync-version-via-labels)
+  - [Require Changelog Updates](#require-changelog-updates)
+  - [Dependabot Changelog Automation](#dependabot-changelog-automation)
+- [Actions Reference](#actions-reference)
+- [Configuration Reference](#configuration-reference)
+- [Contributing](#contributing)
 
-Because there are multiple triggers for `PCO-Release` to work, multiple actions are required.
+---
 
-#### Create a Release PR when content gets added to the `main` branch
+## How It Works
+
+The typical release flow for a library using PCO-Release:
+
+1. **Developer merges a PR to `main`** -- the `release-by-pr` action creates a release PR on the `pco-release--internal` branch with a version bump and changelog update.
+2. **Labels control the version bump** -- apply `pco-release-patch`, `pco-release-minor`, or `pco-release-major` to the release PR. The `sync-with-labels` action updates the version accordingly.
+3. **Release PR is merged** -- the release workflow publishes to npm and creates a GitHub release.
+4. **Deploy** -- the `deploy` action opens PRs to update the dependency across all consuming repos.
+
+At any point during development, you can also create [Release Candidates](#release-candidate-rc) or [QA Releases](#qa-release) by commenting on PRs.
+
+---
+
+## Standard Repos
+
+For single-package JavaScript/TypeScript libraries. Add these workflow files to your library's `.github/workflows/` directory.
+
+Ensure your repo has access to the `PCO_DEPENDENCIES_APP_ID` and `PCO_DEPENDENCIES_PRIVATE_KEY` secrets (reach out in **#github-discuss** on Slack if you need access).
+
+### Quick Setup
+
+To get the full release automation working, you need these workflow files at minimum:
+
+**1. Create a release PR when code is merged to `main`**
 
 ```yml
 # .github/workflows/pco-release-create-pr.yml
-
 on:
   push:
     branches:
@@ -24,7 +62,7 @@ permissions:
   contents: write
   pull-requests: write
 
-name: PCO-Release - Release Automation
+name: PCO-Release - Create Release PR
 
 jobs:
   release-automation:
@@ -33,22 +71,456 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'yarn'
+          node-version: "20"
+          cache: "yarn"
       - uses: planningcenter/pco-release-action/release-by-pr@v1
         with:
           app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
-          private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY}}
+          private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
 ```
 
-- Ensure that the secrets are available in your repo. If not, reach out to #github-discuss on
-  slack for access.
-
-#### Sync the version bump type via labels on the Release PR
+**2. Publish and deploy when the release PR is merged**
 
 ```yml
-# .github/workflows/pco-release-sync-release-by-label.yml
+# .github/workflows/pco-release-on-merge.yml
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
 
+name: PCO-Release - Release on Merge
+
+jobs:
+  release:
+    if: >-
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    uses: planningcenter/pco-release-action/.github/workflows/release.yml@v1
+    secrets: inherit
+    with:
+      pr-number: ${{ github.event.pull_request.number }}
+```
+
+You'll also want to add the [shared workflows](#shared-workflows) (label syncing, changelog enforcement, and dependabot automation).
+
+### Release
+
+**Workflow:** `planningcenter/pco-release-action/.github/workflows/release.yml@v1`
+
+Creates a GitHub release, publishes to npm and GitHub Package Registry, and deploys to all consuming repos via PRs. This is the main workflow for publishing a release.
+
+**Trigger:** When a release PR (with `pco-release-pending` label) is merged to `main`.
+
+```yml
+# .github/workflows/pco-release-on-merge.yml
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  release:
+    if: >-
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    uses: planningcenter/pco-release-action/.github/workflows/release.yml@v1
+    secrets: inherit
+    with:
+      pr-number: ${{ github.event.pull_request.number }}
+      # All below are optional:
+      # install-command: yarn install --check-files
+      # build-command: yarn build
+      # test-command: yarn test
+      # publish-command: npm publish
+      # cache: yarn
+      # build-directory: dist
+      # only: ""
+      # include: ""
+      # exclude: ""
+      # upgrade-commands: "{}"
+      # package-json-path: package.json
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `pr-number` | **(required)** The PR number that triggered the release | |
+| `install-command` | Command to install dependencies | `yarn install --check-files` |
+| `build-command` | Command to build the package | `yarn build` |
+| `test-command` | Command to run tests | `yarn test` |
+| `publish-command` | Command to publish to npm | `npm publish` |
+| `cache` | Package manager for caching (`npm`, `yarn`, `pnpm`, or `""`) | `yarn` |
+| `build-directory` | Directory containing build output | `dist` |
+| `only` | Comma-separated list of repos to exclusively update | `""` |
+| `include` | Comma-separated list of repos to include (without checking for dep) | `""` |
+| `exclude` | Comma-separated list of repos to exclude | `""` |
+| `upgrade-commands` | JSON string of repo-specific upgrade commands | `"{}"` |
+| `package-json-path` | Path to package.json | `package.json` |
+
+---
+
+### Release Candidate (RC)
+
+**Workflow:** `planningcenter/pco-release-action/.github/workflows/release-candidate.yml@v1`
+
+Creates an RC prerelease version, publishes to npm with the `@next` tag, and merges to the staging branch in consumer repos.
+
+**Trigger:** Comment `@pco-release rc` on a release PR.
+
+```yml
+# .github/workflows/pco-release-rc.yml
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  create-rc-and-deploy:
+    if: >-
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@pco-release rc')
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    uses: planningcenter/pco-release-action/.github/workflows/release-candidate.yml@v1
+    secrets: inherit
+```
+
+You can include additional context in the comment that will be added to the release notes:
+
+```
+@pco-release rc
+
+This RC is testing the new Widget feature.
+
+Please test:
+- Thing A
+- Thing B
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `install-command` | Command to install dependencies | `yarn install --check-files` |
+| `build-command` | Command to build the package | `yarn build` |
+| `test-command` | Command to run tests | `yarn test` |
+| `prepublish-command` | Command to publish the prerelease to npm | `npm publish --tag next` |
+| `cache` | Package manager for caching | `yarn` |
+| `build-directory` | Directory containing build output | `dist` |
+| `only` | Comma-separated list of repos to exclusively update | `""` |
+| `include` | Comma-separated list of repos to include | `""` |
+| `exclude` | Comma-separated list of repos to exclude | `""` |
+| `upgrade-commands` | JSON string of repo-specific upgrade commands | `"{}"` |
+| `package-json-path` | Path to package.json | `package.json` |
+| `yarn-version-command` | Command to bump version | `yarn version` |
+
+---
+
+### QA Release
+
+**Workflow:** `planningcenter/pco-release-action/.github/workflows/qa-release.yml@v1`
+
+Creates a QA prerelease version for testing a specific branch, publishes to npm, and deploys to a protonova environment.
+
+**Trigger:** Comment `@pco-release qa` on any PR.
+
+```yml
+# .github/workflows/pco-release-qa.yml
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  create-qa-release-and-deploy:
+    if: >-
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@pco-release qa')
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    uses: planningcenter/pco-release-action/.github/workflows/qa-release.yml@v1
+    secrets: inherit
+```
+
+You can include test instructions in the comment:
+
+```
+@pco-release qa
+
+Testing the new Widget feature in protonova.
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `install-command` | Command to install dependencies | `yarn install --check-files` |
+| `build-command` | Command to build the package | `yarn build` |
+| `test-command` | Command to run tests | `yarn test` |
+| `prepublish-command` | Command to publish the prerelease to npm | `npm publish --tag next` |
+| `cache` | Package manager for caching | `yarn` |
+| `build-directory` | Directory containing build output | `dist` |
+| `only` | Comma-separated list of repos to exclusively update | `""` |
+| `include` | Comma-separated list of repos to include | `""` |
+| `exclude` | Comma-separated list of repos to exclude | `""` |
+| `upgrade-commands` | JSON string of repo-specific upgrade commands | `"{}"` |
+| `package-json-path` | Path to package.json | `package.json` |
+| `yarn-version-command` | Command to bump version | `yarn version` |
+| `branch-name` | Custom proto deploy branch name | |
+| `custom-message` | Custom message for the deployment report | |
+
+---
+
+### Revert
+
+**Workflow:** `planningcenter/pco-release-action/.github/workflows/revert.yml@v1`
+
+Quickly reverts all consumer repos to a previous version of the library by creating PRs.
+
+**Trigger:** Manual workflow dispatch.
+
+```yml
+# .github/workflows/pco-release-revert.yml
+on:
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: "PR number to comment the report to"
+        required: true
+      release-tag:
+        description: "Release tag to revert to (e.g. v4.9.1)"
+        required: true
+
+jobs:
+  revert:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: planningcenter/pco-release-action/.github/workflows/revert.yml@v1
+    secrets: inherit
+    with:
+      pr-number: ${{ inputs.pr-number }}
+      release-tag: ${{ inputs.release-tag }}
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `pr-number` | **(required)** PR number to post the revert report to | |
+| `release-tag` | **(required)** The release tag to revert to (e.g. `v4.9.1`) | |
+| `only` | Comma-separated list of repos to exclusively update | `""` |
+| `include` | Comma-separated list of repos to include | `""` |
+| `exclude` | Comma-separated list of repos to exclude | `""` |
+| `package-json-path` | Path to package.json | `package.json` |
+
+---
+
+## Lerna Monorepos
+
+For Lerna monorepos where multiple packages need coordinated version bumps. Use these workflows instead of the standard ones above.
+
+Ensure your repo has access to the `PCO_DEPENDENCIES_APP_ID` and `PCO_DEPENDENCIES_PRIVATE_KEY` secrets (reach out in **#github-discuss** on Slack if you need access).
+
+### Quick Setup (Lerna)
+
+**1. Create a release PR when code is merged to `main`**
+
+```yml
+# .github/workflows/pco-release-create-pr.yml
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-pr:
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    uses: planningcenter/pco-release-action/.github/workflows/lerna-release-pr.yml@v1
+    secrets: inherit
+```
+
+**2. Publish and deploy when the release PR is merged**
+
+```yml
+# .github/workflows/pco-release-on-merge.yml
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  release:
+    if: >-
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    uses: planningcenter/pco-release-action/.github/workflows/lerna-release-on-merge.yml@v1
+    secrets: inherit
+```
+
+You'll also want to add the [shared workflows](#shared-workflows) (label syncing, changelog enforcement, and dependabot automation).
+
+### Create Release PR (Lerna)
+
+**Workflow:** `planningcenter/pco-release-action/.github/workflows/lerna-release-pr.yml@v1`
+
+Creates a release PR and publishes RC versions for changed packages when code is pushed to `main`.
+
+```yml
+# .github/workflows/pco-release-create-pr.yml
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-pr:
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    uses: planningcenter/pco-release-action/.github/workflows/lerna-release-pr.yml@v1
+    secrets: inherit
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `install-command` | Command to install dependencies | `yarn install --check-files` |
+| `node-version` | Node.js version | `20` |
+| `cache` | Package manager for caching | `yarn` |
+
+### Release on Merge (Lerna)
+
+**Workflow:** `planningcenter/pco-release-action/.github/workflows/lerna-release-on-merge.yml@v1`
+
+Publishes all packages and deploys to consumers when the Lerna release PR is merged.
+
+```yml
+# .github/workflows/pco-release-on-merge.yml
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  release:
+    if: >-
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    uses: planningcenter/pco-release-action/.github/workflows/lerna-release-on-merge.yml@v1
+    secrets: inherit
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `install-command` | Command to install dependencies | `yarn install --check-files` |
+| `node-version` | Node.js version | `20` |
+| `cache` | Package manager for caching | `yarn` |
+| `only` | Comma-separated list of repos to exclusively update | `""` |
+| `include` | Comma-separated list of repos to include | `""` |
+| `exclude` | Comma-separated list of repos to exclude | `""` |
+
+### QA Release (Lerna)
+
+**Workflow:** `planningcenter/pco-release-action/.github/workflows/lerna-qa-release.yml@v1`
+
+Creates QA releases for all changed packages in the monorepo. Triggered by commenting `@pco-release qa` on a PR.
+
+```yml
+# .github/workflows/pco-release-qa.yml
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  create-qa-release-and-deploy:
+    if: >-
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@pco-release qa')
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    uses: planningcenter/pco-release-action/.github/workflows/lerna-qa-release.yml@v1
+    secrets: inherit
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `install-command` | Command to install dependencies | `yarn install --check-files` |
+| `node-version` | Node.js version | `20` |
+| `cache` | Package manager for caching | `yarn` |
+| `only` | Comma-separated list of repos to exclusively update | `""` |
+| `include` | Comma-separated list of repos to include | `""` |
+| `exclude` | Comma-separated list of repos to exclude | `""` |
+| `lerna-json-path` | Path to lerna.json | `lerna.json` |
+| `branch-name` | Custom proto deploy branch name | |
+| `custom-message` | Custom deployment message | |
+
+### Deploy RC (Lerna)
+
+**Workflow:** `planningcenter/pco-release-action/.github/workflows/lerna-deploy-rc.yml@v1`
+
+Deploys RC versions to staging for consumer repos. Triggered by commenting `@pco-release deploy` on the release PR.
+
+```yml
+# .github/workflows/pco-release-deploy-rc.yml
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  deploy-rc:
+    if: >-
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@pco-release deploy')
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: planningcenter/pco-release-action/.github/workflows/lerna-deploy-rc.yml@v1
+    secrets: inherit
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `install-command` | Command to install dependencies | `yarn install --check-files` |
+| `node-version` | Node.js version | `20` |
+| `cache` | Package manager for caching | `yarn` |
+| `only` | Comma-separated list of repos to exclusively update | `""` |
+| `include` | Comma-separated list of repos to include | `""` |
+| `exclude` | Comma-separated list of repos to exclude | `""` |
+| `upgrade-commands` | JSON string of repo-specific upgrade commands | `"{}"` |
+
+---
+
+## Shared Workflows
+
+These workflows work the same way for both standard repos and Lerna monorepos.
+
+### Sync Version via Labels
+
+Keeps the release PR version in sync when `pco-release-patch`, `pco-release-minor`, or `pco-release-major` labels are added.
+
+```yml
+# .github/workflows/pco-release-sync-with-labels.yml
 on:
   pull_request:
     types: [labeled]
@@ -61,7 +533,11 @@ name: PCO-Release - Sync With Labels
 
 jobs:
   sync-with-labels:
-    if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
+    if: >-
+      github.event.pull_request.head.ref == 'pco-release--internal' &&
+      (github.event.label.name == 'pco-release-patch' ||
+       github.event.label.name == 'pco-release-minor' ||
+       github.event.label.name == 'pco-release-major')
     runs-on: ubuntu-latest
     steps:
       - uses: planningcenter/pco-release-action/sync-with-labels@v1
@@ -69,41 +545,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-#### Automatically creates a Github Release when
+### Require Changelog Updates
+
+Enforces that PRs to `main` include a CHANGELOG.md update.
 
 ```yml
-# .github/workflows/pco-release-create-release-on-merge.yml
-
-name: PCO-Release - Create Release on Merge
-
-on:
-  pull_request:
-    types: [closed]
-    branches:
-      - main
-
-jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
-    steps:
-      - uses: planningcenter/pco-release-action/create-release-on-merge@v1
-        with:
-          // optional, but allows triggering other workflows
-          app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
-          private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY}}
-```
-
-#### Require the CHANGELOG.md file to be updated in general PRs (to use human communication about changes)
-
-```yml
-# .github/workflows/pco-release-require-changelog-update.yml
-
-name: PCO-Release - Require Changelog Update
-
+# .github/workflows/pco-release-require-changelog.yml
 on:
   pull_request:
     branches: [main]
+
+name: PCO-Release - Require Changelog Update
 
 jobs:
   require-changelog-update:
@@ -123,14 +575,15 @@ jobs:
           exit 1
 ```
 
-#### Automate updating the Changelog when dependabot opens a PR
+### Dependabot Changelog Automation
+
+Automatically adds changelog entries when dependabot creates PRs, so they pass the changelog requirement.
 
 ```yml
 # .github/workflows/pco-release-dependabot-automation.yml
-
-name: PCO-Release - Dependabot Automation (Update changelog)
-
 on: pull_request
+
+name: PCO-Release - Dependabot Automation
 
 jobs:
   update-dependabot-pr-changelog:
@@ -145,189 +598,224 @@ jobs:
       - uses: planningcenter/pco-release-action/dependabot-automation@v1
 ```
 
-#### Automate the creation of Release candidate releases
+---
 
-See [create-prerelease-candidate](./create-release-candidate/README.md)
+## Actions Reference
 
-#### Automate the creation of QA releases
+Individual composite actions used by the workflows above. You can also use them directly in workflow steps for custom setups.
 
-See [create-qa-release](./create-qa-release/README.md)
+### release-by-pr
 
-#### Set up Auto Deploys
-
-See the [`deploy` action readme](./deploy/README.md).
-
-## Available workflows
-
-### Release
-
-This will be available to create a new release and deploy it to all consumers via PR.
-
-#### Configuration variables
-
-You can customize the commands the workflow runs for installing dependencies, building, and testing the package.
-If no options are provided, the defaults will be used.
-
-| Input              | Description                                                                                                                                        | Req'd | Default                      |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------------- |
-| `build-command`    | The command to run to build the package                                                                                                            | No    | `yarn build`                 |
-| `build-directory`  | The directory containing the build output                                                                                                          | No    | `dist`                       |
-| `cache`            | Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching.                   | No    | `yarn`                       |
-| `install-command`  | The command to run to install the package's dependencies                                                                                           | No    | `yarn install --check-files` |
-| `publish-command`  | The command to publish a release version of the package to NPM                                                                                     | No    | `npm publish`                |
-| `test-command`     | The command to run to test the package                                                                                                             | No    | `yarn test`                  |
-| `only`             | A comma separated list of repos that will only be updated                                                                                          | No    | ''                           |
-| `include`          | A comma separated list of repos to include without checking for the dependency.                                                                    | No    | ''                           |
-| `exclude`          | A comma separated list of repos to exclude without checking for the dependency.                                                                    | No    | ''                           |
-| `upgrade-commands` | "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory." | No    | `"{}"`                       |
-
-#### Usage
-
-Create a workflow within your own JavaScript library. As an example, in `.github/workflows/rc.yml`...
+Creates or updates a release PR on the `pco-release--internal` branch with version bumps based on conventional commits.
 
 ```yml
-on:
-  pull_request:
-    types: [closed]
-    branches:
-      - main
-
-jobs:
-  create-release:
-    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'pco-release-pending')
-    permissions:
-      contents: write
-      pull-requests: write
-      packages: write
-    uses: planningcenter/pco-release-action/create-release-on-merge@v1
-    secrets: inherit
+- uses: planningcenter/pco-release-action/release-by-pr@v1
+  with:
+    app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+    private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
 ```
 
-### release candidate (rc)
+| Input | Description | Default |
+|---|---|---|
+| `app-id` | GitHub App ID for authentication | |
+| `private-key` | GitHub App private key | |
+| `GITHUB_TOKEN` | Alternative: GitHub token | |
+| `release_type` | Force a release type (`patch`, `minor`, `major`, `nochange`) | `nochange` |
+| `package_json_path` | Path to package.json | `package.json` |
+| `version_command` | Command to bump version | `yarn version` |
 
-This will be available to create a release candidate from a release PR, publish it, and send it to staging for all consumers.
+### create-release-on-merge
 
-#### Configuration variables
-
-You can customize the commands the workflow runs for installing dependencies, building, and testing the package.
-If no options are provided, the defaults will be used.
-
-| Input                | Description                                                                                                                                        | Req'd | Default                      |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------------- |
-| `build-command`      | The command to run to build the package                                                                                                            | No    | `yarn build`                 |
-| `build-directory`    | The directory containing the build output                                                                                                          | No    | `dist`                       |
-| `cache`              | Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching.                   | No    | `yarn`                       |
-| `install-command`    | The command to run to install the package's dependencies                                                                                           | No    | `yarn install --check-files` |
-| `prepublish-command` | The command to publish a prerelease version of the package to NPM                                                                                  | No    | `npm publish --tag next`     |
-| `test-command`       | The command to run to test the package                                                                                                             | No    | `yarn test`                  |
-| `only`               | A comma separated list of repos that will only be updated                                                                                          | No    | ''                           |
-| `include`            | A comma separated list of repos to include without checking for the dependency.                                                                    | No    | ''                           |
-| `exclude`            | A comma separated list of repos to exclude without checking for the dependency.                                                                    | No    | ''                           |
-| `upgrade-commands`   | "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory." | No    | `"{}"`                       |
-
-#### Usage
-
-Create a workflow within your own JavaScript library. As an example, in `.github/workflows/rc.yml`...
+Creates a GitHub release when a release PR is merged.
 
 ```yml
-on:
-  issue_comment:
-    types: [created]
-
-jobs:
-  create-rc-and-deploy:
-    if: (github.event_name == 'workflow_dispatch') || (github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release rc'))
-    permissions:
-      contents: write
-      pull-requests: write
-      packages: write
-    uses: planningcenter/pco-release-action/.github/workflows/rc.yml@v1
-    secrets: inherit
+- uses: planningcenter/pco-release-action/create-release-on-merge@v1
+  with:
+    app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+    private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
 ```
 
-### QA Release
+| Input | Description | Default |
+|---|---|---|
+| `app-id` | GitHub App ID (allows triggering other workflows) | |
+| `private-key` | GitHub App private key | |
+| `package_json_path` | Path to package.json | `package.json` |
 
-This will be available to create a QA release from a PR for testing a specific branch, publish it, and send it to a protonova environment for all consumers.
+### sync-with-labels
 
-#### Configuration variables
-
-You can customize the commands the workflow runs for installing dependencies, building, and testing the package.
-If no options are provided, the defaults will be used.
-
-| Input                | Description                                                                                                                                        | Req'd | Default                      |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------------- |
-| `build-command`      | The command to run to build the package                                                                                                            | No    | `yarn build`                 |
-| `build-directory`    | The directory containing the build output                                                                                                          | No    | `dist`                       |
-| `cache`              | Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching.                   | No    | `yarn`                       |
-| `install-command`    | The command to run to install the package's dependencies                                                                                           | No    | `yarn install --check-files` |
-| `prepublish-command` | The command to publish a prerelease version of the package to NPM                                                                                  | No    | `npm publish --tag next`     |
-| `test-command`       | The command to run to test the package                                                                                                             | No    | `yarn test`                  |
-| `only`               | A comma separated list of repos that will only be updated                                                                                          | No    | ''                           |
-| `include`            | A comma separated list of repos to include without checking for the dependency.                                                                    | No    | ''                           |
-| `exclude`            | A comma separated list of repos to exclude without checking for the dependency.                                                                    | No    | ''                           |
-| `upgrade-commands`   | "JSON string of repo names and their specific upgrade commands. Useful for monorepos where the package.json does not exist in the root directory." | No    | `"{}"`                       |
-
-#### Usage
-
-Create a workflow within your own JavaScript library. As an example, in `.github/workflows/qa.yml`...
+Updates the version bump type on a release PR when `pco-release-patch`, `pco-release-minor`, or `pco-release-major` labels are applied.
 
 ```yml
-on:
-  issue_comment:
-    types: [created]
-
-jobs:
-  create-qa-release-and-deploy:
-    if: (github.event_name == 'workflow_dispatch') || (github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release qa'))
-    permissions:
-      contents: write
-      pull-requests: write
-      packages: write
-    uses: planningcenter/pco-release-action/.github/workflows/qa-release.yml@v1
-    secrets: inherit
+- uses: planningcenter/pco-release-action/sync-with-labels@v1
+  with:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-### Revert
+| Input | Description | Default |
+|---|---|---|
+| `GITHUB_TOKEN` | **(required)** GitHub token | |
+| `cache` | Package manager for caching | `yarn` |
+| `package_json_path` | Path to package.json | `package.json` |
+| `version_command` | Command to bump version | `yarn version` |
 
-This will allow you to quickly revert all apps to an older version of the library.
+### dependabot-automation
 
-#### Configuration variables
-
-The main trigger to run this will be a workflow dispatch. The options are:
-
-| Input         | Description                                                                     | Req'd | Default |
-| ------------- | ------------------------------------------------------------------------------- | ----- | ------- |
-| `pr-number`   | PR number to comment the report to                                              | yes   |
-| `release-tag` | The release tag to revert to. Usually prefixed with v (ex. `v4.9.1`)            | yes   |         |
-| `only`        | A comma separated list of repos that will only be updated                       | No    | ''      |
-| `include`     | A comma separated list of repos to include without checking for the dependency. | No    | ''      |
-| `exclude`     | A comma separated list of repos to exclude without checking for the dependency. | No    | ''      |
-
-#### Usage
-
-Create a workflow within your own JavaScript library. As an example, in `.github/workflows/revert.yml`...
+Automatically adds changelog entries when dependabot creates PRs.
 
 ```yml
-on:
-  workflow_dispatch:
-    inputs:
-      pr-number:
-        required: true
-      release-tag:
-        required: true
-
-jobs:
-  create-qa-release-and-deploy:
-    permissions:
-      contents: write
-      pull-requests: write
-    uses: planningcenter/pco-release-action/.github/workflows/revert.yml@v1
-    secrets: inherit
-    with:
-      pr-number: ${{ inputs.pr-number }}
-      release-tag: ${{ inputs.release-tag }}
+- uses: planningcenter/pco-release-action/dependabot-automation@v1
 ```
 
-## Working on this Project
+| Input | Description | Default |
+|---|---|---|
+| `changelog_path` | Path to the changelog file | `./CHANGELOG.md` |
 
-- Build before pushing changes with `yarn build`
+### deploy
+
+Creates PRs (or merges directly) to update a package version across all consumer repositories.
+
+```yml
+- uses: planningcenter/pco-release-action/deploy@v1
+  with:
+    app-id: ${{ secrets.PCO_DEPENDENCIES_APP_ID }}
+    private-key: ${{ secrets.PCO_DEPENDENCIES_PRIVATE_KEY }}
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `app-id` | **(required)** GitHub App ID | |
+| `private-key` | **(required)** GitHub App private key | |
+| `automerge` | Auto-merge PRs for compatible versions | |
+| `change-method` | How to apply changes: `pr`, `merge`, or `revert` | `pr` |
+| `branch-name` | Target branch for `merge` method | `staging` |
+| `only` | Comma-separated repos to exclusively update | `""` |
+| `include` | Comma-separated repos to include | `""` |
+| `exclude` | Comma-separated repos to exclude | `""` |
+| `upgrade-commands` | JSON of repo-specific upgrade commands | `"{}"` |
+| `package-name` | The package name to update | |
+| `version` | The version to update to | |
+| `owner` | Owner of target repositories | `planningcenter` |
+| `allow-major` | Allow major version updates | `false` |
+| `package-json-path` | Path to package.json | `package.json` |
+| `node-version` | Node version for upgrade commands | `20` |
+
+Consumer repos can define a `.pco-release.config.yml` file for custom upgrade behavior:
+
+```yml
+# .pco-release.config.yml
+upgrade_command: "yarn tr upgrade"
+```
+
+### create-release-candidate
+
+Creates an RC prerelease version from a PR branch. Publishes as `v{version}-rc.N`.
+
+```yml
+- uses: planningcenter/pco-release-action/create-release-candidate@v1
+  with:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `GITHUB_TOKEN` | **(required)** GitHub token | |
+| `package-json-path` | Path to package.json | `package.json` |
+| `yarn-version-command` | Command to bump version | `yarn version` |
+| `node-version` | Node.js version | `18` |
+
+### create-qa-release
+
+Creates a QA prerelease version for testing a specific branch. Publishes as `v{version}-qa-{pr_number}.N`.
+
+```yml
+- uses: planningcenter/pco-release-action/create-qa-release@v1
+  with:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `GITHUB_TOKEN` | **(required)** GitHub token | |
+| `package-json-path` | Path to package.json | `package.json` |
+| `yarn-version-command` | Command to bump version | `yarn version` |
+| `node-version` | Node.js version | `18` |
+
+### node-cache
+
+Utility action that caches `node_modules` for faster workflow runs.
+
+```yml
+- uses: planningcenter/pco-release-action/node-cache@v1
+  with:
+    cache: yarn
+    node-version: "20"
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `cache` | Package manager (`npm`, `yarn`, `pnpm`, or `""`) | `yarn` |
+| `node-version` | Node.js version | `20` |
+
+### reporting
+
+Posts deployment results as a comment on the originating PR.
+
+```yml
+- uses: planningcenter/pco-release-action/reporting@v1
+  with:
+    results-json: ${{ steps.deploy.outputs.json }}
+    pr-number: ${{ github.event.pull_request.number }}
+    actor: ${{ github.actor }}
+    version-tag: v1.2.3
+    release-type: Release
+```
+
+| Input | Description | Default |
+|---|---|---|
+| `results-json` | **(required)** JSON string with deployment results | |
+| `pr-number` | **(required)** PR number to comment on | |
+| `actor` | **(required)** GitHub user who triggered the release | |
+| `version-tag` | **(required)** Version tag (e.g. `v1.0.0`) | |
+| `release-type` | **(required)** Type of release (`Release`, `RC`, `QA`) | |
+| `proto-tag` | Proto release tag if applicable | |
+| `custom-message` | Custom message instead of default protonova URL | |
+
+---
+
+## Configuration Reference
+
+### Labels
+
+| Label | Purpose |
+|---|---|
+| `pco-release-patch` | Bump the patch version (e.g. 1.0.0 -> 1.0.1) |
+| `pco-release-minor` | Bump the minor version (e.g. 1.0.0 -> 1.1.0) |
+| `pco-release-major` | Bump the major version (e.g. 1.0.0 -> 2.0.0) |
+| `pco-release-pending` | Applied automatically to release PRs; triggers release on merge |
+| `pco-release-urgent` | Force deploy PRs to all repos |
+
+### PR Comment Commands
+
+| Command | Where | What it does |
+|---|---|---|
+| `@pco-release rc` | Release PR | Creates an RC version and deploys to staging |
+| `@pco-release qa` | Any PR | Creates a QA version and deploys to protonova |
+| `@pco-release deploy` | Release PR (Lerna) | Deploys the RC to staging |
+
+### Required Secrets
+
+| Secret | Purpose |
+|---|---|
+| `PCO_DEPENDENCIES_APP_ID` | GitHub App ID for cross-repo operations |
+| `PCO_DEPENDENCIES_PRIVATE_KEY` | GitHub App private key |
+| `PLANNINGCENTER_NPM_TOKEN` | NPM registry token (used by reusable workflows via `secrets: inherit`) |
+
+---
+
+## Contributing
+
+1. Edit TypeScript source in a workspace's `src/` directory
+2. Run `yarn build` to compile to `dist/`
+3. Commit both `src/` and `dist/` changes (dist is committed so GitHub Actions can run without `node_modules`)
+4. Test the action by referencing your branch in a consuming repo
+5. After merging to `main`, update the version tag (e.g. `v1`)

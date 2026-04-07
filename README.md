@@ -21,6 +21,7 @@ PCO-Release automates the release process for Planning Center's JavaScript/TypeS
   - [Require Changelog Updates](#require-changelog-updates)
   - [Dependabot Changelog Automation](#dependabot-changelog-automation)
 - [Actions Reference](#actions-reference)
+- [NPM Authentication via OIDC Trusted Publishing](#npm-authentication-via-oidc-trusted-publishing)
 - [Configuration Reference](#configuration-reference)
 - [Contributing](#contributing)
 
@@ -100,6 +101,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/release.yml@v1
     secrets: inherit
     with:
@@ -115,6 +117,8 @@ You'll also want to add the [shared workflows](#shared-workflows) (label syncing
 Creates a GitHub release, publishes to npm and GitHub Package Registry, and deploys to all consuming repos via PRs. This is the main workflow for publishing a release.
 
 **Trigger:** When a release PR (with `pco-release-pending` label) is merged to `main`.
+
+> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your package must be configured on npmjs.com and the calling workflow must include `id-token: write`.
 
 ```yml
 # .github/workflows/pco-release-on-merge.yml
@@ -133,6 +137,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/release.yml@v1
     secrets: inherit
     with:
@@ -176,6 +181,8 @@ Creates an RC prerelease version, publishes to npm with the `@next` tag, and mer
 
 **Trigger:** Comment `@pco-release rc` on a release PR.
 
+> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your package must be configured on npmjs.com and the calling workflow must include `id-token: write`.
+
 ```yml
 # .github/workflows/pco-release-rc.yml
 on:
@@ -191,6 +198,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/release-candidate.yml@v1
     secrets: inherit
 ```
@@ -232,6 +240,8 @@ Creates a QA prerelease version for testing a specific branch, publishes to npm,
 
 **Trigger:** Comment `@pco-release qa` on any PR.
 
+> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your package must be configured on npmjs.com and the calling workflow must include `id-token: write`.
+
 ```yml
 # .github/workflows/pco-release-qa.yml
 on:
@@ -247,6 +257,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/qa-release.yml@v1
     secrets: inherit
 ```
@@ -344,6 +355,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/lerna-release-pr.yml@v1
     secrets: inherit
 ```
@@ -367,6 +379,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/lerna-release-on-merge.yml@v1
     secrets: inherit
 ```
@@ -378,6 +391,8 @@ You'll also want to add the [shared workflows](#shared-workflows) (label syncing
 **Workflow:** `planningcenter/pco-release-action/.github/workflows/lerna-release-pr.yml@v1`
 
 Creates a release PR and publishes RC versions for changed packages when code is pushed to `main`.
+
+> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your packages must be configured on npmjs.com and the calling workflow must include `id-token: write`.
 
 ```yml
 # .github/workflows/pco-release-create-pr.yml
@@ -392,6 +407,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/lerna-release-pr.yml@v1
     secrets: inherit
 ```
@@ -407,6 +423,8 @@ jobs:
 **Workflow:** `planningcenter/pco-release-action/.github/workflows/lerna-release-on-merge.yml@v1`
 
 Publishes all packages and deploys to consumers when the Lerna release PR is merged.
+
+> **Requires [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- your packages must be configured on npmjs.com and the calling workflow must include `id-token: write`.
 
 ```yml
 # .github/workflows/pco-release-on-merge.yml
@@ -425,6 +443,7 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required for OIDC trusted publishing
     uses: planningcenter/pco-release-action/.github/workflows/lerna-release-on-merge.yml@v1
     secrets: inherit
 ```
@@ -444,6 +463,8 @@ jobs:
 
 Creates QA releases for all changed packages in the monorepo. Triggered by commenting `@pco-release qa` on a PR.
 
+> **Supports [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing)** -- set `use-oidc: true` and add `id-token: write` to your calling workflow permissions. OIDC will become the default in a future release.
+
 ```yml
 # .github/workflows/pco-release-qa.yml
 on:
@@ -459,8 +480,11 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
+      id-token: write  # Required when use-oidc is true
     uses: planningcenter/pco-release-action/.github/workflows/lerna-qa-release.yml@v1
     secrets: inherit
+    with:
+      use-oidc: true
 ```
 
 | Input | Description | Default |
@@ -474,6 +498,7 @@ jobs:
 | `lerna-json-path` | Path to lerna.json | `lerna.json` |
 | `branch-name` | Custom proto deploy branch name | |
 | `custom-message` | Custom deployment message | |
+| `use-oidc` | Use OIDC trusted publishing instead of `PLANNINGCENTER_NPM_TOKEN` | `false` |
 
 ### Deploy RC (Lerna)
 
@@ -782,6 +807,70 @@ Posts deployment results as a comment on the originating PR.
 
 ---
 
+## NPM Authentication via OIDC Trusted Publishing
+
+PCO-Release workflows support [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) using OpenID Connect (OIDC), eliminating the need for long-lived `PLANNINGCENTER_NPM_TOKEN` secrets.
+
+### Prerequisites
+
+- **Lerna v9+** in consuming repos (for lerna-based workflows)
+- **npm CLI v11.5.1+** and **Node v22.14.0+** (for non-lerna workflows)
+
+### Configuring a package on npmjs.com
+
+Each npm package must be configured to trust the GitHub Actions workflow that publishes it.
+
+1. Go to [npmjs.com](https://www.npmjs.com) and navigate to your package's **Settings**
+2. Find the **Trusted Publisher** section
+3. Select **GitHub Actions** as the provider
+4. Fill in the required fields:
+   - **Organization or user**: `planningcenter`
+   - **Repository**: Your repository name (e.g., `tapestry`)
+   - **Workflow filename**: The filename of the *calling* workflow in your repo (e.g., `pco-release-qa.yml`)
+   - **Environment name**: Leave blank unless using GitHub environments
+5. Save the configuration
+
+> **Important:** For reusable workflows (like those in this repo), npm validates the *calling* workflow's filename, not the reusable workflow that contains the `npm publish` command. Make sure the workflow filename matches exactly, including the `.yml` extension.
+
+> **Note:** Each package can only have one trusted publisher configured at a time. npm does not validate the configuration when you save it -- errors will only appear when you attempt to publish.
+
+### Configuring your calling workflow
+
+Your calling workflow must include the `id-token: write` permission. This is required on both the calling and reusable workflows for OIDC to function.
+
+```yml
+# Example: .github/workflows/pco-release-qa.yml
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  create-qa-release-and-deploy:
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release qa')
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write  # Required for OIDC trusted publishing
+    uses: planningcenter/pco-release-action/.github/workflows/lerna-qa-release.yml@v1
+    secrets: inherit
+```
+
+### Post-migration security (recommended)
+
+Once trusted publishing is working:
+
+1. Navigate to your package's **Settings** -> **Publishing access** on npmjs.com
+2. Select **"Require two-factor authentication and disallow tokens"**
+3. [Revoke any existing automation tokens](https://docs.npmjs.com/revoking-access-tokens) that are no longer needed
+
+### Troubleshooting
+
+- **"Unable to authenticate" (ENEEDAUTH)**: Verify the workflow filename on npmjs.com matches your calling workflow exactly, including the `.yml` extension. All fields are case-sensitive.
+- **Self-hosted runners**: Not currently supported by npm trusted publishing. You must use GitHub-hosted runners.
+- **Private dependencies**: Trusted publishing only applies to `npm publish`. You still need a read-only token for installing private packages via `npm ci`/`npm install`.
+
+---
+
 ## Configuration Reference
 
 ### Labels
@@ -808,7 +897,7 @@ Posts deployment results as a comment on the originating PR.
 |---|---|
 | `PCO_DEPENDENCIES_APP_ID` | GitHub App ID for cross-repo operations |
 | `PCO_DEPENDENCIES_PRIVATE_KEY` | GitHub App private key |
-| `PLANNINGCENTER_NPM_TOKEN` | NPM registry token (used by reusable workflows via `secrets: inherit`) |
+| `PLANNINGCENTER_NPM_TOKEN` | NPM registry token -- being replaced by [OIDC trusted publishing](#npm-authentication-via-oidc-trusted-publishing) |
 
 ---
 

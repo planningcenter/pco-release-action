@@ -1,0 +1,43 @@
+name: PCO-Release - Create Release PR
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: "The version of node to use"
+        required: false
+        type: string
+        default: "20"
+      cache:
+        description: "Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm, or '' for no caching."
+        required: false
+        type: string
+        default: "yarn"
+      package-json-path:
+        description: "The path to the package.json file to version."
+        required: false
+        type: string
+        default: "package.json"
+      version-command:
+        description: "The command to run to bump the version"
+        required: false
+        type: string
+        default: "yarn version"
+
+jobs:
+  create-release-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: ${{ inputs.cache }}
+      - uses: planningcenter/pco-release-action/release-by-pr@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          package_json_path: ${{ inputs.package-json-path }}
+          version_command: ${{ inputs.version-command }}

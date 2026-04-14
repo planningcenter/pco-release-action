@@ -18,12 +18,18 @@ on:
         required: false
         type: string
         default: 'yarn'
+      use-oidc:
+        description: 'Use OIDC trusted publishing for npm authentication instead of PLANNINGCENTER_NPM_TOKEN'
+        required: false
+        type: boolean
+        default: false
 jobs:
   create-rc-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,7 +44,8 @@ jobs:
         with:
           cache: ${{ inputs.cache}}
           node-version: ${{ inputs.node-version }}
-      - run: echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" >> ~/.npmrc
+      - if: ${{ !inputs.use-oidc }}
+        run: echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" >> ~/.npmrc
         env:
           NODE_AUTH_TOKEN: ${{ secrets.PLANNINGCENTER_NPM_TOKEN }}
       - run: ${{ inputs.install-command }}

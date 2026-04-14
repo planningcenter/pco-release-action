@@ -72,6 +72,11 @@ on:
         required: false
         type: string
         default: ''
+      use-oidc:
+        description: 'Use OIDC trusted publishing for npm authentication instead of PLANNINGCENTER_NPM_TOKEN'
+        required: false
+        type: boolean
+        default: false
 jobs:
   react-to-comment:
     if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release qa')
@@ -101,6 +106,10 @@ jobs:
   publish-to-npm:
     needs: create-qa-release
     uses: planningcenter/pco-release-action/.github/workflows/publish.yml@v1
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     secrets: inherit
     with:
       install-command: ${{ inputs.install-command }}
@@ -111,6 +120,7 @@ jobs:
       build-directory: ${{ inputs.build-directory }}
       ref: ${{ needs.create-qa-release.outputs.release-tag }}
       prerelease: true
+      use-oidc: ${{ inputs.use-oidc }}
   deploy-to-proto-for-consumers:
     needs: [create-qa-release, publish-to-npm]
     runs-on: ubuntu-latest

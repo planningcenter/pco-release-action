@@ -72,7 +72,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "yarn"
       - uses: planningcenter/pco-release-action/release-by-pr@v1
         with:
@@ -415,7 +415,7 @@ jobs:
 | Input | Description | Default |
 |---|---|---|
 | `install-command` | Command to install dependencies | `yarn install --check-files` |
-| `node-version` | Node.js version | `20` |
+| `node-version` | Node.js version | `24` |
 | `cache` | Package manager for caching | `yarn` |
 
 ### Release on Merge (Lerna)
@@ -451,7 +451,7 @@ jobs:
 | Input | Description | Default |
 |---|---|---|
 | `install-command` | Command to install dependencies | `yarn install --check-files` |
-| `node-version` | Node.js version | `20` |
+| `node-version` | Node.js version | `24` |
 | `cache` | Package manager for caching | `yarn` |
 | `only` | Comma-separated list of repos to exclusively update | `""` |
 | `include` | Comma-separated list of repos to include | `""` |
@@ -490,7 +490,7 @@ jobs:
 | Input | Description | Default |
 |---|---|---|
 | `install-command` | Command to install dependencies | `yarn install --check-files` |
-| `node-version` | Node.js version | `20` |
+| `node-version` | Node.js version | `24` |
 | `cache` | Package manager for caching | `yarn` |
 | `only` | Comma-separated list of repos to exclusively update | `""` |
 | `include` | Comma-separated list of repos to include | `""` |
@@ -527,7 +527,7 @@ jobs:
 | Input | Description | Default |
 |---|---|---|
 | `install-command` | Command to install dependencies | `yarn install --check-files` |
-| `node-version` | Node.js version | `20` |
+| `node-version` | Node.js version | `24` |
 | `cache` | Package manager for caching | `yarn` |
 | `only` | Comma-separated list of repos to exclusively update | `""` |
 | `include` | Comma-separated list of repos to include | `""` |
@@ -722,7 +722,7 @@ Creates PRs (or merges directly) to update a package version across all consumer
 | `owner` | Owner of target repositories | `planningcenter` |
 | `allow-major` | Allow major version updates | `false` |
 | `package-json-path` | Path to package.json | `package.json` |
-| `node-version` | Node version for upgrade commands | `20` |
+| `node-version` | Node version for upgrade commands | `24` |
 
 Consumer repos can define a `.pco-release.config.yml` file for custom upgrade behavior:
 
@@ -746,7 +746,7 @@ Creates an RC prerelease version from a PR branch. Publishes as `v{version}-rc.N
 | `GITHUB_TOKEN` | **(required)** GitHub token | |
 | `package-json-path` | Path to package.json | `package.json` |
 | `yarn-version-command` | Command to bump version | `yarn version` |
-| `node-version` | Node.js version | `18` |
+| `node-version` | Node.js version | `24` |
 
 ### create-qa-release
 
@@ -763,7 +763,7 @@ Creates a QA prerelease version for testing a specific branch. Publishes as `v{v
 | `GITHUB_TOKEN` | **(required)** GitHub token | |
 | `package-json-path` | Path to package.json | `package.json` |
 | `yarn-version-command` | Command to bump version | `yarn version` |
-| `node-version` | Node.js version | `18` |
+| `node-version` | Node.js version | `24` |
 
 ### node-cache
 
@@ -773,13 +773,13 @@ Utility action that caches `node_modules` for faster workflow runs.
 - uses: planningcenter/pco-release-action/node-cache@v1
   with:
     cache: yarn
-    node-version: "20"
+    node-version: "24"
 ```
 
 | Input | Description | Default |
 |---|---|---|
 | `cache` | Package manager (`npm`, `yarn`, `pnpm`, or `""`) | `yarn` |
-| `node-version` | Node.js version | `20` |
+| `node-version` | Node.js version | `24` |
 
 ### reporting
 

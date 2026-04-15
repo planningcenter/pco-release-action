@@ -29,7 +29,7 @@ jobs:
           ##############################
           # the following are optional #
           ##############################
-          # node-version: 20
+          # node-version: 24
           # package-json-path: 'package.json'
           # yarn-version-command: 'yarn version'
 ```

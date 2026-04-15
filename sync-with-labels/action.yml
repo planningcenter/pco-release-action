@@ -18,6 +18,11 @@ inputs:
     description: "The command to run to bump the version"
     required: false
     default: "yarn version"
+  node-version:
+    description: "The version of Node.js to use"
+    required: false
+    type: string
+    default: "24"
 
 runs:
   using: "composite"
@@ -27,7 +32,7 @@ runs:
     - uses: actions/setup-node@v4
       if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}
       with:
-        node-version: "20"
+        node-version: ${{ inputs.node-version }}
         cache: ${{ inputs.cache }}
     - uses: planningcenter/pco-release-action/release-by-pr@v1
       if: ${{ github.event.pull_request.head.ref == 'pco-release--internal' && (github.event.label.name == 'pco-release-patch' || github.event.label.name == 'pco-release-minor' || github.event.label.name == 'pco-release-major') }}

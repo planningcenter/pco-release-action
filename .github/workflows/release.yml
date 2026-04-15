@@ -66,6 +66,11 @@ on:
         required: false
         type: boolean
         default: false
+      node-version:
+        description: "The version of Node.js to use for the build and publish steps"
+        required: false
+        type: string
+        default: "24"
 jobs:
   create-release:
     runs-on: ubuntu-latest
@@ -97,6 +102,7 @@ jobs:
       ref: ${{ needs.create-release.outputs.release-tag }}
       prerelease: false
       use-oidc: ${{ inputs.use-oidc }}
+      node-version: ${{ inputs.node-version }}
   deploy-to-consumers:
     needs: [create-release, publish-to-npm]
     runs-on: ubuntu-latest

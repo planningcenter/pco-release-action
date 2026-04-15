@@ -67,6 +67,11 @@ on:
         required: false
         type: boolean
         default: false
+      node-version:
+        description: 'The version of Node.js to use for the build and publish steps'
+        required: false
+        type: string
+        default: '24'
 jobs:
   react-to-comment:
     if: github.event.issue.pull_request && contains(github.event.comment.body, '@pco-release rc')
@@ -111,6 +116,7 @@ jobs:
       ref: ${{ needs.create-rc-release.outputs.release-tag }}
       prerelease: true
       use-oidc: ${{ inputs.use-oidc }}
+      node-version: ${{ inputs.node-version }}
   deploy-to-staging-for-consumers:
     needs: [create-rc-release, publish-to-npm]
     runs-on: ubuntu-latest

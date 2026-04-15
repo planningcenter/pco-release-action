@@ -66,7 +66,7 @@ inputs:
   node-version:
     description: "Fallback node version for running upgrade commands. Overridden by node_version in a consumer repo's .pco-release.config.yml when present."
     required: false
-    default: "20"
+    default: "24"
 outputs:
   json:
     description: "The json output of the upgrade prs."

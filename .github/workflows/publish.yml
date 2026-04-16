@@ -1,9 +1,5 @@
 name: Publish package on GitHub release
 
-permissions:
-  contents: read
-  packages: write
-
 on:
   workflow_call:
     inputs:
@@ -99,9 +95,6 @@ jobs:
   publish-to-npm:
     needs: [cache-key, build-and-test]
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:

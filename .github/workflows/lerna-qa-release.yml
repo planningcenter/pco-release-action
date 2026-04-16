@@ -68,10 +68,6 @@ jobs:
   create-qa-release:
     if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@pco-release qa')
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      id-token: write
     steps:
       - name: Get PR head ref
         id: get-pr-ref

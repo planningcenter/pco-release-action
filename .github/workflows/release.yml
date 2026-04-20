@@ -87,10 +87,6 @@ jobs:
   publish-to-npm:
     needs: create-release
     uses: planningcenter/pco-release-action/.github/workflows/publish.yml@v1
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
     secrets: inherit
     with:
       install-command: ${{ inputs.install-command }}
